@@ -1,3 +1,7 @@
 .env
 env.sh
 audio/
+__pycache__/
+*.pyc
+robotito_db/
+.vscode
