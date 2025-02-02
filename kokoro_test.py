@@ -2,8 +2,11 @@ from kokoro import KPipeline
 import soundfile as sf
 
 from playsound import playsound
-
-
+from pydub import AudioSegment
+from io import BytesIO
+import numpy as np
+from pydub import AudioSegment
+import wave
 pipeline = KPipeline(lang_code='a') # make sure lang_code matches voice
 
 # The following text is for demonstration purposes only, unseen during training
@@ -20,10 +23,16 @@ generator = pipeline(
     text, voice='af_bella',
     speed=1, split_pattern=r'\n+'
 )
+
 for i, (gs, ps, audio) in enumerate(generator):
     print(i)  # i => index
     print(gs) # gs => graphemes/text
-    print(ps) # ps => phonemes    
-    sf.write(f'{i}.wav', audio, 24000) # save each audio file
-    #playsound(f'{i}.wav') # play each audio file
+    print(ps) # ps => phonemes 
+    if (i==0):
+        total = audio
+    else:
+        total=np.concatenate((total, audio), axis=0)
+    #
+
+sf.write(f'audio.wav', total, 24000)    
 

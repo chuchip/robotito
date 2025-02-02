@@ -12,6 +12,9 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import START,END, MessagesState, StateGraph
 from langchain_chroma import Chroma
 from kokoro import KPipeline
+import torch
+from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
+
 
 
 class State(TypedDict):
@@ -20,6 +23,7 @@ class State(TypedDict):
     retrieved_context: List[str]
     system_msg: str
     vd: bool
+
 def call_llm(state: State):
     print(f"call_llm: {state['messages']}")
     prompt = ChatPromptTemplate.from_messages( [
@@ -111,12 +115,12 @@ print("--------------------------------")
 config = {"configurable": {"thread_id": "1"}}
 
 model = ChatOpenAI(temperature=0)
-pipeline = KPipeline(lang_code='a') # make sure lang_code matches voice
+kpipeline = KPipeline(lang_code='a') # make sure lang_code matches voice
 embeddings = OpenAIEmbeddings( model="text-embedding-3-large")
 vector_store = Chroma(
     collection_name="user1",
     embedding_function=embeddings,
-    persist_directory="./robotito_db",  # Where to save data locally, remove if not necessary
+    persist_directory="../robotito_db",  # Where to save data locally, remove if not necessary
 )
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=200, chunk_overlap=200)
 ai={"model":model,"pipeline":pipeline,"embeddings":embeddings,"vector_store":vector_store,"text_splitter":text_splitter}  
@@ -136,3 +140,26 @@ workflow.add_edge("save", END)
 #memory = MemorySaver()
 #graph = workflow.compile(checkpointer=memory)
 graph = workflow.compile()
+
+# Configure Whisper
+
+device = "cuda:0" if torch.cuda.is_available() else "cpu"
+torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+
+model_id = "openai/whisper-large-v3-turbo"
+
+model_audio = AutoModelForSpeechSeq2Seq.from_pretrained(
+    model_id, torch_dtype=torch_dtype, low_cpu_mem_usage=True, use_safetensors=True
+)
+model_audio.to(device)
+
+processor = AutoProcessor.from_pretrained(model_id)
+
+pipe = pipeline(
+    "automatic-speech-recognition",
+    model=model_audio,
+    tokenizer=processor.tokenizer,
+    feature_extractor=processor.feature_extractor,
+    torch_dtype=torch_dtype,
+    device=device,
+)
