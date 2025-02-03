@@ -25,22 +25,22 @@ class State(TypedDict):
     vd: bool
 
 def call_llm(state: State):
-    print(f"call_llm: {state['messages']}")
+    #print(f"call_llm: {state['messages']}")
     prompt = ChatPromptTemplate.from_messages( [
           ("system", "{system_msg}"),
           ("system", "Here is some background information to help answer user queries:\n{context}"),
           ("placeholder","{msgs}"),
           ("user","{question}")
     ])
-    print("Chat History: ",state['chat_history']) 
-    print("retrieved_context: ",state['retrieved_context']) 
+    #print("Chat History: ",state['chat_history']) 
+    #print("retrieved_context: ",state['retrieved_context']) 
     chat_prompt =  prompt.format_messages(
       system_msg=state['system_msg'],
       context=state['retrieved_context'], 
       msgs=state['chat_history'],
       question=state["messages"][-1].content
     )  
-    print(f"chat_prompt {chat_prompt}")
+    #print(f"chat_prompt {chat_prompt}")
     response = model.invoke(chat_prompt)    
     #print("- Call LLM",response)
     return {"messages": response}
@@ -53,13 +53,11 @@ def initial(state: State):
         k=10
       )
       similarity_threshold = 1.0
-      for res, score in results_with_scores:       
-            print(f"* {res.page_content} [{res.metadata}] {score}")
-      filtered_results = [res for res, score in results_with_scores if score <= similarity_threshold]
-        
+#      for res, score in results_with_scores:       
+#            print(f"* {res.page_content} [{res.metadata}] {score}")
+      filtered_results = [res for res, score in results_with_scores if score <= similarity_threshold]        
       retrieved_context = "\n".join([res.page_content for res in filtered_results])
-        # Add the constructed prompt to the state messages
-      print(f"Retrieved Context in initial: {retrieved_context}")
+      # print(f"Retrieved Context in initial: {retrieved_context}")
       state['retrieved_context']=retrieved_context
     return state
 
@@ -70,7 +68,7 @@ def save(state: State):
       source = "Human"
     else:
       source = "AI"
-    print(f"Content: {message.content} source: {source}")
+    #print(f"Content: {message.content} source: {source}")
     chat_documents.append(Document(page_content=message.content, metadata={"source": source},))
   
     all_splits = text_splitter.split_documents(chat_documents)
@@ -81,7 +79,7 @@ def save(state: State):
 def llm_question(question: str):
   input_message = [HumanMessage(content=question)]
   output = graph.invoke({"messages": input_message}, config) 
-  print(f"Answer from llm to question: {question}")
+  #print(f"Answer from llm to question: {question}")
   
   output["messages"][-1].pretty_print()
 

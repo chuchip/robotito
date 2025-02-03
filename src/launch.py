@@ -7,12 +7,11 @@ import pathlib
 import numpy as np
 from st_audiorec import st_audiorec
 
-def add_name(ss,name_input,chat_history):
+def add_name(ss,name_input):
     ss.name=name_input
     greetings="Hello!. My name now is "+name_input    
     ss.chat_history.append(HumanMessage(content=greetings))    
-    with st.chat_message("Human"):
-        st.write(ss.chat_history[-1].content)  
+    human_msg(ss.chat_history[-1].content)  
 
 def init_db(connection):
     cursor=connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users'" )
@@ -20,6 +19,10 @@ def init_db(connection):
         print("Initialzing the database")    
         connection.execute("CREATE TABLE users (user TEXT PRIMARY KEY, name TEXT, email TEXT, password TEXT)")        
         connection.execute("INSERT INTO users (user,name) VALUES ('','No Name')")
+        connection.commit()
+    cursor=connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='context'" )
+    if cursor.fetchone() is  None:
+        connection.execute("CREATE TABLE context (user TEXT, label TEXT, context TEXT)")
         connection.commit()
     
 def ai_msg(content):
@@ -30,10 +33,11 @@ def human_msg(content):
     
 if "graph" not in st.session_state:
   print("Rebuilding the graph")  
-  ss.connection=sqlite3.connect("../robotito_db/sqllite.db", check_same_thread=False)
+  ss.connection=sqlite3.connect("robotito_db/sqllite.db", check_same_thread=False)
   init_db(ss.connection)
+  ss.context_value=""
+  ss.contexts=[]
   ss.users= [user[0] for user in ss.connection.execute("SELECT * FROM users").fetchall()]
-  print(f"Users: {ss.users}")
   ss.graph= ai.graph  
   ss.config= ai.config
   ss.chat_history=[ AIMessage(content="I'm a bot. How can I help you ?") ]
@@ -53,17 +57,29 @@ load_css(css_path)
 
 st.title("Robotito")
 with st.sidebar:
-    st.header("Settings") 
+    with st.container(border=True):        
+        name_input=st.selectbox(label="User", options=list(ss.users))
+        with st.popover("New"):
+            ss.new_user=st.text_input("New User")
 
-record_audio = st_audiorec()
-name_input=st.sidebar.selectbox(label="Name", options=list(ss.users))
-context=st.sidebar.text_area(f"Context")
-vd= st.sidebar.checkbox("Vector Database",value="True")
-sound= st.sidebar.checkbox("Speak aloud",value="False")
+    if name_input is not None:
+        with st.popover("Context"):        
+            if len(ss.contexts)==0:
+                query=ss.connection.execute(f"select label,context from context where user = '{name_input}'")
+                data=query.fetchall()
+                
+            context=st.text_area(f"Context",value=ss.context_value,help="Context is the information that robotito uses to understand the conversation.")
+            if len(data)>0:
+                list_context=st.selectbox(label="Saved", options=list(data[0]))
+                if list_context is not None and list_context!='':
+                    ss.context_value="Choosed"
+    vd= st.checkbox("Vector Database",value=False)
+    sound= st.checkbox("Speak aloud",value=False)     
+    newConversation=st.button("New Conversation",type="primary")    
+with st.expander("Listen"):     
+    record_audio = st_audiorec()
 question=st.chat_input(f"Type your message here ... ",key="styledinput") 
 
-
-new_user=ss.new_user=st.sidebar.text_input("New User")
 new_user=ss.get("new_user",None)
 if new_user is not None and new_user != "":
         c=ss.connection.execute(f"select user from users where user = '{new_user}'")
@@ -74,21 +90,18 @@ if new_user is not None and new_user != "":
             name_input=new_user    
         else:
             st.sidebar.error("User already exists")
-if st.sidebar.button("New Conversation",type="primary"):
+if newConversation:
     ss.chat_history=[ AIMessage(content="I'm a bot. How can I help you ?") ]       
     if name_input is not None and name_input != "":
-       add_name(ss,name_input,chat_history)
+       add_name(ss,name_input)
     else:
         ss.name=None
 else:
-    for history in chat_history:
-        #print("History: ",history)
-        if type(history) is AIMessage:
-            #with st.chat_message("AI"):
-                ai_msg( history.content)
+    for history in chat_history:        
+        if type(history) is AIMessage:           
+            ai_msg( history.content)
         else:    
-            #with st.chat_message("Human"):
-                human_msg(history.content)  
+            human_msg(history.content)  
     
     if record_audio is not None and len(record_audio)>1000:
         print("Recording audio")
@@ -121,5 +134,5 @@ else:
               
             st.audio(total, format="audio/wav",sample_rate=24000, autoplay=True)
     if name is None and name_input is not None and name_input != "":
-        add_name(ss,name_input,chat_history)    
+        add_name(ss,name_input)    
 
