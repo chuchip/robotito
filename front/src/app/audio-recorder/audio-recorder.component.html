@@ -1,0 +1,10 @@
+<input type="text" [(ngModel)]="inputText" style="width: 600px;"  (keydown.enter)="sendData()" placeholder="Type and press Enter">
+<button (click)="speak_aloud()"> Speak  </button>
+
+<button (click)="toggleRecording()">
+    {{ isRecording ? 'Stop Recording' : 'Start Recording' }}    
+</button>
+<p>{{audio_to_text}} <button (click)="copy_to_input()">Copy</button> <input type="checkbox" [(ngModel)]="sw_send_audio">Send</p>
+
+<pre> {{ responseMessage }} </pre><p> <button (click)="speak_aloud_response()"> Speak  </button><button (click)="stopAudio()"> Stop Audio  </button></p>
+<textarea style="width: 400px;height: 100px;" (keydown.enter)="send_context($event)" placeholder="Type an context..."></textarea>
