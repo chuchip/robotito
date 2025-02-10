@@ -89,7 +89,15 @@ export class AudioRecorderService {
     });
    return response
   }
-
+  async change_language(language:string) : Promise<Response>  {  
+    const response = await fetch(`${this.backendUrl}/language`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ language: language }),
+    });
+   return response
+  }
+  
   private uploadAudio(): Promise<string> {
     return new Promise((resolve, reject) => {
       const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
@@ -109,14 +117,5 @@ export class AudioRecorderService {
 
       this.audioChunks = [];
     });
-  }
-  base64ToArrayBuffer(base64: string) {
-    const binaryString = atob(base64);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    return bytes.buffer;
   }
 }

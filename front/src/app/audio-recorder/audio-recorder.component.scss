@@ -1,0 +1,94 @@
+.multiline-text {
+    border: 1px solid rgb(153, 168, 175);
+    border-radius: 1%;
+    white-space: pre-wrap;  // Preserves spaces and breaks lines
+    word-wrap: break-word;  // Ensures long words break properly
+    width: 80%;  // Adjust width as needed
+    font-size: 12px;  // Optional styling
+    line-height: 1.5;  // Improves readability
+  
+  }
+  .head {
+    display: flex;
+    align-items:  flex-start;
+    gap: 5px;
+  }
+  .line {
+    display: flex;
+    align-items:  flex-start;
+    gap: 8px; /* Space between button and text */
+  
+    padding: 5px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 2px solid #ddd;
+    box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.2); /* 3D effect */
+    max-width: 98%;
+    margin-bottom: 6px;
+    position: relative;
+  }
+  
+  .speaker-btn {
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+  }
+  
+  .line-text {
+    font-size: 12px;
+    color: #333;
+    flex: 1;
+    word-wrap: break-word;
+  }
+  .record-btn {
+    background-color: red;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+  }
+  .stop-btn {
+    background-color: rgb(196, 107, 148);
+    border: none;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+  }
+  .record-btn:hover {
+    background-color: darkred;
+  }
+  
+  .material-icons {
+    font-size: 12px;
+  }
+  
+  
+
+  .scroll-box {
+    max-height: 400px;  /* Adjust height as needed */
+    overflow-y: auto;   /* Enables vertical scrolling */
+    border: 2px solid #ccc;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    width: 90%;
+  }
+  

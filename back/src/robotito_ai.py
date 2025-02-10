@@ -11,10 +11,10 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import START,END, MessagesState, StateGraph
 from langchain_chroma import Chroma
-from kokoro import KPipeline
+
 import torch
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
-
+import sqlite3
 
 
 class State(TypedDict):
@@ -23,7 +23,30 @@ class State(TypedDict):
     retrieved_context: List[str]
     system_msg: str
     vd: bool
-
+def init_db(connection):
+    cursor=connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users'" )
+    if cursor.fetchone() is  None:
+        print("Initialzing the database")    
+        connection.execute("CREATE TABLE users (user TEXT PRIMARY KEY, name TEXT, email TEXT, password TEXT)")        
+        connection.execute("INSERT INTO users (user,name) VALUES ('','No Name')")
+        connection.commit()
+    cursor=connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='context'" )
+    if cursor.fetchone() is  None:
+        connection.execute("CREATE TABLE context (user TEXT, label TEXT, context TEXT)")
+        connection.commit()
+    cursor=connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='conversation'" )
+    if cursor.fetchone() is  None:
+        connection.execute("""CREATE TABLE conversation (id text primary key,user TEXT,
+                            label TEXT,
+                            name text,
+                            initial_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+                            final_date DATETIME)
+                           """)
+        connection.execute("""CREATE TABLE conversation_lines (id text, 
+                           type TEXT,
+                           msg TEXT
+                           time_msg DATETIME DEFAULT CURRENT_TIMESTAMP)""")
+        connection.commit()
 def call_llm(state: State):
     #print(f"call_llm: {state['messages']}")
     prompt = ChatPromptTemplate.from_messages( [
@@ -116,8 +139,10 @@ print("Initializing Robotito ...")
 print("--------------------------------")
 config = {"configurable": {"thread_id": "1"}}
 
-model = ChatOpenAI(temperature=0)
-kpipeline = KPipeline(lang_code='a') # make sure lang_code matches voice
+model = ChatOpenAI(model_name="gpt-4o-mini",
+                   presence_penalty=1.2,
+                   temperature=0.7)
+
 embeddings = OpenAIEmbeddings( model="text-embedding-3-large")
 vector_store = Chroma(
     collection_name="user1",
@@ -166,3 +191,7 @@ pipe_whisper = pipeline(
     device=device,
 )
 chat_history=[ AIMessage(content="I'm a bot. How can I help you ?") ]
+
+# Configure connection to sqlLite
+connection=sqlite3.connect("robotito_db/sqllite.db", check_same_thread=False)
+init_db(connection)

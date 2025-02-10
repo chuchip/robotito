@@ -1,23 +1,33 @@
 import { Component } from '@angular/core';
 import { AudioRecorderService } from '../services/audio-recorder.service';
-
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { LinebreaksPipe } from '../linebreaks.pipe';
 @Component({
   selector: 'app-record',
-  imports: [CommonModule, FormsModule], // 
+  imports: [CommonModule, FormsModule,LinebreaksPipe], // 
   templateUrl: './audio-recorder.component.html',
-  styleUrls: ['./audio-recorder.component.css']
+  styleUrls: ['./audio-recorder.component.scss']
 })
 export class RecordComponent {
+  
+  chat_history:{line: number,type: string,msg: string}[]=[]
+  number_line:number=0
   audio_to_text:string=""
-  responseMessage:string=""
+  responseMessage:string="Hello, I'm robotito. Do you want to talk?"
   isRecording = false;
   inputText: string = '';
   response: any;
   error: any;
   sw_send_audio: Boolean= false;
+  sw_talk_response: Boolean= false;
   audio: HTMLAudioElement | null = null;
+  selectedValue: string = 'a';
+  options = [
+    { label: 'American English', value: 'a' },
+    { label: 'British English', value: 'b' },
+    { label: 'Spanish', value: 'e' },    
+  ];
   constructor(private audioRecorderService: AudioRecorderService) {}
 
   async toggleRecording() {
@@ -30,8 +40,15 @@ export class RecordComponent {
   }
   async sendData() {
     if (this.inputText.trim()) {
+      this.chat_history.push({line:this.number_line, type: "H",msg: this.inputText.trim()})
       this.responseMessage= await this.audioRecorderService.sendMsg(this.inputText.trim());
-      console.log(this.response)
+      this.number_line++
+      this.chat_history.push({line:this.number_line,type: "R",msg: this.responseMessage})
+      this.number_line++
+      if (this.sw_talk_response) {
+        this.speak_aloud_response(this.number_line-1)
+      }
+
     }
   }
 
@@ -52,11 +69,12 @@ export class RecordComponent {
     this.playAudio(audioUrl);
   }
 
-  async speak_aloud_response(){
-    if (this.responseMessage.trim()) {
-      const response = await this.audioRecorderService.text_to_sound(this.responseMessage.trim());
+  async onChangeLanguage() {
+    const response= await this.audioRecorderService.change_language(this.selectedValue);
+  }
+  async speak_aloud_response(i:number){  
+      const response = await this.audioRecorderService.text_to_sound(this.chat_history[i].msg);
       this.prepareAudio(response)
-    }
   }
   playAudio(audioUrl: string): void {
     // Stop the previous audio if it’s playing

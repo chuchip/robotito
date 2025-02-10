@@ -8,6 +8,7 @@ from pydub import AudioSegment
 from io import BytesIO
 import soundfile as sf
 import subprocess
+from kokoro import KPipeline
 
 app = Flask(__name__)
 CORS(app)  # Enable Cross-Origin Resource Sharing
@@ -20,6 +21,9 @@ graph= ai.graph
 config= ai.config
 vd=False
 context="You are a robot designed to interact with non-technical people and we are having a friendly conversation."
+kpipeline = KPipeline(lang_code='a') # make sure lang_code matches voice
+voice_name="af_heart"
+
 @app.route('/upload-audio', methods=['POST'])
 def upload_audio():
     print("In upload audio")
@@ -51,16 +55,15 @@ def send_question():
 
 
 @app.route('/tts', methods=['POST'])
-def tts(): 
-    
+def tts():     
     data = request.get_json()  # Get JSON data from the request body
     text = data.get('text') 
     print(f"In tts {text}")
-    generator = ai.kpipeline(
-            text, voice='af_bella',
+    generator = kpipeline(
+            text, 
+            voice= voice_name,
             speed=1, split_pattern=r'\n+'
-        )
-    
+        )    
     
     for i, (gs, ps, audio) in enumerate(generator):       
         if (i==0):
@@ -89,9 +92,26 @@ def tts():
 @app.route('/set-context', methods=['POST'])
 def set_context(): 
   global context
-
+  
   data = request.get_json()  # Get JSON data from the request body
   context = data.get('text') 
+  print("Set Context: ",context)
+  return jsonify({'message': 'Context updated successfully!', 'text': context})
+
+@app.route('/language', methods=['POST'])
+def set_language(): 
+  global voice_name,kpipeline
+
+  data = request.get_json()  # Get JSON data from the request body
+  language = data.get('language') 
+  if language == 'a':
+    voice_name='af_heart'
+  if language == 'b':
+    voice_name='bf_emma'
+  if language == 'c':
+    voice_name='em_alex'
+  print("language:",language)
+  kpipeline = KPipeline(lang_code=language) 
   return jsonify({'message': 'Context updated successfully!', 'text': context})
 
 if __name__ == '__main__':

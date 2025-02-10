@@ -1,5 +1,4 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
 import { RecordComponent } from "./audio-recorder/audio-recorder.component";
 
 @Component({
