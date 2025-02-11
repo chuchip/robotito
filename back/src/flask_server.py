@@ -108,7 +108,7 @@ def set_language():
     voice_name='af_heart'
   if language == 'b':
     voice_name='bf_emma'
-  if language == 'e':
+  if language == 'e':   
     voice_name='em_alex'
   print("language:",language)
   kpipeline = KPipeline(lang_code=language) 

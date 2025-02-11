@@ -11,6 +11,7 @@ import { LinebreaksPipe } from '../linebreaks.pipe';
   styleUrls: ['./audio-recorder.component.scss']
 })
 export class RecordComponent {
+  context=""
   @ViewChild('inputField') inputElement!: ElementRef;
   response_back: string="Hi"
   chat_history:{line: number,type: string,msg: string}[]=[]
@@ -19,7 +20,8 @@ export class RecordComponent {
   responseMessage:string="Hello, I'm robotito. Do you want to talk?"
   isRecording = false;
   inputText: string = '';
-
+  showRecord=false;
+  showContext=false;
   error: any;
   sw_send_audio: Boolean= false;
   sw_talk_response: Boolean= false;
@@ -34,14 +36,15 @@ export class RecordComponent {
 
   async toggleRecording() {
     if (this.isRecording) {
-      this.audio_to_text= await this.audioRecorderService.stopRecording();
-      
+      this.showRecord=true
+      this.audio_to_text= await this.audioRecorderService.stopRecording();      
     } else {
       this.audioRecorderService.startRecording();
     }
     this.isRecording = !this.isRecording;
   }
   async sendData() {
+    this.showRecord=false
     if (this.inputText.trim()) {
       this.chat_history.push({line:this.number_line, type: "H",msg: this.inputText.trim()})
       this.responseMessage= await this.audioRecorderService.sendMsg(this.inputText.trim());
@@ -107,10 +110,11 @@ export class RecordComponent {
 
   async send_context(event:any)    {
     const textArea = event.target as HTMLTextAreaElement;
-    const text = textArea.value;
+    this.context = textArea.value;
   
-    if (text) {
-      const response=await this.audioRecorderService.send_context(text);
+    if (this.context) {
+      this.showContext=false
+      const response=await this.audioRecorderService.send_context(this.context);
       this.put_message(response)
     }
   }

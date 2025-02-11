@@ -92,3 +92,16 @@
     width: 90%;
   }
   
+  .context
+  {
+    width:95%;
+    position: fixed;
+    display: flex;
+    align-items:  flex-start;
+    top: 300px;
+    left: 2%;
+    height: 100px;
+    border-top: 3px solid black; /* Adjust thickness and color */
+    background-color: rgb(174, 180, 173); /* Optional: Set background */    
+    padding: 3px;
+  }
