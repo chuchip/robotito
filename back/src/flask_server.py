@@ -51,7 +51,7 @@ def send_question():
         #print("Question_Graph: ",msg_graph) 
     response= graph.invoke(msg_graph, config) 
     answer=response["messages"][-1].content
-    return jsonify({'message': 'Mg uploaded successfully!', 'text': answer})
+    return jsonify({'message': 'M   g uploaded successfully!', 'text': answer})
 
 
 @app.route('/tts', methods=['POST'])
@@ -108,11 +108,11 @@ def set_language():
     voice_name='af_heart'
   if language == 'b':
     voice_name='bf_emma'
-  if language == 'c':
+  if language == 'e':
     voice_name='em_alex'
   print("language:",language)
   kpipeline = KPipeline(lang_code=language) 
-  return jsonify({'message': 'Context updated successfully!', 'text': context})
+  return jsonify({'message': f'Voice changed to {voice_name}'})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -71,14 +71,14 @@ export class AudioRecorderService {
     audioElement.src = `${this.backendUrl}/tts`;  // Flask endpoint
     audioElement.play();  //
   }
-  async send_context(context:string)  {      
+  async send_context(context:string):  Promise<Response> {      
     console.log("Set context: ",context)
     const response = await fetch(`${this.backendUrl}/set-context`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: context }),
-    });
-    console.log("Response: ",response)
+    });    
+    return  response;
   }
 
   async text_to_sound(inputText:string) : Promise<Response>  {  

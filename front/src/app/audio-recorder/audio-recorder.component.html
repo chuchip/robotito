@@ -1,5 +1,5 @@
 <div class="head"> 
-  <input type="text" [(ngModel)]="inputText" style="width: 600px;"  (keydown.enter)="sendData()" placeholder="Type and press Enter">
+  <input #inputField type="text" [(ngModel)]="inputText" style="width: 600px;"  (keydown.enter)="sendData()" placeholder="Type and press Enter">
   <button class="speaker-btn" (click)="speak_aloud()"> <span class="material-icons">volume_up</span>  </button>
 
   <button (click)="toggleRecording()" class="record-btn">
@@ -34,5 +34,6 @@
   
 </div>
 <div>
-  <textarea style="width: 400px;height: 50px;" (keydown.enter)="send_context($event)" placeholder="Type an context..."></textarea>
+  <textarea style="width: 95%;height: 30px; font-size: 10px;" (keydown.enter)="send_context($event)" placeholder="Type an context..."></textarea>
 </div>
+<div class="footer">{{response_back}}</div>

@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild, ElementRef } from '@angular/core';
 import { AudioRecorderService } from '../services/audio-recorder.service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { LinebreaksPipe } from '../linebreaks.pipe';
+
 @Component({
   selector: 'app-record',
   imports: [CommonModule, FormsModule,LinebreaksPipe], // 
@@ -10,14 +11,15 @@ import { LinebreaksPipe } from '../linebreaks.pipe';
   styleUrls: ['./audio-recorder.component.scss']
 })
 export class RecordComponent {
-  
+  @ViewChild('inputField') inputElement!: ElementRef;
+  response_back: string="Hi"
   chat_history:{line: number,type: string,msg: string}[]=[]
   number_line:number=0
   audio_to_text:string=""
   responseMessage:string="Hello, I'm robotito. Do you want to talk?"
   isRecording = false;
   inputText: string = '';
-  response: any;
+
   error: any;
   sw_send_audio: Boolean= false;
   sw_talk_response: Boolean= false;
@@ -33,6 +35,7 @@ export class RecordComponent {
   async toggleRecording() {
     if (this.isRecording) {
       this.audio_to_text= await this.audioRecorderService.stopRecording();
+      
     } else {
       this.audioRecorderService.startRecording();
     }
@@ -71,6 +74,7 @@ export class RecordComponent {
 
   async onChangeLanguage() {
     const response= await this.audioRecorderService.change_language(this.selectedValue);
+    this.put_message(response)   
   }
   async speak_aloud_response(i:number){  
       const response = await this.audioRecorderService.text_to_sound(this.chat_history[i].msg);
@@ -96,17 +100,27 @@ export class RecordComponent {
   copy_to_input()
   {
     this.inputText=this.audio_to_text
+    this.inputElement.nativeElement.focus();
     if (this.sw_send_audio)
       this.sendData()
   }
 
-  send_context(event:any): void    {
+  async send_context(event:any)    {
     const textArea = event.target as HTMLTextAreaElement;
     const text = textArea.value;
   
     if (text) {
-      this.audioRecorderService.send_context(text);
+      const response=await this.audioRecorderService.send_context(text);
+      this.put_message(response)
     }
-
+  }
+  private async put_message( response:any )
+  {
+    const msg=await response.json()
+    
+    this.response_back=msg.message     
+    setTimeout(() => {
+      this.response_back = ''; // Clear message
+    }, 5000);
   }
 }
