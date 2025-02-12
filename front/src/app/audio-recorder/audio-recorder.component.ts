@@ -2,17 +2,16 @@ import { Component, ViewChild, ElementRef } from '@angular/core';
 import { AudioRecorderService } from '../services/audio-recorder.service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { LinebreaksPipe } from '../linebreaks.pipe';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatButtonModule } from '@angular/material/button';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { marked } from 'marked';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 @Component({
   selector: 'app-record',   
   imports: [CommonModule, MatTooltipModule, MatCheckboxModule,FormsModule,
-    LinebreaksPipe, MatButtonModule, MatIconModule, // Required for Angular Material animations
+     MatButtonModule, MatIconModule, // Required for Angular Material animations
     MatProgressSpinnerModule], // 
   templateUrl: './audio-recorder.component.html',
   styleUrls: ['./audio-recorder.component.scss']
@@ -75,6 +74,7 @@ export class RecordComponent {
       this.chat_history.push({line:this.number_line, type: "H",msg: this.inputText.trim()})
       this.isLoading=true
       this.responseMessage= await this.audioRecorderService.sendMsg(this.inputText.trim());
+      this.responseMessage= await marked(this.responseMessage)
       this.isLoading=false
       this.number_line++
       this.chat_history.push({line:this.number_line,type: "R",msg: this.responseMessage})
