@@ -5,9 +5,10 @@ body {
     background-position: center;
     background-repeat: no-repeat;
     height: 100vh;
-    margin: 10;
-  }
-  body::before {
+    margin: 5px;
+    font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+body::before {
     content: "";
     position: fixed;
     top: 0;
@@ -17,51 +18,13 @@ body {
     background: inherit;
     filter: blur(5px); /* Adjust blur intensity */
     z-index: -1;
-  }
-  .system {
-    position: fixed;
-    z-index: 9999; 
-    top: 0;
-    left: 0;
-    height: 15px;
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 12px;
-    width: 100%;
-    border-top: 3px solid black; /* Adjust thickness and color */
-    background-color: rgb(243, 237, 243); /* Optional: Set background */
-    text-align: center;
-    padding: 3px;
-  }
+}
+ 
+.visible {
+    display: block ;
+}
+.hidden {
+    display: none !important;
+}
+  
 
-  .input
-  {
-    width:95%;
-    position: fixed;
-    bottom: 0;
-    left: 2%;
-    height: 30px;
-    border-top: 3px solid black; /* Adjust thickness and color */
-    background-color: rgb(174, 180, 173); /* Optional: Set background */    
-    padding: 3px;
-  }
-  
-  .output_record
-  {
-    width:95%;
-    position: fixed;
-    display: flex;
-    align-items:  flex-start;
-    bottom: 40px;
-    left: 2%;
-    height: 20px;
-    border-top: 3px solid black; /* Adjust thickness and color */
-    background-color: rgb(174, 180, 173); /* Optional: Set background */    
-    padding: 3px;
-  }
-  .visible-class {
-    display: block;
-  }
-  .hidden-class {
-    display: none;
-  }
-  

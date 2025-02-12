@@ -97,6 +97,12 @@ export class AudioRecorderService {
     });
    return response
   }
+  async clear_conversation() : Promise<Response>  {  
+    const response = await fetch(`${this.backendUrl}/clear`, {
+      method: 'GET'      
+    });
+   return response
+  }
   
   private uploadAudio(): Promise<string> {
     return new Promise((resolve, reject) => {

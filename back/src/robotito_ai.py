@@ -190,7 +190,7 @@ pipe_whisper = pipeline(
     torch_dtype=torch_dtype,
     device=device,
 )
-chat_history=[ AIMessage(content="I'm a bot. How can I help you ?") ]
+chat_history=[]
 
 # Configure connection to sqlLite
 connection=sqlite3.connect("robotito_db/sqllite.db", check_same_thread=False)

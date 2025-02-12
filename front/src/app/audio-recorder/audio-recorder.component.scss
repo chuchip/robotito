@@ -1,33 +1,80 @@
-.multiline-text {
-    border: 1px solid rgb(153, 168, 175);
-    border-radius: 1%;
-    white-space: pre-wrap;  // Preserves spaces and breaks lines
-    word-wrap: break-word;  // Ensures long words break properly
-    width: 80%;  // Adjust width as needed
-    font-size: 12px;  // Optional styling
-    line-height: 1.5;  // Improves readability
-  
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.conversation {
+  flex: 1; 
+  max-width: 98%;
+  overflow-y: auto;   /* Enables vertical scrolling */
+  border: 2px solid #ccc;
+  padding-top: 0px;
+  padding-bottom: 0px;
+  padding-left: 3px;
+  padding-right: 3px;
+  border-radius: 8px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+}
+.line {
+  display: flex;
+  align-items:  flex-start;
+  gap: 8px; /* Space between button and text */  
+  padding: 5px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px solid #dddddd;
+  box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.2); /* 3D effect */
+  max-width: 98%;
+  margin-bottom: 2px;
+  position: relative;
+}
+.line-text {
+  font-size: 12px;
+  color: #333;
+  flex: 1;
+  word-wrap: break-word;
+}
+
+.input
+{    
+  display: flex;
+  flex-direction: column; /* Stack items vertically */
+  align-items: flex-start; /* Align to the top */
+  justify-content: flex-start; 
+  width:95%;  
+  bottom: 0;
+  left: 2%;
+  height: 30px;
+  border-top: 3px solid black; /* Adjust thickness and color */
+  background-color: rgb(174, 180, 173); /* Optional: Set background */    
+  padding: 3px;
+}
+  mat-checkbox {    
+    margin: 0;  
+    transform: scale(0.8);  /* Adjust size down (0.8 is 80% of original size) */
+  }
+  mat-checkbox .mat-checkbox-label {
+    font-size: 12px;  /* Smaller font for the label */
+  }
+  .output_record
+  {
+    width:95%;
+    position: fixed;
+    display: flex;
+    align-items:  flex-start;
+    bottom: 40px;
+    left: 2%;
+    height: 20px;
+    border-top: 3px solid black; /* Adjust thickness and color */
+    background-color: rgb(174, 180, 173); /* Optional: Set background */    
+    padding: 3px;
   }
   .head {
     display: flex;
     align-items:  flex-start;
     gap: 5px;
-  }
-  .line {
-    display: flex;
-    align-items:  flex-start;
-    gap: 8px; /* Space between button and text */
-  
-    padding: 5px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    border: 2px solid #ddd;
-    box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.2); /* 3D effect */
-    max-width: 98%;
-    margin-bottom: 6px;
-    position: relative;
-  }
-  
+  }    
   .speaker-btn {
     background-color: white;
     border: 1px solid #ccc;
@@ -42,66 +89,80 @@
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
   }
   
-  .line-text {
-    font-size: 12px;
-    color: #333;
-    flex: 1;
-    word-wrap: break-word;
-  }
-  .record-btn {
-    background-color: red;
-    border: none;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: white;
-  }
-  .stop-btn {
-    background-color: rgb(196, 107, 148);
-    border: none;
-    border-radius: 50%;
-    width: 25px;
-    height: 25px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: white;
-  }
-  .record-btn:hover {
-    background-color: darkred;
-  }
-  
+
   .material-icons {
     font-size: 12px;
   }
-  
-  
-
-  .scroll-box {
-    max-height: 80%;  /* Adjust height as needed */
-    overflow-y: auto;   /* Enables vertical scrolling */
-    border: 2px solid #ccc;
-    padding: 10px;
-    border-radius: 8px;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
-    width: 90%;
-  }
-  
-  .context
-  {
-    width:95%;
-    position: fixed;
+  .stop-button {
+    border: 1px solid rgb(130, 221, 135); /* Red border */
+    border-radius: 4px; /* Rounded edges */
+    padding: 2px 4px; /* Spacing inside button */
+    background-color: white; /* White background */
+    color: rgb(0, 195, 255); /* Red text/icon */
+    font-weight: bold;
     display: flex;
-    align-items:  flex-start;
-    top: 300px;
-    left: 2%;
-    height: 100px;
-    border-top: 3px solid black; /* Adjust thickness and color */
-    background-color: rgb(174, 180, 173); /* Optional: Set background */    
-    padding: 3px;
-  }
+    align-items: center;
+    gap: 1px; /* Space between icon and text */
+}
+
+.stop-button:hover {
+  background-color: rgb(0, 4, 255);
+  color: white;
+}
+  
+.check-option {  
+  border: 1px solid rgb(29, 90, 90); /* Red border */
+  border-radius: 4px; /* Rounded edges */
+  //padding: 2px 4px; /* Spacing inside button */
+  //background-color: white; /* White background */
+  color: rgb(0, 195, 255); /* Red text/icon */
+  //font-weight: bold;
+  align-items: center;
+  gap: 1px; /* Space between icon and text */
+}
+.check-option:hover {
+  background-color: rgb(213, 213, 224);
+  color: white;
+}
+  
+.context
+{
+  width:95%;
+  position: fixed;
+  display: flex;
+  align-items:  flex-start;
+  top: 300px;
+  left: 2%;
+  height: 100px;
+  border-top: 3px solid black; /* Adjust thickness and color */
+  background-color: rgb(174, 180, 173); /* Optional: Set background */    
+  padding: 3px;
+}
+
+.system {  
+  position: fixed;
+  top:2px;  
+  z-index: 100;
+  height: 15px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 10px;
+  width: 100%;
+  border-top: 3px solid rgb(194, 34, 34); /* Adjust thickness and color */
+  background-color: rgb(139, 109, 91); /* Optional: Set background */
+  text-align: center;
+  padding: 3px;
+}
+
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}

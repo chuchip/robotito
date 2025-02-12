@@ -114,6 +114,13 @@ def set_language():
   kpipeline = KPipeline(lang_code=language) 
   return jsonify({'message': f'Voice changed to {voice_name}'})
 
+@app.route('/clear', methods=['GET'])
+def clear(): 
+  print("Clear conversation")
+  
+  ai.chat_history =[]
+  return jsonify({'message': 'Conversation cleared'})
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
 
