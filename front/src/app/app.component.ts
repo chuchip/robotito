@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
-import { RecordComponent } from "./audio-recorder/audio-recorder.component";
+import { ConversationComponent } from "./conversation/conversation.component";
 
 @Component({
   selector: 'app-root',
-  imports: [ RecordComponent],
+  imports: [ ConversationComponent ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })

@@ -1,6 +1,6 @@
 import { Injectable, resolveForwardRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-
+import { firstValueFrom } from 'rxjs';
 @Injectable({
   providedIn: 'root'
 })
@@ -71,12 +71,12 @@ export class AudioRecorderService {
     audioElement.src = `${this.backendUrl}/tts`;  // Flask endpoint
     audioElement.play();  //
   }
-  async send_context(context:string):  Promise<Response> {      
+  async send_context(user:string,label:string,context:string):  Promise<Response> {      
     console.log("Set context: ",context)
     const response = await fetch(`${this.backendUrl}/set-context`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: context }),
+      body: JSON.stringify({ 'user': user,'label':label,'context':context }),
     });    
     return  response;
   }
@@ -103,7 +103,22 @@ export class AudioRecorderService {
     });
    return response
   }
+  async get_last_user() : Promise<Response>  {  
+    const response = await fetch(`${this.backendUrl}/last_user`, {
+      method: 'GET'      
+    });
+   return response
+  }
   
+  async get_contexts(user:string):  Promise<any> {   
+      try {
+        return await firstValueFrom(this.http.get(`${this.backendUrl}/get-contexts?user=${user}`));
+      } catch (error) {
+        console.error('get-contexts failed!:', error);
+        throw error;
+      }
+ 
+  }
   private uploadAudio(): Promise<string> {
     return new Promise((resolve, reject) => {
       const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });

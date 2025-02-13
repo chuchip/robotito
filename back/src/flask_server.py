@@ -9,6 +9,7 @@ from io import BytesIO
 import soundfile as sf
 import subprocess
 from kokoro import KPipeline
+import persistence as db
 
 app = Flask(__name__)
 CORS(app)  # Enable Cross-Origin Resource Sharing
@@ -93,10 +94,20 @@ def tts():
 def set_context(): 
   global context
   
-  data = request.get_json()  # Get JSON data from the request body
-  context = data.get('text') 
+  data = request.get_json()  # Get JSON data from the request body    
+  db.save_context(user=data['user'],label=data['label'],context=data['context'])
   print("Set Context: ",context)
   return jsonify({'message': 'Context updated successfully!', 'text': context})
+
+@app.route('/get-contexts', methods=['GET'])
+def get_contexts(): 
+  print("GET All Context: ")
+  user = request.args.get('user')  # Get 'user' parameter from the query string
+  if not user:
+        return jsonify({'error': 'User parameter is required'}), 400
+  data = db.get_all_context(user)
+  
+  return jsonify({'message': 'Context updated successfully!', 'contexts': data})
 
 @app.route('/language', methods=['POST'])
 def set_language(): 
@@ -120,6 +131,10 @@ def clear():
   
   ai.chat_history =[]
   return jsonify({'message': 'Conversation cleared'})
+
+@app.route('/last_user', methods=['GET'])
+def get_last_user(): 
+  return jsonify({'user': db.get_last_user()})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

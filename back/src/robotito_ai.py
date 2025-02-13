@@ -14,8 +14,7 @@ from langchain_chroma import Chroma
 
 import torch
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
-import sqlite3
-
+import persistence as db
 
 class State(TypedDict):
     messages: Annotated[Sequence[BaseMessage], add_messages]
@@ -23,30 +22,8 @@ class State(TypedDict):
     retrieved_context: List[str]
     system_msg: str
     vd: bool
-def init_db(connection):
-    cursor=connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users'" )
-    if cursor.fetchone() is  None:
-        print("Initialzing the database")    
-        connection.execute("CREATE TABLE users (user TEXT PRIMARY KEY, name TEXT, email TEXT, password TEXT)")        
-        connection.execute("INSERT INTO users (user,name) VALUES ('','No Name')")
-        connection.commit()
-    cursor=connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='context'" )
-    if cursor.fetchone() is  None:
-        connection.execute("CREATE TABLE context (user TEXT, label TEXT, context TEXT)")
-        connection.commit()
-    cursor=connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='conversation'" )
-    if cursor.fetchone() is  None:
-        connection.execute("""CREATE TABLE conversation (id text primary key,user TEXT,
-                            label TEXT,
-                            name text,
-                            initial_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-                            final_date DATETIME)
-                           """)
-        connection.execute("""CREATE TABLE conversation_lines (id text, 
-                           type TEXT,
-                           msg TEXT
-                           time_msg DATETIME DEFAULT CURRENT_TIMESTAMP)""")
-        connection.commit()
+
+
 def call_llm(state: State):
     #print(f"call_llm: {state['messages']}")
     prompt = ChatPromptTemplate.from_messages( [
@@ -192,6 +169,3 @@ pipe_whisper = pipeline(
 )
 chat_history=[]
 
-# Configure connection to sqlLite
-connection=sqlite3.connect("robotito_db/sqllite.db", check_same_thread=False)
-init_db(connection)
