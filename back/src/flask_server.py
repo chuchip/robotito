@@ -96,6 +96,8 @@ def context_update():
   data = request.get_json()  # Get JSON data from the request body    
   print("Context update ",data['label'])
   db.save_context(user=data['user'],label=data['label'],context=data['context'])
+  global context
+  context=data['context']
   return jsonify({'message': 'Context updated successfully!', 'text': data['label']})
 
 @app.route('/context', methods=['DELETE'])
