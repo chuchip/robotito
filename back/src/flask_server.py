@@ -90,17 +90,23 @@ def tts():
 
     return Response(generate(), mimetype='audio/webm')  # Set proper MIME type  
 
-@app.route('/set-context', methods=['POST'])
-def set_context(): 
-  global context
-  
+## Work with context
+@app.route('/context', methods=['POST'])
+def context_update():     
   data = request.get_json()  # Get JSON data from the request body    
+  print("Context update ",data['label'])
   db.save_context(user=data['user'],label=data['label'],context=data['context'])
-  print("Set Context: ",context)
-  return jsonify({'message': 'Context updated successfully!', 'text': context})
+  return jsonify({'message': 'Context updated successfully!', 'text': data['label']})
 
-@app.route('/get-contexts', methods=['GET'])
-def get_contexts(): 
+@app.route('/context', methods=['DELETE'])
+def context_delete(): 
+  data = request.get_json()  # Get JSON data from the request body    
+  print("Deleted  Context: ",data['label'])
+  db.delete_context(user=data['user'],label=data['label'])  
+  return jsonify({'message': 'Context deleted successfully!', 'text': data['label']})
+
+@app.route('/context', methods=['GET'])
+def context_get(): 
   print("GET All Context: ")
   user = request.args.get('user')  # Get 'user' parameter from the query string
   if not user:

@@ -4,52 +4,13 @@ import { firstValueFrom } from 'rxjs';
 @Injectable({
   providedIn: 'root'
 })
-export class AudioRecorderService {
-  private mediaRecorder!: MediaRecorder;
-  private audioChunks: Blob[] = [];
-  private isRecording = false;
+export class ApiBackService {
+
   private readonly backendUrl = 'http://localhost:5000'; // Change this to your backend
 
   constructor(private http: HttpClient) {}
 
-  async startRecording() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      this.mediaRecorder = new MediaRecorder(stream);
-
-      this.mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          this.audioChunks.push(event.data);
-        }
-      };
-
-      this.mediaRecorder.start();
-      this.isRecording = true;
-    } catch (error) {
-      console.error('Error accessing microphone:', error);
-    }
-  }
-
-  async stopRecording(): Promise<string> {
-    return new Promise((resolve, reject) => {
-      if (this.mediaRecorder && this.isRecording) {
-        this.mediaRecorder.onstop = async () => {
-          try {
-            const message = await this.uploadAudio();
-            resolve(message);
-          } catch (error) {
-            reject('Upload failed');
-          }
-        };
-
-        this.mediaRecorder.stop();
-        this.isRecording = false;
-      } else {
-        resolve('No active recording to stop');
-      }
-    });
-  }
-
+ 
   async sendMsg(inputText:string): Promise<string>  {
     return new Promise((resolve, reject) => {  
       const payload = { text: inputText };
@@ -71,15 +32,7 @@ export class AudioRecorderService {
     audioElement.src = `${this.backendUrl}/tts`;  // Flask endpoint
     audioElement.play();  //
   }
-  async send_context(user:string,label:string,context:string):  Promise<Response> {      
-    console.log("Set context: ",context)
-    const response = await fetch(`${this.backendUrl}/set-context`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 'user': user,'label':label,'context':context }),
-    });    
-    return  response;
-  }
+ 
 
   async text_to_sound(inputText:string) : Promise<Response>  {  
     const response = await fetch(`${this.backendUrl}/tts`, {
@@ -110,18 +63,9 @@ export class AudioRecorderService {
    return response
   }
   
-  async get_contexts(user:string):  Promise<any> {   
-      try {
-        return await firstValueFrom(this.http.get(`${this.backendUrl}/get-contexts?user=${user}`));
-      } catch (error) {
-        console.error('get-contexts failed!:', error);
-        throw error;
-      }
- 
-  }
-  private uploadAudio(): Promise<string> {
+  uploadAudio(audioChunks:Blob[]): Promise<string> {
     return new Promise((resolve, reject) => {
-      const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.webm');
 
@@ -136,7 +80,34 @@ export class AudioRecorderService {
         }
       });
 
-      this.audioChunks = [];
+     
     });
   }
+
+  // Context
+  async context_send(user:string,label:string,context:string):  Promise<Response> {          
+    const response = await fetch(`${this.backendUrl}/context`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 'user': user,'label':label,'context':context }),
+    });    
+    return  response;
+  }
+  async context_get(user:string):  Promise<any> {   
+    try {
+      return await firstValueFrom(this.http.get(`${this.backendUrl}/context?user=${user}`));
+    } catch (error) {
+      console.error('get-contexts failed!:', error);
+      throw error;
+    }
+  }
+  async context_delete(user:string,label:string):  Promise<Response> {          
+    const response = await fetch(`${this.backendUrl}/context`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 'user': user,'label':label }),
+    });    
+    return  response;
+  }
+
 }

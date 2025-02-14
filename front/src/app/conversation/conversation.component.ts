@@ -1,5 +1,6 @@
 import { Component, ViewChild, ElementRef } from '@angular/core';
-import { AudioRecorderService } from '../services/audio-recorder.service';
+import { ApiBackService } from '../services/api-back.service';
+import { SoundService } from '../services/sound.service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -8,6 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { marked } from 'marked';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
+
 @Component({
   selector: 'app-conversation',   
   imports: [CommonModule, MatTooltipModule, MatCheckboxModule,FormsModule,
@@ -17,9 +19,11 @@ import { MatIconModule } from '@angular/material/icon';
   styleUrls: ['./conversation.component.scss']
 })
 export class ConversationComponent {
+  labelContext:string=""
   isLoading=false;
   contextValue=""
-  contexts:[]=[]
+  contexts:{"label":string,"context":string,"last_timestamp":string}[]=[]
+  showContext=false;
   @ViewChild('inputField') inputElement!: ElementRef;
   @ViewChild('context') contextElement!: ElementRef;
   @ViewChild('conversation') conversationElement!: ElementRef;
@@ -33,10 +37,10 @@ export class ConversationComponent {
   isRecording = false;
   inputText: string = '';
   showRecord=false;
-  showContext=false;
+  
   error: any;
   sw_send_audio: Boolean= false;
-  sw_talk_response: Boolean= false;
+  sw_talk_response: Boolean= true;
   audio: HTMLAudioElement | null = null;
   selectedValue: string = 'a';
   options = [
@@ -45,14 +49,15 @@ export class ConversationComponent {
     { label: 'Spanish', value: 'e' },    
   ];
   user:string=''
-  constructor(private audioRecorderService: AudioRecorderService) {
+  constructor(private back: ApiBackService,private sound: SoundService ) {
     this.chat_history.push({line:this.number_line, type: "R",msg: this.responseMessage});
     this.number_line++
-    this.audioRecorderService.get_last_user()
+    this.back.get_last_user()
       .then(response=> response.json())
       .then((data:any) => {        
         this.user=data.user
-        this.list_context()})
+        this.list_context()
+        })
 /*    for (let n=1;n<50;n++) {
 
       this.chat_history.push({line:this.number_line, type: "H",
@@ -63,7 +68,7 @@ export class ConversationComponent {
 
   async toggleRecording() {
     if (this.isRecording) {     
-      this.audio_to_text= await this.audioRecorderService.stopRecording();      
+      this.audio_to_text= await this.sound.stopRecording();      
       if (this.sw_send_audio)
       {
         this.inputText=this.audio_to_text
@@ -75,7 +80,7 @@ export class ConversationComponent {
     } else {
       this.audio_to_text=""
       this.showRecord=true
-      this.audioRecorderService.startRecording();
+      this.sound.startRecording();
       this.inputElement.nativeElement.focus();   
 
     }
@@ -87,7 +92,7 @@ export class ConversationComponent {
     if (this.inputText.trim()!='') {
       this.chat_history.push({line:this.number_line, type: "H",msg: this.inputText.trim()})
       this.isLoading=true
-      this.responseMessage= await this.audioRecorderService.sendMsg(this.inputText.trim());
+      this.responseMessage= await this.back.sendMsg(this.inputText.trim());
       //responseMessage= await marked(this.responseMessage)
       this.isLoading=false
       this.number_line++
@@ -111,7 +116,7 @@ export class ConversationComponent {
   }
   async speak_aloud(){
     if (this.inputText.trim()) {
-      const response= await this.audioRecorderService.text_to_sound(this.inputText.trim());
+      const response= await this.back.text_to_sound(this.inputText.trim());
       this.prepareAudio(response)
     }
   }
@@ -127,11 +132,12 @@ export class ConversationComponent {
   }
 
   async onChangeLanguage() {
-    const response= await this.audioRecorderService.change_language(this.selectedValue);
+    const response= await this.back.change_language(this.selectedValue);
     this.put_message(response)   
   }
+
   async speak_aloud_response(i:number){  
-      const response = await this.audioRecorderService.text_to_sound(this.chat_history[i].msg);
+      const response = await this.back.text_to_sound(this.chat_history[i].msg);
       this.prepareAudio(response)
   }
   playAudio(audioUrl: string): void {
@@ -144,14 +150,7 @@ export class ConversationComponent {
     this.audio = new Audio(audioUrl);
     this.audio.play();
   }
-  setVisibleContext()
-  {
-    this.showContext=true
-    setTimeout(() => {
-      this.contextElement.nativeElement.focus();
-    }, 200);
-   
-  }
+  
   stopAudio(): void {
     if (this.audio) {
       this.audio.pause();
@@ -170,16 +169,7 @@ export class ConversationComponent {
     },100)
   }
 
-  async send_context(event:any)    {
-    const textArea = event.target as HTMLTextAreaElement;
-    this.contextValue = textArea.value;
-  
-    if (this.contextValue) {
-      this.showContext=false
-      const response=await this.audioRecorderService.send_context(this.user,'default',this.contextValue);
-      this.put_message(response)
-    }
-  }
+
   private async put_message( response:any )
   {
     const msg=await response.json()
@@ -193,12 +183,62 @@ export class ConversationComponent {
   {
     this.chat_history.length=0
     this.number_line=0  
-    const response=await this.audioRecorderService.clear_conversation();
+    const response=await this.back.clear_conversation();
     this.put_message(response)
+  }
+
+  // Context functions
+  setVisibleContext()
+  {
+    this.showContext=true
+    //this.list_context()
+    setTimeout(() => {
+      this.contextElement.nativeElement.focus();
+    }, 200);
+   
+  }
+  async onChangeContext(event:any) {
+    const textArea = event.target as HTMLTextAreaElement;
+    const label = textArea.value;
+    this.labelContext=label=='NEW'?"":label;    
+    for (const c of  this.contexts)
+    {
+      if (c['label']==label)
+      {
+        this.contextValue=c['context']
+      }
+    }
   }
   async list_context()
   {
-    const response= await this.audioRecorderService.get_contexts(this.user);
-    this.contexts=response.contexts    
+    const response= await this.back.context_get(this.user);
+    this.contexts=response.contexts
+    const value={"label":"NEW","context":"","last_timestamp":""}
+    this.contexts.splice(0,0,value)
+  }
+  async context_delete(label:string)
+  {
+    this.isLoading=true
+    const response= await this.back.context_delete(this.user,this.selectedValue);    
+    this.list_context()
+    this.isLoading=false
+    this.put_message(response)
+    this.contextValue=""
+    this.labelContext=""
+  }
+  async context_send(event:any)    {
+    const textArea = event.target as HTMLTextAreaElement;
+    this.contextValue = textArea.value;
+  
+    if (this.contextValue) {
+      this.showContext=false
+      this.isLoading=true
+      const response=await this.back.context_send(this.user,this.labelContext,
+                this.contextValue);
+      this.list_context()
+      this.selectedValue=this.labelContext
+      this.isLoading=false
+      this.put_message(response)
+    }
   }
 }

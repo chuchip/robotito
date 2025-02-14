@@ -64,70 +64,84 @@
   word-wrap: break-word;
 }
 
+
 .input
 {    
+  display: flex;  
+  flex-direction: row; 
+  align-items: baseline;
+  justify-content: center;
+  width:100%;
+  row-gap: 5px;
+  max-width: 100%;  
+  bottom: 5;
+  height:40px;
+  border-top: 3px solid black; /* Adjust thickness and color */
+  border-radius: 8px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+  background-color: rgb(174, 180, 173); /* Optional: Set background */    
+  padding: 5px;
+}
+.input_text
+{    
+  border: none; /* Adjust as needed */
+  box-sizing: border-box;
+  flex-grow: 1;
+}
+.expandable-input {
+  width: 98%;
+  font-size: 16px;  
+}
+mat-checkbox {    
+    margin: 0;  
+    transform: scale(0.8);  /* Adjust size down (0.8 is 80% of original size) */
+}
+mat-checkbox .mat-checkbox-label {
+  font-size: 12px;  /* Smaller font for the label */
+}
+.output_record
+{
+  width:95%;
+  position: fixed;
   display: flex;
-  flex-direction: column; /* Stack items vertically */
-  align-items: flex-start; /* Align to the top */
-  justify-content: flex-start; 
-  width:95%;  
-  bottom: 0;
+  align-items:  flex-start;
+  bottom: 40px;
   left: 2%;
-  height: 30px;
+  height: 60px;
   border-top: 3px solid black; /* Adjust thickness and color */
   background-color: rgb(174, 180, 173); /* Optional: Set background */    
   padding: 3px;
 }
-  mat-checkbox {    
-    margin: 0;  
-    transform: scale(0.8);  /* Adjust size down (0.8 is 80% of original size) */
-  }
-  mat-checkbox .mat-checkbox-label {
-    font-size: 12px;  /* Smaller font for the label */
-  }
-  .output_record
-  {
-    width:95%;
-    position: fixed;
-    display: flex;
-    align-items:  flex-start;
-    bottom: 40px;
-    left: 2%;
-    height: 20px;
-    border-top: 3px solid black; /* Adjust thickness and color */
-    background-color: rgb(174, 180, 173); /* Optional: Set background */    
-    padding: 3px;
-  }
-  .head {
-    display: flex;
-    align-items: center;  
-    gap: 5px;
-  }    
-  .speaker-btn {
-    background-color: white;
-    border: 1px solid #ccc;
-    border-radius: 50%;
-    width: 16px;
-    height: 16px;   
-    cursor: pointer;
-    flex-shrink: 0;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
-  }
+.output_record textarea
+{
+  flex: 1;
+  height:100%;
+}
+.speaker-btn {
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;   
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+}
   
 
-  .material-icons {
-    font-size: 12px;
-  }
-  .stop-button {
-    border: 1px solid rgb(130, 221, 135); /* Red border */
-    border-radius: 4px; /* Rounded edges */
-    padding: 2px 4px; /* Spacing inside button */
-    background-color: white; /* White background */
-    color: rgb(0, 195, 255); /* Red text/icon */
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    gap: 1px; /* Space between icon and text */
+.material-icons {
+  font-size: 12px;
+}
+.stop-button {
+  border: 1px solid rgb(130, 221, 135); /* Red border */
+  border-radius: 4px; /* Rounded edges */
+  padding: 2px 4px; /* Spacing inside button */
+  background-color: white; /* White background */
+  color: rgb(0, 195, 255); /* Red text/icon */
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 1px; /* Space between icon and text */
 }
 
 .stop-button:hover {
@@ -147,19 +161,6 @@
   color: white;
 }
   
-.context
-{
-  width:95%;
-  position: fixed;
-  display: flex;
-  align-items:  flex-start;
-  top: 300px;
-  left: 2%;
-  height: 100px;
-  border-top: 3px solid black; /* Adjust thickness and color */
-  background-color: rgb(174, 180, 173); /* Optional: Set background */    
-  padding: 3px;
-}
 
 .system {  
   position: fixed;
@@ -194,4 +195,57 @@
   border-top: 1px solid rgb(177, 186, 194); /* Adjust thickness and color */
   font-family: 'Courier New', Courier, monospace;
   font-size: 10px;
+}
+
+.context
+{
+  width:95%;
+  position: fixed;
+  display: flex;
+  flex-direction: column;  
+  top: 300px;
+  left: 2%;
+  height: 100px;
+  border-top: 3px solid black; /* Adjust thickness and color */
+  background-color: rgb(174, 180, 173); /* Optional: Set background */    
+  padding: 3px;
+}
+.context_horizontal
+{
+  display: flex;
+  width: 70%;
+  flex-direction: row;
+}
+.context_horizontal select
+{
+  flex: 1;
+  height: 20px;
+  max-width: 60%;
+}
+.context_horizontal input
+{
+  flex: 2;
+  max-width: 50%;
+  margin-left: 10px;
+}
+.context_horizontal button
+{
+  flex:0;
+  min-width: 22px;
+  min-height: 22px;
+  border: 1px solid rgb(130, 221, 135); /* Red border */
+  border-radius: 4px; /* Rounded edges */
+  padding: 2px 4px; /* Spacing inside button */
+  background-color: white; /* White background */
+  color: rgb(238, 126, 135); /* Red text/icon */
+  font-weight: bold;
+  display: flex;
+  gap: 5px; /* Space between icon and text */
+}
+.context_textarea
+{  
+  flex: 1;
+  font-size: 16px;
+  font-family: 'Courier New', Courier, monospace;
+  height: 90px;   
 }

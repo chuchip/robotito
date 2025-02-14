@@ -18,16 +18,17 @@
   </div>
   <div class="spacer"></div>
   <!-- Input and controls -->
-  <div class='input'>
-    <div class="head">
+  <div class='input'>    
       <span class="name_user" >User: <br>{{user}}</span>
-      <input #inputField type="text" [(ngModel)]="inputText" style="width: 500px;" (keydown.enter)="sendData()" (keydown.F2)="toggleRecording()"
-        placeholder="Type and press Enter">
+      <span class="input_text">
+        <input class="expandable-input" #inputField type="text" [(ngModel)]="inputText" (keydown.enter)="sendData()" (keydown.F2)="toggleRecording()"
+          placeholder="Type and press Enter">
+      </span>
       <button class="stop-button" (click)="speak_aloud()" matTooltip="Speak Input text">
         <span class="material-icons">volume_up</span>
       </button>
 
-      <button class="stop-button" (click)="toggleRecording()" matTooltip="Record voice (F1)">
+      <button class="stop-button" (click)="toggleRecording()" matTooltip="Record voice (F2)">
         <span class="material-icons">{{ isRecording ? 'stop' : 'mic' }}</span>
       </button>
       <button class="stop-button" (click)="stopAudio()" matTooltip="Stop Talk">
@@ -47,23 +48,27 @@
         <option *ngFor="let option of options" [value]="option.value">
           {{ option.label }}
         </option>
-      </select>     
-    </div>
+      </select>         
   </div>
   <!-- Output of record -->
   <div *ngIf="showRecord" class="output_record">
     <button class="stop-btn" (click)="copy_to_input()"> <span class="material-icons">content_copy</span></button>
-    <input #record_text type="text" [(ngModel)]="audio_to_text" style="width: 500px;" (keydown.enter)="copy_to_input();sendData()"
-    (keydown.F2)="toggleRecording()" (keydown.esc)="focus_input()" >
+    <textarea #record_text type="text" [value]="audio_to_text" style="width: 500px;" (keydown.enter)="copy_to_input();sendData()"
+    (keydown.F2)="toggleRecording()" (keydown.esc)="focus_input()" ></textarea>
   
   </div>
   <!-- to put a context to the conversation -->
   <div class="context" *ngIf="showContext">
-    <div class="line" *ngFor="let context of contexts; let i = index">
-       {{context['label']}} {{context['context']}}
-
-    </div>    
-    <textarea #context style="width: 98%;height: 90px; font-size: 10px;" (keydown.enter)="send_context($event)"
+    <div class="context_horizontal">
+      <select #selectComponent [(ngModel)]="selectedValue" (change)="onChangeContext($event)" val>
+        <option *ngFor="let context of contexts">
+          {{ context['label'] }}
+        </option>
+      </select>     
+      <button (click)="context_delete(selectComponent.value)"> <span class="material-icons">remove_circle</span></button>
+      <input  #inputField type="text" [(ngModel)]="labelContext"  placeholder="Choose a new Label">
+    </div>
+    <textarea #context  class="context_textarea" (keydown.enter)="context_send($event)"
       (keydown.esc)="showContext=false" [value]="contextValue" placeholder="Type an context..."></textarea>
   </div>
 

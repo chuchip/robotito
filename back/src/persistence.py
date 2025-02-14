@@ -49,7 +49,8 @@ def get_last_user():
     return data[0][0] # User
 
 def get_all_context(user):
-    query=connection.execute(f"select label,context,last_time from context where user = '{user}' order by last_time desc")
+    query=connection.execute(f"""select label,context,last_time 
+                             from context where user = ? order by last_time desc""",(user,))
     data=query.fetchall()
     result = [{"label": row[0], "context": row[1], "last_time": row[2]} for row in data]
     return result
@@ -57,13 +58,18 @@ def get_all_context(user):
 def save_context(user,label,context):
     cursor=connection.execute(f"select * from context where label='{label}' and user='{user}'")
     if cursor.fetchone() is  None:
-        connection.execute(f"INSERT INTO context (label,user,context) VALUES ('{label}','{user}','{context}')")
+        sql=f"INSERT INTO context (label,user,context) VALUES (?, ?, ?)"        
+        connection.execute(sql, (label,user,context))
     else:
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        connection.execute(f"""UPDATE context SET context = '{context}'),last_time='${now}'
-                           where label='{label}' and user='{user}'"
-                           """)
+        sql=f"""UPDATE context SET context = ?,last_time='{now}'
+                           where label= ?  and user= ?
+                           """    
+        connection.execute(sql,(context,label,user))
     connection.commit()
-    
+def delete_context(user,label):
+    sql=f"""delete from context where label=? and user=? """ 
+    connection.execute(sql,(label,user))
+    connection.commit()
 connection=sqlite3.connect("robotito_db/sqllite.db", check_same_thread=False)
 init_db()
