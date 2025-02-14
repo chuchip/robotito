@@ -80,9 +80,9 @@ export class ConversationComponent {
     } else {
       this.audio_to_text=""
       this.showRecord=true
+      this.stopAudio()
       this.sound.startRecording();
       this.inputElement.nativeElement.focus();   
-
     }
     this.isRecording = !this.isRecording;
   }
@@ -157,9 +157,9 @@ export class ConversationComponent {
       this.audio.currentTime = 0;
     }
   }
-  copy_to_input()
+  copy_to_input(text:string)
   {
-    this.inputText=this.audio_to_text    
+    this.inputText=text
     this.focus_input()
   }
   focus_input()

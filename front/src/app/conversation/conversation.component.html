@@ -52,8 +52,8 @@
   </div>
   <!-- Output of record -->
   <div *ngIf="showRecord" class="output_record">
-    <button class="stop-btn" (click)="copy_to_input()"> <span class="material-icons">content_copy</span></button>
-    <textarea #record_text type="text" [value]="audio_to_text" style="width: 500px;" (keydown.enter)="copy_to_input();sendData()"
+    <button class="stop-btn" (click)="copy_to_input(record_text.value)"> <span class="material-icons">content_copy</span></button>
+    <textarea #record_text type="text" [value]="audio_to_text" style="width: 500px;" (keydown.enter)="copy_to_input(record_text.value);sendData()"
     (keydown.F2)="toggleRecording()" (keydown.esc)="focus_input()" ></textarea>
   
   </div>
