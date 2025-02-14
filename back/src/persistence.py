@@ -29,15 +29,18 @@ def init_db():
     # Create tables to save conversations
     cursor=connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='conversation'" )
     if cursor.fetchone() is  None:
-        connection.execute("""CREATE TABLE conversation (id text primary key,user TEXT,
-                             label TEXT,
-                            name text,
-                            initial_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-                            final_date DATETIME)
-                           """)
+        connection.execute("""
+            CREATE TABLE conversation (
+                 id text primary key,
+                 user TEXT,
+                 label TEXT,
+                 name text,
+                 initial_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+                 final_date DATETIME)
+            """)
         connection.execute("""CREATE TABLE conversation_lines (id text, 
                            type TEXT,
-                           msg TEXT
+                           msg TEXT,
                            time_msg DATETIME DEFAULT CURRENT_TIMESTAMP)""")
         connection.commit()
 
@@ -71,5 +74,46 @@ def delete_context(user,label):
     sql=f"""delete from context where label=? and user=? """ 
     connection.execute(sql,(label,user))
     connection.commit()
+
+def init_conversation(id ,user,msg,force=False):
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    if id is None or force:
+        sql="""
+            select max(id) from conversation
+        """
+        query=connection.execute(sql)        
+        data=query.fetchone()
+        if data[0] is None:
+            id = 1        
+        else:
+            id = int(data[0][0]) + 1
+        sql="""
+                insert into conversation (id,user,label,name,final_date) values (?,?,?,?,?)
+            """
+        connection.execute(sql,(id,user,msg,msg,now))
+        connection.commit()
+    return id
+
+# Conversation
+def save_conversation(id ,type,msg):
+
+    sql="""
+        insert into conversation_lines  (id,type,msg) values (?,?,?)
+    """
+    connection.execute(sql,(id,type,msg))
+    connection.commit()
+    return id
+
+def get_conversation(id):
+    sql = """
+        select c.user,c.label,c.name,c.initial_time,c.final_date, l.type,l.msg
+         from conversation as c, conversation_lines as l where c.id = ? and c.id=l.id order by l.time_msg
+    """
+    print(sql)
+    data=connection.execute(sql,(id,))
+    result = [{"user": row[0], "label": row[1], "name": row[2],
+            "initial_time": row[3],"final_date":row[4],"type": row[5],"msg": row[6]} for row in data]
+    
+    return result
 connection=sqlite3.connect("robotito_db/sqllite.db", check_same_thread=False)
 init_db()

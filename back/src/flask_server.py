@@ -24,7 +24,8 @@ vd=False
 context="You are a robot designed to interact with non-technical people and we are having a friendly conversation."
 kpipeline = KPipeline(lang_code='a') # make sure lang_code matches voice
 voice_name="af_heart"
-
+id = None
+user='default'
 @app.route('/upload-audio', methods=['POST'])
 def upload_audio():
     print("In upload audio")
@@ -37,18 +38,25 @@ def upload_audio():
  
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
     file.save(filepath)
-    result = ai.pipe_whisper(filepath)
-    
+    result = ai.pipe_whisper(filepath,return_timestamps=True)
+    print(result)
     return jsonify({'message': 'Audio uploaded successfully!', 'text': result["text"]})
 
 @app.route('/send-question', methods=['POST'])
 def send_question():    
+    global id
     data = request.get_json()  # Get JSON data from the request body
-    question = data.get('text') 
+    question = data.get('text')
+    
+    if id is None:
+      id = db.init_conversation(id,user,question)
     print(f"In send-question {question} \ncontext: {context}")
-    msg_graph={"messages": question,"chat_history": ai.chat_history,"retrieved_context": []
+    msg_graph={"messages": question,"chat_history": ai.chat_history,
+               "retrieved_context": []
                 ,"vd": vd,
-                "system_msg": context }
+                "system_msg": context,
+                "id": id,
+                "user":user }
         #print("Question_Graph: ",msg_graph) 
     response= graph.invoke(msg_graph, config) 
     answer=response["messages"][-1].content
@@ -135,14 +143,27 @@ def set_language():
 
 @app.route('/clear', methods=['GET'])
 def clear(): 
+  global id
   print("Clear conversation")
-  
+  id = None
   ai.chat_history =[]
   return jsonify({'message': 'Conversation cleared'})
 
 @app.route('/last_user', methods=['GET'])
 def get_last_user(): 
-  return jsonify({'user': db.get_last_user()})
+  global user
+  user=db.get_last_user()
+  return jsonify({'user':user})
+
+@app.route('/conversation', methods=['GET'])
+def conversation_get(): 
+  print("GET All conversations: ")
+  id = request.args.get('id')  
+  if not id:
+     return jsonify({'error': 'id parameter is required'}), 400
+  data = db.get_conversation(id)
+  
+  return jsonify({'message': f'This is the history of id {id}!', 'contexts': data})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

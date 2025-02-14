@@ -22,9 +22,11 @@ class State(TypedDict):
     retrieved_context: List[str]
     system_msg: str
     vd: bool
+    id: int
+    user:str
 
 
-def call_llm(state: State):
+def call_llm(state: State):    
     #print(f"call_llm: {state['messages']}")
     prompt = ChatPromptTemplate.from_messages( [
           ("system", "{system_msg}"),
@@ -44,7 +46,9 @@ def call_llm(state: State):
     response = model.invoke(chat_prompt)    
     #print("- Call LLM",response)
     chat_history.append(state["messages"][-1])
-    chat_history.append(response)   
+    chat_history.append(response)
+    db.save_conversation(state['id'], "R",state["messages"][-1].content)
+    db.save_conversation(state['id'],"H",response.content)
     return {"messages": response}
 
 def initial(state: State):    
