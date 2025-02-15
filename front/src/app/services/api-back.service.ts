@@ -50,6 +50,7 @@ export class ApiBackService {
     });
    return response
   }
+
   async clear_conversation() : Promise<Response>  {  
     const response = await fetch(`${this.backendUrl}/clear`, {
       method: 'GET'      
@@ -110,4 +111,22 @@ export class ApiBackService {
     return  response;
   }
 
+  async conversation_user(user:string):  Promise<any> {    
+    try {
+      return await firstValueFrom(this.http.get(`${this.backendUrl}/conversation/user/${user}`));
+    } catch (error) {
+      console.error('conversation_user failed!:', error);
+      throw error;
+    }      
+
+  }
+  async conversation_by_id(id:string):  Promise<any> {    
+    try {
+      return await firstValueFrom(this.http.get(`${this.backendUrl}/conversation/id/${id}`));
+    } catch (error) {
+      console.error('get conversation_by_id failed!:', error);
+      throw error;
+    }      
+
+  }
 }

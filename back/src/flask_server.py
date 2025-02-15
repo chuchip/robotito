@@ -48,8 +48,8 @@ def send_question():
     data = request.get_json()  # Get JSON data from the request body
     question = data.get('text')
     
-    if id is None:
-      id = db.init_conversation(id,user,question)
+    
+    id = db.init_conversation(id,user,question)
     print(f"In send-question {question} \ncontext: {context}")
     msg_graph={"messages": question,"chat_history": ai.chat_history,
                "retrieved_context": []
@@ -155,15 +155,20 @@ def get_last_user():
   user=db.get_last_user()
   return jsonify({'user':user})
 
-@app.route('/conversation', methods=['GET'])
-def conversation_get(): 
-  print("GET All conversations: ")
-  id = request.args.get('id')  
-  if not id:
-     return jsonify({'error': 'id parameter is required'}), 400
+@app.route('/conversation/id/<string:id>', methods=['GET'])
+def conversation_getId(id): 
+  print("GET  conversation with id: ",id)
   data = db.get_conversation(id)
   
-  return jsonify({'message': f'This is the history of id {id}!', 'contexts': data})
+  return jsonify({'message': f'This is the conversation with id {id}!', 'conversation': data})
+
+@app.route('/conversation/user/<string:user>', methods=['GET'])
+def conversation_getUser(user): 
+  print("GET All conversations of the user: ",user)
+
+  data = db.getlist_conversation(user)
+  
+  return jsonify({'message': f'Conversations of user {user}!', 'conversations': data})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -4,16 +4,26 @@
   padding: 0;
 }
 
+.page
+{
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  transition: margin-left 0.3s ease;
+}
 .container {
+  flex: 2;
   display: flex;
   flex-direction: column;
   height: 100vh;
+  transition: margin-left 0.3s ease;
 }
 .spacer {
   flex: 1; /* Takes all available space between the boxes */
 }
 .conversation {
-//  max-width: 98%;  
+  max-height: 92%;  
+  flex: 0 0 auto;
   overflow-y: auto;   /* Enables vertical scrolling */
   display: flex;
   flex-direction: column;
@@ -67,15 +77,18 @@
 
 .input
 {    
-  display: flex;  
+  display: flex;    
   flex-direction: row; 
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: center;
+  position: fixed;
+  background-color: #333;
   width:100%;
   row-gap: 5px;
-  max-width: 100%;  
-  bottom: 5;
-  height:40px;
+  max-width: 100%; 
+  bottom: 5px;
+  left: 0;
+  height:60px;
   border-top: 3px solid black; /* Adjust thickness and color */
   border-radius: 8px;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
@@ -84,9 +97,15 @@
 }
 .input_text
 {    
-  border: none; /* Adjust as needed */
   box-sizing: border-box;
+  
   flex-grow: 1;
+}
+.input_text  textarea
+{
+  height: 40px;
+  font-size: 12px;
+  font-family: 'Courier New', Courier, monospace;
 }
 .expandable-input {
   width: 98%;
@@ -105,7 +124,7 @@ mat-checkbox .mat-checkbox-label {
   position: fixed;
   display: flex;
   align-items:  flex-start;
-  bottom: 40px;
+  bottom: 60px;
   left: 2%;
   height: 60px;
   border-top: 3px solid black; /* Adjust thickness and color */
@@ -248,4 +267,37 @@ mat-checkbox .mat-checkbox-label {
   font-size: 16px;
   font-family: 'Courier New', Courier, monospace;
   height: 90px;   
+}
+.sidebar {
+  flex: 0 0 auto;
+  overflow-y: auto;
+  height: 92%;
+  max-width: 15%;
+  background-color: #e2e9ec;
+  color: rgb(6, 1, 17);  
+  transition: width 0.3s ease;
+  padding-bottom: 0px;
+  padding-left: 3px;
+  padding-right: 3px;
+  border-radius: 8px;
+  box-shadow: 2px 2px 5px rgba(133, 20, 20, 0.2);
+  padding: 1px;
+}
+.sidebar_line {
+  margin-top: 5px;
+  display: flex;
+  position: relative;  
+  padding-top: 3px;
+  border-radius: 8px;  
+  padding-top: 10px;
+
+  background-color: #f4f4f4e5;
+}
+.sidebar_line:hover 
+{
+  background-color: #6895be;
+}
+
+.custom-tooltip .mat-tooltip {
+  white-space: pre-line; /* Allows line breaks */
 }

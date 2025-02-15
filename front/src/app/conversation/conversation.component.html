@@ -3,26 +3,40 @@
 </div>
 
 <div class="system" *ngIf="response_back!=''">{{response_back}}</div>
-<div class="container">  
-  <!-- Body of the page when I will show the conversation  -->
-  <div  #conversation class="conversation">
-    <div class="line" *ngFor="let line_chat of chat_history; let i = index">
-      <div class="buttons-conversation">
-        <button  (click)="speak_aloud_response(i)"> <span class="material-icons">volume_up</span></button>        
-        <span class="material-icons" style="color: blue">{{line_chat.type=='H'?"face":"smart_toy" }}</span>
+<div class="page">
+  <div *ngIf="isSidebarOpen" class="sidebar">
+    <div   *ngFor="let line of conversationHistory; let i = index" >
+        <span class="sidebar_line"  [matTooltipClass]="'custom-tooltip'"  
+           matTooltip="{{getFormattedDate(line.final_date) | date: 'dd/MMM HH:mm'}}"    (click)="history_choose(line.id)">
+           {{ line.label}}
+        </span>    
       </div>
-      <span class="line-text">       
-        <span [innerHTML]="toHtml(line_chat.msg)"> </span>
-      </span>
-    </div>
   </div>
-  <div class="spacer"></div>
-  <!-- Input and controls -->
-  <div class='input'>    
-      <span class="name_user" >User: <br>{{user}}</span>
+  <div class="container"> 
+    <!-- Body of the page when I will show the conversation  -->
+    <div #conversation class="conversation">
+      <div class="line" *ngFor="let line_chat of chat_history; let i = index">
+        <div class="buttons-conversation">
+          <button (click)="speak_aloud_response(i)"> <span class="material-icons">volume_up</span></button>
+          <span class="material-icons" style="color: blue">{{line_chat.type=='H'?"face":"smart_toy" }}</span>
+        </div>
+        <span class="line-text">
+          <span [innerHTML]="toHtml(line_chat.msg)"> </span>
+        </span>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <!-- Input and controls -->
+    <div class='input'>
+      <button class="stop-button" (click)="toggleSidebar()" matTooltip="Show Conversations list">
+        <span class="material-icons">{{ isSidebarOpen ? 'close' : 'menu' }}</span>
+      </button>
+      <span class="name_user">User: <br>{{user}}</span>
+
       <span class="input_text">
-        <input class="expandable-input" #inputField type="text" [(ngModel)]="inputText" (keydown.enter)="sendData()" (keydown.F2)="toggleRecording()"
-          placeholder="Type and press Enter">
+        <textarea #human_input class="expandable-input" #inputField  [value]="inputText" (keydown.enter)="this.inputText=human_input.value; sendData()"
+          (keydown.F2)="toggleRecording()" placeholder="Type and press Enter">
+        </textarea>
       </span>
       <button class="stop-button" (click)="speak_aloud()" matTooltip="Speak Input text">
         <span class="material-icons">volume_up</span>
@@ -40,35 +54,38 @@
       <button class="stop-button" (click)="clearConversation()" matTooltip="Clear conversation">
         <span class="material-icons">refresh</span>
       </button>
-      <span class="check-option" ><input type="checkbox" [(ngModel)]="sw_talk_response"
-        matTooltip="Reproduce Sound Automatically"> Talk</span>
-      <span class="check-option" ><input type="checkbox" [(ngModel)]="sw_send_audio" matTooltip="Send Audio as Text inmediately">
-         STT</span>
+      <span class="check-option"><input type="checkbox" [(ngModel)]="sw_talk_response"
+          matTooltip="Reproduce Sound Automatically"> Talk</span>
+      <span class="check-option"><input type="checkbox" [(ngModel)]="sw_send_audio"
+          matTooltip="Send Audio as Text inmediately">
+        STT</span>
       <select [(ngModel)]="selectedValue" (change)="onChangeLanguage()">
         <option *ngFor="let option of options" [value]="option.value">
           {{ option.label }}
         </option>
-      </select>         
-  </div>
-  <!-- Output of record -->
-  <div *ngIf="showRecord" class="output_record">
-    <button class="stop-btn" (click)="copy_to_input(record_text.value)"> <span class="material-icons">content_copy</span></button>
-    <textarea #record_text type="text" [value]="audio_to_text" style="width: 500px;" (keydown.enter)="copy_to_input(record_text.value);sendData()"
-    (keydown.F2)="toggleRecording()" (keydown.esc)="focus_input()" ></textarea>
-  
-  </div>
-  <!-- to put a context to the conversation -->
-  <div class="context" *ngIf="showContext">
-    <div class="context_horizontal">
-      <select #selectComponent [(ngModel)]="selectedValue" (change)="onChangeContext($event)" val>
-        <option *ngFor="let context of contexts">
-          {{ context['label'] }}
-        </option>
-      </select>     
-      <button (click)="context_delete(selectComponent.value)"> <span class="material-icons">remove_circle</span></button>
-      <input  #inputField type="text" [(ngModel)]="labelContext"  placeholder="Choose a new Label">
+      </select>
     </div>
-    <textarea #context  class="context_textarea" (keydown.enter)="context_send($event)"
-      (keydown.esc)="showContext=false" [value]="contextValue" placeholder="Type an context..."></textarea>
+    <!-- Output of record -->
+    <div *ngIf="showRecord" class="output_record">
+      <button class="stop-btn" (click)="copy_to_input(record_text.value)"> <span
+          class="material-icons">content_copy</span></button>
+      <textarea #record_text  [value]="audio_to_text" style="width: 500px;"
+        (keydown.enter)="copy_to_input(record_text.value);sendData()" (keydown.F2)="toggleRecording()"
+        (keydown.esc)="focus_input()" ></textarea>
+    </div>
+    <!-- to put a context to the conversation -->
+    <div class="context" *ngIf="showContext">
+      <div class="context_horizontal">
+        <select #selectComponent [(ngModel)]="selectedValue" (change)="onChangeContext($event)" val>
+          <option *ngFor="let context of contexts">
+            {{ context['label'] }}
+          </option>
+        </select>
+        <button (click)="context_delete(selectComponent.value)"> <span
+            class="material-icons">remove_circle</span></button>
+        <input #inputField type="text" [(ngModel)]="labelContext" placeholder="Choose a new Label">
+      </div>
+      <textarea #context class="context_textarea" (keydown.enter)="context_send($event)"
+        (keydown.esc)="showContext=false" [value]="contextValue" placeholder="Type an context..."></textarea>
+    </div>
   </div>
-

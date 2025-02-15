@@ -19,6 +19,8 @@ import { MatIconModule } from '@angular/material/icon';
   styleUrls: ['./conversation.component.scss']
 })
 export class ConversationComponent {
+  conversationHistory:{"id":string,"user":string,"label":string,
+    "name":string,"initial_time": string,"final_date":string}[]=[];
   labelContext:string=""
   isLoading=false;
   contextValue=""
@@ -56,7 +58,10 @@ export class ConversationComponent {
       .then(response=> response.json())
       .then((data:any) => {        
         this.user=data.user
+        this.clearConversation()
         this.list_context()
+        this.get_conversations_history()
+        this.setContext(this.user,"NEW","") 
         })
 /*    for (let n=1;n<50;n++) {
 
@@ -78,7 +83,8 @@ export class ConversationComponent {
         this.recordElement.nativeElement.focus();   
       }
     } else {
-      this.audio_to_text=""
+      // Start recording
+      this.audio_to_text="Recording audio ...."
       this.showRecord=true
       this.stopAudio()
       this.sound.startRecording();
@@ -98,8 +104,9 @@ export class ConversationComponent {
       this.number_line++
       this.chat_history.push({line:this.number_line,type: "R",msg: this.responseMessage})
       this.number_line++
-      if (this.sw_talk_response) {
-        this.speak_aloud_response(this.number_line-1)
+      const numWords=this.responseMessage.split(" ").length
+      if (this.sw_talk_response && numWords <100) {
+        this.speak_aloud_response(this.number_line-1) 
       }
       this.inputText=""
       setTimeout(() => this.scrollToBottom(), 0)
@@ -132,8 +139,10 @@ export class ConversationComponent {
   }
 
   async onChangeLanguage() {
-    const response= await this.back.change_language(this.selectedValue);
+    this.isLoading=true
+    const response= await this.back.change_language(this.selectedValue);    
     this.put_message(response)   
+    this.isLoading=false
   }
 
   async speak_aloud_response(i:number){  
@@ -164,11 +173,11 @@ export class ConversationComponent {
   }
   focus_input()
   {
+    this.showRecord=false
     setTimeout(() => {
       this.inputElement.nativeElement.focus();   
     },100)
   }
-
 
   private async put_message( response:any )
   {
@@ -190,8 +199,7 @@ export class ConversationComponent {
   // Context functions
   setVisibleContext()
   {
-    this.showContext=true
-    //this.list_context()
+    this.showContext=true    
     setTimeout(() => {
       this.contextElement.nativeElement.focus();
     }, 200);
@@ -233,7 +241,7 @@ export class ConversationComponent {
     if (this.contextValue) {
       this.showContext=false
       this.isLoading=true
-      const response=await this.back.context_send(this.user,this.labelContext,
+      const response=await this.setContext(this.user,this.labelContext,
                 this.contextValue);
       this.list_context()
       this.selectedValue=this.labelContext
@@ -241,4 +249,40 @@ export class ConversationComponent {
       this.put_message(response)
     }
   }
+  async setContext(user:string,labelContext:string, contextValue:string)
+  {
+    return await this.back.context_send(user,labelContext,contextValue);
+  }
+  isSidebarOpen = false;
+
+
+  toggleSidebar() {
+    this.isSidebarOpen = !this.isSidebarOpen;
+  }
+  async get_conversations_history()
+  {
+    const response=await this.back.conversation_user(this.user);
+    this.conversationHistory=response.conversations;
+  
+  }
+  
+  async history_choose(id:string)
+  {    
+    this.isLoading=true
+    const response=await this.back.conversation_by_id(id);
+    this.chat_history.length=0
+    var i=0;  
+    for (const c of response.conversation)
+    {
+      this.chat_history.push(
+        {"line": i,"type": c.type,"msg": c.msg}        
+      )
+      i+=1
+    }    
+    this.number_line=i
+    this.isLoading=false
+  }
+  getFormattedDate(dateString: string): Date {
+    return new Date(dateString);
+  }  
 }
