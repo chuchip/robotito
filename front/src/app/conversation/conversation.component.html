@@ -40,7 +40,7 @@
           (keydown.F2)="toggleRecording()" placeholder="Type and press Enter">
         </textarea>
       </span>
-      <button class="stop-button" (click)="speak_aloud()" matTooltip="Speak Input text">
+      <button class="stop-button" (click)="speak_aloud(human_input.value)" matTooltip="Speak Input text">
         <span class="material-icons">volume_up</span>
       </button>
 

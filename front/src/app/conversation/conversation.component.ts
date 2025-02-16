@@ -127,9 +127,10 @@ export class ConversationComponent {
       this.conversationElement.nativeElement.scrollTop = this.conversationElement.nativeElement.scrollHeight;
     }
   }
-  async speak_aloud(){
-    if (this.inputText.trim()) {
-      const response= await this.back.text_to_sound(this.inputText.trim());
+  async speak_aloud(inputText:string){
+    
+    if (inputText.trim()!='') {
+      const response= await this.back.text_to_sound(inputText.trim());
       this.prepareAudio(response)
     }
   }
@@ -146,7 +147,7 @@ export class ConversationComponent {
 
   async onChangeLanguage() {
     this.isLoading=true
-    const response= await this.back.change_language(this.selectContext);    
+    const response= await this.back.change_language(this.selectLanguage);    
     this.put_message(response)   
     this.isLoading=false
   }
