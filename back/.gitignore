@@ -1,6 +1,6 @@
 /src/__pycache__
 .vscode/
-/__pycache__
+**/__pycache__/
 /audio
 /uploads
 /robotito_db
