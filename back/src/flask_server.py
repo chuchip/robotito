@@ -3,7 +3,6 @@ from flask_cors import CORS
 import os
 import robotito_ai as ai
 import numpy as np
-import base64
 from pydub import AudioSegment
 from io import BytesIO
 import soundfile as sf
@@ -22,6 +21,7 @@ graph= ai.graph
 config= ai.config
 vd=False
 context="You are a robot designed to interact with non-technical people and we are having a friendly conversation."
+label="NEW"
 kpipeline = KPipeline(lang_code='a') # make sure lang_code matches voice
 voice_name="af_heart"
 id = None
@@ -47,8 +47,7 @@ def send_question():
     global id
     data = request.get_json()  # Get JSON data from the request body
     question = data.get('text')
-    
-    
+        
     id = db.init_conversation(id,user,question)
     print(f"In send-question {question} \ncontext: {context}")
     msg_graph={"messages": question,"chat_history": ai.chat_history,
@@ -56,6 +55,7 @@ def send_question():
                 ,"vd": vd,
                 "system_msg": context,
                 "id": id,
+                "label": label,
                 "user":user }
         #print("Question_Graph: ",msg_graph) 
     response= graph.invoke(msg_graph, config) 
@@ -101,12 +101,15 @@ def tts():
 ## Work with context
 @app.route('/context', methods=['POST'])
 def context_update():     
+  global context,label
   data = request.get_json()  # Get JSON data from the request body    
   print("Context update ",data['label'])
-  db.save_context(user=data['user'],label=data['label'],context=data['context'])
-  global context
+  label=data['label']
+  if label != 'NEW' and label !='':
+    db.save_context(user=data['user'],label=label,context=data['context'])  
   context=data['context']
-  return jsonify({'message': 'Context updated successfully!', 'text': data['label']})
+  
+  return jsonify({'message': f"Context updated successfully!. Update Context of: '{label}'", 'text': data['label']})
 
 @app.route('/context', methods=['DELETE'])
 def context_delete(): 
@@ -158,15 +161,22 @@ def get_last_user():
 @app.route('/conversation/id/<string:id>', methods=['GET'])
 def conversation_getId(id): 
   print("GET  conversation with id: ",id)
-  data = db.get_conversation(id)
+  data = db.conversation_get_by_id(id)
   
   return jsonify({'message': f'This is the conversation with id {id}!', 'conversation': data})
+
+@app.route('/conversation/id/<string:id>', methods=['DELETE'])
+def conversation_deleteId(id): 
+  print("GET  conversation with id: ",id)
+  db.conversation_delete_by_id(id)
+  
+  return jsonify({'message': f'Conversation with id {id} DELETED!', 'conversation': id})
 
 @app.route('/conversation/user/<string:user>', methods=['GET'])
 def conversation_getUser(user): 
   print("GET All conversations of the user: ",user)
 
-  data = db.getlist_conversation(user)
+  data = db.conversation_get_list(user)
   
   return jsonify({'message': f'Conversations of user {user}!', 'conversations': data})
 

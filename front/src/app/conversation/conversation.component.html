@@ -7,8 +7,10 @@
   <div *ngIf="isSidebarOpen" class="sidebar">
     <div   *ngFor="let line of conversationHistory; let i = index" >
         <span class="sidebar_line"  [matTooltipClass]="'custom-tooltip'"  
-           matTooltip="{{getFormattedDate(line.final_date) | date: 'dd/MMM HH:mm'}}"    (click)="history_choose(line.id)">
-           {{ line.label}}
+           matTooltip="{{getFormattedDate(line.final_date) | date: 'dd/MMM HH:mm'}}"    (click)="history_choose(line.id,line.label)">          
+           <button (click)="history_delete(line.id)" matTooltip="Remove Conversation">  <span 
+                class="material-icons">remove_circle</span></button>
+             {{ line.name}}
         </span>    
       </div>
   </div>
@@ -59,7 +61,7 @@
       <span class="check-option"><input type="checkbox" [(ngModel)]="sw_send_audio"
           matTooltip="Send Audio as Text inmediately">
         STT</span>
-      <select [(ngModel)]="selectedValue" (change)="onChangeLanguage()">
+      <select [(ngModel)]="selectLanguage" (change)="onChangeLanguage()">
         <option *ngFor="let option of options" [value]="option.value">
           {{ option.label }}
         </option>
@@ -76,12 +78,12 @@
     <!-- to put a context to the conversation -->
     <div class="context" *ngIf="showContext">
       <div class="context_horizontal">
-        <select #selectComponent [(ngModel)]="selectedValue" (change)="onChangeContext($event)" val>
+        <select #selectComponent [(ngModel)]="selectContext" (change)="onChangeContext($event)" val>
           <option *ngFor="let context of contexts">
             {{ context['label'] }}
           </option>
         </select>
-        <button (click)="context_delete(selectComponent.value)"> <span
+        <button (click)="context_delete(selectComponent.value)" matTooltip="Remove Context"> <span 
             class="material-icons">remove_circle</span></button>
         <input #inputField type="text" [(ngModel)]="labelContext" placeholder="Choose a new Label">
       </div>

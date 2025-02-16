@@ -120,13 +120,19 @@ export class ApiBackService {
     }      
 
   }
-  async conversation_by_id(id:string):  Promise<any> {    
+  async conversation_by_id(id:string): Promise<any> {    
     try {
       return await firstValueFrom(this.http.get(`${this.backendUrl}/conversation/id/${id}`));
     } catch (error) {
       console.error('get conversation_by_id failed!:', error);
       throw error;
     }      
-
   }
+  async conversation_delete_by_id(id:string):  Promise<Response> {    
+    const response = await fetch(`${this.backendUrl}/conversation/id/${id}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }    
+    });    
+    return  response;
+  }    
 }

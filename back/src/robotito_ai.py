@@ -23,6 +23,7 @@ class State(TypedDict):
     system_msg: str
     vd: bool
     id: int
+    label: str
     user:str
 
 
@@ -47,8 +48,8 @@ def call_llm(state: State):
     #print("- Call LLM",response)
     chat_history.append(state["messages"][-1])
     chat_history.append(response)
-    db.save_conversation(state['id'], "R",state["messages"][-1].content)
-    db.save_conversation(state['id'],"H",response.content)
+    db.conversation_save(state['id'], state['label'],"R",state["messages"][-1].content)
+    db.conversation_save(state['id'], state['label'],"H",response.content)
     return {"messages": response}
 
 def initial(state: State):    

@@ -10,7 +10,7 @@ import { marked } from 'marked';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 
-@Component({
+@Component({  
   selector: 'app-conversation',   
   imports: [CommonModule, MatTooltipModule, MatCheckboxModule,FormsModule,
      MatButtonModule, MatIconModule, // Required for Angular Material animations
@@ -18,7 +18,12 @@ import { MatIconModule } from '@angular/material/icon';
   templateUrl: './conversation.component.html',
   styleUrls: ['./conversation.component.scss']
 })
+
+/**
+ * Conversation component
+ */
 export class ConversationComponent {
+  isSidebarOpen = false;
   conversationHistory:{"id":string,"user":string,"label":string,
     "name":string,"initial_time": string,"final_date":string}[]=[];
   labelContext:string=""
@@ -44,7 +49,8 @@ export class ConversationComponent {
   sw_send_audio: Boolean= false;
   sw_talk_response: Boolean= true;
   audio: HTMLAudioElement | null = null;
-  selectedValue: string = 'a';
+  selectContext:string = 'NEW';
+  selectLanguage: string = 'a';
   options = [
     { label: 'American English', value: 'a' },
     { label: 'British English', value: 'b' },
@@ -140,7 +146,7 @@ export class ConversationComponent {
 
   async onChangeLanguage() {
     this.isLoading=true
-    const response= await this.back.change_language(this.selectedValue);    
+    const response= await this.back.change_language(this.selectContext);    
     this.put_message(response)   
     this.isLoading=false
   }
@@ -208,6 +214,11 @@ export class ConversationComponent {
   async onChangeContext(event:any) {
     const textArea = event.target as HTMLTextAreaElement;
     const label = textArea.value;
+    this.setTextContext(label)    
+    this.contextElement.nativeElement.focus();   
+  }
+
+  setTextContext(label:string)  {   
     this.labelContext=label=='NEW'?"":label;    
     for (const c of  this.contexts)
     {
@@ -227,7 +238,7 @@ export class ConversationComponent {
   async context_delete(label:string)
   {
     this.isLoading=true
-    const response= await this.back.context_delete(this.user,this.selectedValue);    
+    const response= await this.back.context_delete(this.user,this.selectContext);    
     this.list_context()
     this.isLoading=false
     this.put_message(response)
@@ -244,7 +255,7 @@ export class ConversationComponent {
       const response=await this.setContext(this.user,this.labelContext,
                 this.contextValue);
       this.list_context()
-      this.selectedValue=this.labelContext
+      this.selectContext=this.labelContext
       this.isLoading=false
       this.put_message(response)
     }
@@ -253,23 +264,31 @@ export class ConversationComponent {
   {
     return await this.back.context_send(user,labelContext,contextValue);
   }
-  isSidebarOpen = false;
+  
 
 
-  toggleSidebar() {
+  async toggleSidebar() {
+    if (! this.isSidebarOpen)
+    {
+      this.get_conversations_history()
+    }
     this.isSidebarOpen = !this.isSidebarOpen;
   }
   async get_conversations_history()
   {
     const response=await this.back.conversation_user(this.user);
-    this.conversationHistory=response.conversations;
-  
+    this.conversationHistory=response.conversations;    
   }
   
-  async history_choose(id:string)
+  async history_choose(id:string,context:string)
   {    
     this.isLoading=true
     const response=await this.back.conversation_by_id(id);
+    this.labelContext=context;   
+    this.selectContext=context
+    this.setTextContext(context)
+    const response_context=await this.setContext(this.user,this.labelContext,this.contextValue)      
+    this.context_send(this.labelContext)
     this.chat_history.length=0
     var i=0;  
     for (const c of response.conversation)
@@ -280,6 +299,14 @@ export class ConversationComponent {
       i+=1
     }    
     this.number_line=i
+    this.isLoading=false
+  }
+  async history_delete(id: string)
+  {
+    this.isLoading=true
+    const response=await this.back.conversation_delete_by_id(id);
+    const msg=await response.json()
+    this.put_message(msg)
     this.isLoading=false
   }
   getFormattedDate(dateString: string): Date {
