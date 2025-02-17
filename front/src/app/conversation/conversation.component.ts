@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef } from '@angular/core';
+import { Component, ViewChild,HostListener, ElementRef } from '@angular/core';
 import { ApiBackService } from '../services/api-back.service';
 import { SoundService } from '../services/sound.service';
 import { FormsModule } from '@angular/forms';
@@ -23,7 +23,9 @@ import { MatIconModule } from '@angular/material/icon';
  * Conversation component
  */
 export class ConversationComponent {
+  max_words_tts=100
   isSidebarOpen = false;
+  clicksWindow=0;
   conversationHistory:{"id":string,"user":string,"label":string,
     "name":string,"initial_time": string,"final_date":string}[]=[];
   labelContext:string=""
@@ -35,7 +37,8 @@ export class ConversationComponent {
   @ViewChild('context') contextElement!: ElementRef;
   @ViewChild('conversation') conversationElement!: ElementRef;
   @ViewChild('record_text') recordElement!: ElementRef;
-
+  @ViewChild('configuration_window') configurationWinElement!: ElementRef;
+  
   response_back: string=""
   chat_history:{line: number,type: string,msg: string}[]=[]
   number_line:number=0
@@ -43,23 +46,43 @@ export class ConversationComponent {
   responseMessage:string="Hello, I'm robotito. Do you want to talk?"
   isRecording = false;
   inputText: string = '';
-  showRecord=false;
-  
+  showRecord=false
+  showLanguageOptions=false
   error: any;
   sw_send_audio: Boolean= false;
   sw_talk_response: Boolean= true;
   audio: HTMLAudioElement | null = null;
   selectContext:string = 'NEW';
   selectLanguage: string = 'a';
-  options = [
+  selectLanguageDesc:string="American English"
+  selectVoice: string = 'af_heart';  
+  languageOptions:{label:string, value:string}[] = [
     { label: 'American English', value: 'a' },
     { label: 'British English', value: 'b' },
     { label: 'Spanish', value: 'e' },    
   ];
+  voiceOptions = [
+    { 'language':'a', label: '' }, 
+    { 'language':'a', label: 'af_heart' }, 
+    { 'language':'a', label: 'af_aoede' },    
+    { 'language':'a', label: 'af_bella' },    
+    { 'language':'a', label: 'af_sky' },    
+    { 'language':'a', label: 'am_michael' },
+    { 'language':'a', label: 'am_fenrir' },        
+    { 'language':'a', label: 'af_kore' },    
+    { 'language':'a', label: 'am_puck' },    
+    { 'language':'b', label: '' }, 
+    { 'language':'b', label: 'bf_emma' },    
+    { 'language':'b', label: 'bm_george' },    
+    { 'language':'b', label: 'bm_fable' },    
+    { 'language':'e', label: '' }, 
+    { 'language':'e', label: 'ef_dora' },    
+    { 'language':'e', label: 'em_alex' },    
+    { 'language':'e', label: 'em_santa' },    
+  ]
   user:string=''
-  constructor(private back: ApiBackService,private sound: SoundService ) {
-    this.chat_history.push({line:this.number_line, type: "R",msg: this.responseMessage});
-    this.number_line++
+  constructor(private back: ApiBackService,private sound: SoundService) {
+    
     this.back.get_last_user()
       .then(response=> response.json())
       .then((data:any) => {        
@@ -68,6 +91,8 @@ export class ConversationComponent {
         this.list_context()
         this.get_conversations_history()
         this.setContext(this.user,"NEW","") 
+        this.chat_history.push({line:this.number_line, type: "R",msg: this.responseMessage});
+        this.number_line++
         })
 /*    for (let n=1;n<50;n++) {
 
@@ -111,7 +136,7 @@ export class ConversationComponent {
       this.chat_history.push({line:this.number_line,type: "R",msg: this.responseMessage})
       this.number_line++
       const numWords=this.responseMessage.split(" ").length
-      if (this.sw_talk_response && numWords <100) {
+      if (this.sw_talk_response && numWords <this.max_words_tts) {
         this.speak_aloud_response(this.number_line-1) 
       }
       this.inputText=""
@@ -129,8 +154,8 @@ export class ConversationComponent {
   }
   async speak_aloud(inputText:string){
     
-    if (inputText.trim()!='') {
-      const response= await this.back.text_to_sound(inputText.trim());
+    if (inputText.trim()!='') {      
+      const response= await this.back.text_to_sound(this.cleanText(this.inputText));
       this.prepareAudio(response)
     }
   }
@@ -145,16 +170,17 @@ export class ConversationComponent {
     this.playAudio(audioUrl);
   }
 
-  async onChangeLanguage() {
-    this.isLoading=true
-    const response= await this.back.change_language(this.selectLanguage);    
-    this.put_message(response)   
-    this.isLoading=false
-  }
+
 
   async speak_aloud_response(i:number){  
-      const response = await this.back.text_to_sound(this.chat_history[i].msg);
+      
+      const response = await this.back.text_to_sound(this.cleanText( this.chat_history[i].msg));
       this.prepareAudio(response)
+  }
+  cleanText(text:string):string
+  {
+    const cleanedText = text.replace(/[^a-zA-Z0-9\s]/g, '');
+    return cleanedText;
   }
   playAudio(audioUrl: string): void {
     // Stop the previous audio if it’s playing
@@ -199,6 +225,7 @@ export class ConversationComponent {
   {
     this.chat_history.length=0
     this.number_line=0  
+    this.showLanguageOptions=false
     const response=await this.back.clear_conversation();
     this.put_message(response)
   }
@@ -207,6 +234,7 @@ export class ConversationComponent {
   setVisibleContext()
   {
     this.showContext=true    
+    this.showLanguageOptions=false;
     setTimeout(() => {
       this.contextElement.nativeElement.focus();
     }, 200);
@@ -265,7 +293,6 @@ export class ConversationComponent {
   {
     return await this.back.context_send(user,labelContext,contextValue);
   }
-  
 
 
   async toggleSidebar() {
@@ -313,4 +340,40 @@ export class ConversationComponent {
   getFormattedDate(dateString: string): Date {
     return new Date(dateString);
   }  
+  onKeydownInput(event: KeyboardEvent) {      
+      if (event.altKey && event.key.toLowerCase() === 'v') {
+        event.preventDefault(); // Prevent default behavior if needed
+        console.log('ALT + V pressed!');
+        this.speak_aloud(this.inputText);
+        this.inputElement.nativeElement.focus();   
+      }
+      
+
+  }
+  async changeLanguage() {
+    if (this.selectVoice=='')
+      return;
+    this.isLoading=true
+    const response= await this.back.change_language(this.selectLanguage,this.selectVoice);    
+    this.put_message(response)   
+    this.selectLanguageDesc=this.getDescriptionLanguage((this.selectLanguage))
+    this.isLoading=false
+  }
+  get filteredVoiceOptions() {
+    return this.voiceOptions.filter(option => option.language === this.selectLanguage);
+  }
+  getDescriptionLanguage(language:string):string
+  {
+    return this.languageOptions.find(desc => desc.value === language)?.label || "";
+  }
+  @HostListener('document:click', ['$event'])
+  clickOutside(event: Event) {
+    if (this.clicksWindow==0){
+      this.clicksWindow++;
+      return
+    }
+    if (this.showLanguageOptions && !this.configurationWinElement.nativeElement.contains(event.target)) {
+      this.showLanguageOptions = false;
+    }
+  }
 }

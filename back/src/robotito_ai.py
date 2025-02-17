@@ -52,6 +52,13 @@ def call_llm(state: State):
     db.conversation_save(state['id'], state['label'],"H",response.content)
     return {"messages": response}
 
+def restore_history(jsonHistory):
+  chat_history.clear()
+  for line in jsonHistory:
+    if line['type']=='R':
+      chat_history.append(AIMessage(content=line['msg']))
+    else:
+       chat_history.append(HumanMessage(content=line['msg']))
 def initial(state: State):    
     #print(f"--- Searching in Vector Database --- {state['messages'][-1].content}")
     if state["vd"]: 

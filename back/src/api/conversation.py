@@ -1,12 +1,13 @@
 from flask import Blueprint,  request, jsonify,Response
 import persistence as db
+import robotito_ai as ai
 conversation_bp = Blueprint('conversation', __name__)
 
 @conversation_bp.route('/id/<string:id>', methods=['GET'])
 def conversation_getId(id): 
   print("GET  conversation with id: ",id)
   data = db.conversation_get_by_id(id)
-  
+  ai.restore_history(data)
   return jsonify({'message': f'This is the conversation with id {id}!', 'conversation': data})
 
 @conversation_bp.route('/id/<string:id>', methods=['DELETE'])

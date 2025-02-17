@@ -7,9 +7,9 @@ from kokoro import KPipeline
 import subprocess
 import numpy as np
 
-
-audio_bp = Blueprint('user', __name__)
-kpipeline = KPipeline(lang_code='a') # make sure lang_code matches voice
+language='a'
+audio_bp = Blueprint('audio', __name__)
+kpipeline = KPipeline(lang_code=language) 
 voice_name="af_heart"
 
 @audio_bp.route('/stt', methods=['POST'])
@@ -67,16 +67,13 @@ def tts():
 
 @audio_bp.route('/language', methods=['POST'])
 def set_language(): 
-  global voice_name,kpipeline
-
+  global voice_name,kpipeline,language
   data = request.get_json()  # Get JSON data from the request body
-  language = data.get('language') 
-  if language == 'a':
-    voice_name='af_heart'
-  if language == 'b':
-    voice_name='bf_emma'
-  if language == 'e':   
-    voice_name='em_alex'
-  print("language:",language)
-  kpipeline = KPipeline(lang_code=language) 
+  
+  languageInput = data.get('language') 
+  voice_name = data.get('voice') 
+  print(language , voice_name)
+  if languageInput != language:
+    language=languageInput
+    kpipeline = KPipeline(lang_code=language) 
   return jsonify({'message': f'Voice changed to {voice_name}'})

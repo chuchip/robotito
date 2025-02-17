@@ -56,11 +56,11 @@ export class ApiBackService {
      
     });
   }
-  async change_language(language:string) : Promise<Response>  {  
+  async change_language(language:string,voice: string) : Promise<Response>  {  
     const response = await fetch(`${this.backendUrl}/audio/language`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ language: language }),
+      body: JSON.stringify({ language: language,voice: voice }),
     });
    return response
   }
