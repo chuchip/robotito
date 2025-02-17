@@ -335,6 +335,7 @@ export class ConversationComponent {
     const response=await this.back.conversation_delete_by_id(id);
     const msg=await response.json()
     this.put_message(msg)
+    this.get_conversations_history()
     this.isLoading=false
   }
   getFormattedDate(dateString: string): Date {
