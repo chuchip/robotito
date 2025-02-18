@@ -23,7 +23,7 @@ import { MatIconModule } from '@angular/material/icon';
  * Conversation component
  */
 export class ConversationComponent {
-  max_words_tts=100
+  max_words_tts=250
   isSidebarOpen = false;
   clicksWindow=0;
   conversationHistory:{"id":string,"user":string,"label":string,
@@ -32,7 +32,7 @@ export class ConversationComponent {
   isLoading=false;
   contextValue=""
   contexts:{"label":string,"context":string,"last_timestamp":string}[]=[]
-  showContext=false;
+  
   @ViewChild('inputField') inputElement!: ElementRef;
   @ViewChild('context') contextElement!: ElementRef;
   @ViewChild('conversation') conversationElement!: ElementRef;
@@ -230,16 +230,6 @@ export class ConversationComponent {
     this.put_message(response)
   }
 
-  // Context functions
-  setVisibleContext()
-  {
-    this.showContext=true    
-    this.showLanguageOptions=false;
-    setTimeout(() => {
-      this.contextElement.nativeElement.focus();
-    }, 200);
-   
-  }
   async onChangeContext(event:any) {
     const textArea = event.target as HTMLTextAreaElement;
     const label = textArea.value;
@@ -278,14 +268,14 @@ export class ConversationComponent {
     const textArea = event.target as HTMLTextAreaElement;
     this.contextValue = textArea.value;
   
-    if (this.contextValue) {
-      this.showContext=false
+    if (this.contextValue) {      
       this.isLoading=true
       const response=await this.setContext(this.user,this.labelContext,
                 this.contextValue);
       this.list_context()
       this.selectContext=this.labelContext
       this.isLoading=false
+      this.showLanguageOptions=false
       this.put_message(response)
     }
   }

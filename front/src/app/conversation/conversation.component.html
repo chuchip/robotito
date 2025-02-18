@@ -5,6 +5,9 @@
 <div class="system" *ngIf="response_back!=''">{{response_back}}</div>
 <div class="page">
   <div *ngIf="isSidebarOpen" class="sidebar">
+    <button class="button-option button-clear"  (click)="clearConversation()" matTooltip="Clear conversation">
+      <span class="material-icons">refresh</span>
+    </button>
     <div *ngFor="let line of conversationHistory; let i = index">
       <span class="sidebar_line" [matTooltipClass]="'custom-tooltip'"
         matTooltip="{{getFormattedDate(line.final_date) | date: 'dd/MMM HH:mm'}}"
@@ -58,7 +61,6 @@
         <span class="material-icons">stop</span>
       </button>
 
-
     </div>
     <!-- Output of record -->
     <div *ngIf="showRecord" class="output_record">
@@ -68,24 +70,11 @@
         (keydown.enter)="copy_to_input(record_text.value);sendData()" (keydown.F2)="toggleRecording()"
         (keydown.esc)="focus_input()"></textarea>
     </div>
-    <!-- to put a context to the conversation -->
-    <div class="context" *ngIf="showContext">
-      <div class="context_horizontal">
-        <select #selectComponent [(ngModel)]="selectContext" (change)="onChangeContext($event)" val>
-          <option *ngFor="let context of contexts">
-            {{ context['label'] }}
-          </option>
-        </select>
-        <button (click)="context_delete(selectComponent.value)" matTooltip="Remove Context"> <span
-            class="material-icons">remove_circle</span></button>
-        <input #inputField type="text" [(ngModel)]="labelContext" placeholder="Choose a new Label">
-      </div>
-      <textarea #context class="context_textarea" (keydown.enter)="context_send($event)"
-        (keydown.esc)="showContext=false" [value]="contextValue" placeholder="Type an context..."></textarea>
-    </div>
-    <div #configuration_window class="context_language" *ngIf="showLanguageOptions">
-      <div class="context_language_line">
-        <div class="context_horizontal">
+    
+    
+    <div #configuration_window class="configuration " *ngIf="showLanguageOptions">
+      <div class="configuration_line">
+        <div class="configuration_horizontal">
           <span class="check-option"><input type="checkbox" [(ngModel)]="sw_talk_response" 
               matTooltip="Reproduce Sound Automatically"> Talk</span>
           <span>
@@ -104,19 +93,28 @@
             <option *ngFor="let option of filteredVoiceOptions" [value]="option.label">
               {{ option.label }}
             </option>
-          </select>
-          <button class="button-option" (click)="setVisibleContext()" matTooltip="Set Context">
-            <span class="material-icons">menu_book</span>
-          </button>
-          <button class="button-option" (click)="clearConversation()" matTooltip="Clear conversation">
-            <span class="material-icons">refresh</span>
-          </button>
+          </select>        
+       
         </div>
       </div>
-      <div class="context_language_line">
-        <div> Actual Language: <span class="context_language_line_text"><input type="text"
+      <div class="configuration_line">
+        <div> Actual Language: <span class="configuration_line_text"><input type="text"
               value="{{selectLanguageDesc}}" readonly> </span>
-          Actual Voice: <span class="context_language_line_text"><input type="text" value="{{selectVoice}}" readonly>
+          Actual Voice: <span class="configuration_line_text"><input type="text" value="{{selectVoice}}" readonly>
           </span></div>
+      </div>      
+      <div class="context">
+      <div class="configuration_horizontal">
+          <select #selectComponent [(ngModel)]="selectContext" (change)="onChangeContext($event)" val>
+            <option *ngFor="let context of contexts">
+              {{ context['label'] }}
+            </option>
+          </select>
+          <button (click)="context_delete(selectComponent.value)" matTooltip="Remove Context"> <span
+              class="material-icons">remove_circle</span></button>
+          <input #inputField type="text" [(ngModel)]="labelContext" placeholder="Choose a new Label">
+        </div>
+        <textarea #context class="context_textarea" (keydown.enter)="context_send($event)"
+          (keydown.esc)="showLanguageOptions=false" [value]="contextValue" placeholder="Type an context..."></textarea>
       </div>
     </div>

@@ -1,5 +1,6 @@
 * {
   box-sizing: border-box;
+  font-size: 14px;
   margin: 0;
   padding: 0;
 }
@@ -215,39 +216,30 @@ mat-checkbox .mat-checkbox-label {
   font-family: 'Courier New', Courier, monospace;
   font-size: 10px;
 }
-
 .context
 {
-  width:95%;
-  position: fixed;
-  display: flex;
-  flex-direction: column;  
-  top: 300px;
-  left: 2%;
-  height: 250px;
-  border-top: 3px solid black; /* Adjust thickness and color */
-  background-color: rgb(174, 180, 173); /* Optional: Set background */    
-  padding: 3px;
+  border-top: 1px solid rgb(80, 120, 143); /* Adjust thickness and color */
 }
-.context_horizontal
+.configuration_horizontal
 {
-  display: flex;
-  width: 70%;
+  display: flex;  
+  margin-top: 10px;
   flex-direction: row;
 }
-.context_horizontal select
+.configuration_horizontal select
 {
   flex: 1;
   height: 20px;
   max-width: 60%;
 }
-.context_horizontal input
+.configuration_horizontal input
 {
   flex: 2;
   max-width: 50%;
   margin-left: 10px;
 }
-.context_horizontal button
+
+.configuration_horizontal button
 {
   flex:0;
   min-width: 22px;
@@ -261,12 +253,14 @@ mat-checkbox .mat-checkbox-label {
   display: flex;
   gap: 5px; /* Space between icon and text */
 }
-.context_textarea
+.context_textarea 
 {  
-  flex: 1;
+  flex: 2;
   font-size: 16px;
+  margin-top: 5px;
+  width: 100%;  
   font-family: 'Courier New', Courier, monospace;
-  height: 90px;   
+  height: 130px;   
 }
 .sidebar {
   flex: 0 0 auto;
@@ -311,15 +305,15 @@ mat-checkbox .mat-checkbox-label {
   white-space: pre-line; /* Allows line breaks */
 }
 
-.context_language
+.configuration
 {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  height: 100px;
+//  height: 250px;
   background: white;
-  width: 75%;
+  width: 1000px;
   border: 1px solid #ccc;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   z-index: 1000; /* Ensure it's above other content */  
@@ -329,7 +323,7 @@ mat-checkbox .mat-checkbox-label {
   background-color: rgb(174, 180, 173); /* Optional: Set background */    
   padding: 3px;
 }
-.context_language_line
+.configuration_line
 {
   width:100%;
   display: flex;
@@ -339,7 +333,7 @@ mat-checkbox .mat-checkbox-label {
   background-color: rgb(174, 180, 173); /* Optional: Set background */    
   padding: 3px;
 }
-.context_language_line_text
+.configuration_line_text
 {
   margin: 10px;
 }
@@ -374,4 +368,10 @@ mat-checkbox .mat-checkbox-label {
 .button-option:hover {
   background-color: rgb(216, 228, 196);
   color: white;
+}
+.button-clear
+{
+  flex:1;
+  width: 80%;
+  margin: 5px;
 }
