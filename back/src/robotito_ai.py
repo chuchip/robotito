@@ -1,7 +1,7 @@
 from langchain_community.embeddings  import OpenAIEmbeddings
 from langchain_openai import ChatOpenAI,OpenAIEmbeddings
-from langchain.prompts import PromptTemplate,MessagesPlaceholder,ChatPromptTemplate
-from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+from langchain.prompts import ChatPromptTemplate
+from langchain_core.messages import  HumanMessage, AIMessage
 from typing_extensions import Annotated, TypedDict
 from typing import Sequence, List
 from langchain_core.messages import BaseMessage

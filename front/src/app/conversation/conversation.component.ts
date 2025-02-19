@@ -23,6 +23,7 @@ import { MatIconModule } from '@angular/material/icon';
  * Conversation component
  */
 export class ConversationComponent {
+  private readonly backendUrl = 'http://localhost:5000'; 
   max_words_tts=250
   isSidebarOpen = false;
   clicksWindow=0;
@@ -129,7 +130,34 @@ export class ConversationComponent {
     if (this.inputText.trim()!='') {
       this.chat_history.push({line:this.number_line, type: "H",msg: this.inputText.trim()})
       this.isLoading=true
-      this.responseMessage= await this.back.sendMsg(this.inputText.trim());
+      this.responseMessage=""
+      //this.responseMessage= await this.back.sendMsg(this.inputText.trim());      
+
+      const response = await fetch(`${this.backendUrl}/send-question`, {
+        method: 'POST',
+        body: JSON.stringify({ text: this.inputText.trim() }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+      
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+    
+      if (reader) {
+        let result = "";
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          this.responseMessage+= chunk;
+          console.log('Chunk received:', chunk); // Update UI with each streamed chunk
+        }
+      }
+      else{
+        console.log("No reader")
+      }
+
+      //const response = this.back.sendMessage(this.inputText.trim());
+      
       //responseMessage= await marked(this.responseMessage)
       this.isLoading=false
       this.number_line++

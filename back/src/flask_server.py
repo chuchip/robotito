@@ -1,5 +1,7 @@
-from flask import Flask, request, jsonify,Response
-from flask_cors import CORS
+from quart import Quart, Response,request,jsonify
+import time
+import asyncio
+from quart_cors import cors
 import os
 import robotito_ai as ai
 import persistence as db
@@ -7,9 +9,10 @@ from api.audio  import audio_bp
 from api.context  import context_bp
 import api.context  as context
 from api.conversation import conversation_bp
+from langchain_core.messages import  AIMessage
 
-app = Flask(__name__)
-CORS(app)  # Enable Cross-Origin Resource Sharing
+app = Quart(__name__)
+app=cors(app,allow_origin="*")  # Enable Cross-Origin Resource Sharing
 
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Create folder if not exists
@@ -21,12 +24,27 @@ vd=False
 id = None
 user='default'
 
+async def generate(graph,msg_graph):
+    for msg, metadata  in graph.stream(msg_graph, config, stream_mode="messages"):      
+      if isinstance(msg,AIMessage):
+        yield msg.content
+async def generate1():
+    for i in range(100):
+        await asyncio.sleep(0.1)
+        yield f"{i}\n" 
+
+def generate2():
+    for i in range(100):
+        asyncio.sleep(0.1)
+        yield f"{i}\n" 
+
 @app.route('/send-question', methods=['POST'])
-def send_question():    
+async def send_question():    
     global id
-    data = request.get_json()  # Get JSON data from the request body
-    question = data.get('text')
-        
+    data = await request.get_json()  # Get JSON data from the request body
+    question =  data.get('text')
+    if question is None:
+       return ""
     id = db.init_conversation(id,user,question)
     print(f"In send-question {question} \ncontext: {context.context_text}")
     msg_graph={"messages": question,"chat_history": ai.chat_history,
@@ -35,11 +53,11 @@ def send_question():
                 "system_msg": context.context_text,
                 "id": id,
                 "label": context.context_label,
-                "user":user }
-        #print("Question_Graph: ",msg_graph) 
-    response= graph.invoke(msg_graph, config) 
-    answer=response["messages"][-1].content
-    return jsonify({'message': 'M   g uploaded successfully!', 'text': answer})
+                "user":user }     
+  
+    #return Response(generate1(), mimetype='text/plain')
+    return Response(generate(graph,msg_graph))
+
 
 @app.route('/clear', methods=['GET'])
 def clear(): 

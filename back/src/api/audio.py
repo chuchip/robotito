@@ -1,4 +1,4 @@
-from flask import current_app,Blueprint,  request, jsonify,Response
+from quart import current_app,Blueprint,  request, jsonify,Response
 import os
 import persistence as db
 import robotito_ai as ai
@@ -13,28 +13,30 @@ kpipeline = KPipeline(lang_code=language)
 voice_name="af_heart"
 
 @audio_bp.route('/stt', methods=['POST'])
-def upload_audio():
+async def upload_audio():
     print("In upload audio")
-    if 'audio' not in request.files:
+    f=await request.files
+    if 'audio' not in f:
         return jsonify({'error': 'No file part'}), 400
 
-    file = request.files['audio']
+    file = f['audio']
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
- 
+    print(file)
+    print("Uplaod folder ",current_app.config['UPLOAD_FOLDER'])
     filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], file.filename)
-    file.save(filepath)
+    await  file.save(filepath) 
     result = ai.pipe_whisper(filepath,return_timestamps=True)
     print(result)
     return jsonify({'message': 'Audio uploaded successfully!', 'text': result["text"]})
 
 @audio_bp.route('/tts', methods=['POST'])
-def tts():     
-    data = request.get_json()  # Get JSON data from the request body
+async def tts():     
+    data = await request.get_json()  # Get JSON data from the request body
     text = data.get('text') 
     if text=='':
         return Response(None, mimetype='audio/webm')  
-    print(f"In tts {text}")
+    #print(f"In tts {text}")
     generator = kpipeline(
             text, 
             voice= voice_name,
@@ -66,9 +68,9 @@ def tts():
     return Response(generate(), mimetype='audio/webm')  # Set proper MIME type  
 
 @audio_bp.route('/language', methods=['POST'])
-def set_language(): 
+async def set_language(): 
   global voice_name,kpipeline,language
-  data = request.get_json()  # Get JSON data from the request body
+  data = await request.get_json()  # Get JSON data from the request body
   
   languageInput = data.get('language') 
   voice_name = data.get('voice') 
