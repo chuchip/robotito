@@ -131,7 +131,6 @@ export class ConversationComponent {
       this.chat_history.push({line:this.number_line, type: "H",msg: this.inputText.trim()})
       this.isLoading=true
       this.responseMessage=""
-      //this.responseMessage= await this.back.sendMsg(this.inputText.trim());      
 
       const response = await fetch(`${this.backendUrl}/send-question`, {
         method: 'POST',
@@ -155,10 +154,7 @@ export class ConversationComponent {
       else{
         console.log("No reader")
       }
-
-      //const response = this.back.sendMessage(this.inputText.trim());
-      
-      //responseMessage= await marked(this.responseMessage)
+      console.log("I have all")
       this.isLoading=false
       this.number_line++
       this.chat_history.push({line:this.number_line,type: "R",msg: this.responseMessage})

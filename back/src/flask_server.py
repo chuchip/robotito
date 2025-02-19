@@ -1,5 +1,4 @@
 from quart import Quart, Response,request,jsonify
-import time
 import asyncio
 from quart_cors import cors
 import os
@@ -27,6 +26,7 @@ user='default'
 async def generate(graph,msg_graph):
     for msg, metadata  in graph.stream(msg_graph, config, stream_mode="messages"):      
       if isinstance(msg,AIMessage):
+        print (msg.content)
         yield msg.content
 async def generate1():
     for i in range(100):

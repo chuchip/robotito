@@ -10,30 +10,6 @@ export class ApiBackService {
 
   constructor(private http: HttpClient) {}
 
-  async sendMessage(prompt: string) {
-    const response = await fetch(`${this.backendUrl}/send-question`, {
-      method: 'POST',
-      body: JSON.stringify({ text: prompt }),
-      headers: { 'Content-Type': 'application/json' },
-    });
-    
-    const reader = response.body?.getReader();
-    const decoder = new TextDecoder();
-  
-    if (reader) {
-      let result = "";
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        result += chunk;
-        console.log('Chunk received:', chunk); // Update UI with each streamed chunk
-      }
-    }
-    else{
-      console.log("No reader")
-    }
-  }
   
 
   async sendMsg1(inputText:string): Promise<string>  {
