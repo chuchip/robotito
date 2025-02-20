@@ -16,7 +16,7 @@
   flex: 2;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 95vh;
   transition: margin-left 0.3s ease;
 }
 .spacer {
@@ -265,7 +265,7 @@ mat-checkbox .mat-checkbox-label {
 .sidebar {
   flex: 0 0 auto;
   overflow-y: auto;
-  height: 92%;
+  height: 88%;
   max-width: 15%;
   background-color: #e2e9ec;
   color: rgb(6, 1, 17);  

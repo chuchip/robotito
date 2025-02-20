@@ -123,9 +123,8 @@ export class ConversationComponent {
     }
     this.isRecording = !this.isRecording;
   }
-  async sendData() {
-    this.showRecord=false
-    
+  async sendData() { 
+    this.showRecord=false     
     if (this.inputText.trim()!='') {
       this.chat_history.push({line:this.number_line, type: "H",msg: this.inputText.trim()})
       this.isLoading=true
