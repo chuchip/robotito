@@ -1,7 +1,7 @@
 from datetime  import datetime
 import sqlite3
 import uuid
-
+import robotito_ai as ai
 def init_db():
     cursor=connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users'" )
     # Create table to create User
@@ -60,7 +60,8 @@ def get_all_context(user):
     return result
 
 def save_context(user,label,context):
-    cursor=connection.execute(f"select * from context where label='{label}' and user='{user}'")
+    sql=f"select * from context where label=? and user=?"    
+    cursor=connection.execute(sql,(label,user))
     if cursor.fetchone() is  None:
         print(f"Insert context: {label}")
         sql=f"INSERT INTO context (label,user,context) VALUES (?, ?, ?)"        
@@ -93,7 +94,10 @@ def init_conversation(id ,user,msg,force=False):
     return id
 
 # Conversation
-def conversation_save(id , label,type,msg):
+def conversation_save(id ,user, label,type,msg):
+    if id=='X':
+        id=init_conversation(None,user,msg,True)
+    ai.save_msg(type,msg)
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     sql="update conversation set final_date = ?, label=? where id = ? "
     connection.execute(sql,(now,label,id))
@@ -130,5 +134,6 @@ def conversation_delete_by_id(id):
     connection.execute(sql,(id,))    
     connection.commit()
     return 
+
 connection=sqlite3.connect("robotito_db/sqllite.db", check_same_thread=False)
 init_db()

@@ -31,6 +31,11 @@
           <span [innerHTML]="toHtml(line_chat.msg)"> </span>
         </span>
       </div>
+      <div *ngIf="responseMessage!=''"  class="line" >
+        <span class="line-text">
+          <span [innerHTML]="toHtml(responseMessage)"> </span>
+        </span>
+      </div>
     </div>
     <div class="spacer"></div>
     <!-- Input and controls -->
@@ -40,8 +45,7 @@
       </button>
       <button class="stop-button" (click)="clicksWindow=0; showLanguageOptions=!showLanguageOptions"   matTooltip="Show Language Options">
           <span class="material-icons">settings</span>
-      </button>
-      <span class="name_user">User: <br>{{user}}</span>
+      </button>    
 
       <span class="input_text">
         <textarea #human_input class="expandable-input" #inputField [value]="inputText"
@@ -101,7 +105,9 @@
         <div> Actual Language: <span class="configuration_line_text"><input type="text"
               value="{{selectLanguageDesc}}" readonly> </span>
           Actual Voice: <span class="configuration_line_text"><input type="text" value="{{selectVoice}}" readonly>
-          </span></div>
+          </span>
+          <span  class="name_user">User: {{user}} Conv: {{id_conversation}}</span>
+        </div>
       </div>      
       <div class="context">
       <div class="configuration_horizontal">

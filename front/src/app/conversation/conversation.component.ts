@@ -9,7 +9,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { marked } from 'marked';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
-
+import { ChangeDetectorRef } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
 @Component({  
   selector: 'app-conversation',   
   imports: [CommonModule, MatTooltipModule, MatCheckboxModule,FormsModule,
@@ -29,6 +30,7 @@ export class ConversationComponent {
   clicksWindow=0;
   conversationHistory:{"id":string,"user":string,"label":string,
     "name":string,"initial_time": string,"final_date":string}[]=[];
+  id_conversation=""
   labelContext:string=""
   isLoading=false;
   contextValue=""
@@ -41,7 +43,7 @@ export class ConversationComponent {
   @ViewChild('configuration_window') configurationWinElement!: ElementRef;
   
   response_back: string=""
-  chat_history:{line: number,type: string,msg: string}[]=[]
+  chat_history:{line: number,type: string,msg: string,msgClean:string}[]=[]
   number_line:number=0
   audio_to_text:string=""
   responseMessage:string="Hello, I'm robotito. Do you want to talk?"
@@ -82,7 +84,7 @@ export class ConversationComponent {
     { 'language':'e', label: 'em_santa' },    
   ]
   user:string=''
-  constructor(private back: ApiBackService,private sound: SoundService) {
+  constructor(private back: ApiBackService,private sound: SoundService,private cdr: ChangeDetectorRef) {
     
     this.back.get_last_user()
       .then(response=> response.json())
@@ -92,7 +94,8 @@ export class ConversationComponent {
         this.list_context()
         this.get_conversations_history()
         this.setContext(this.user,"NEW","") 
-        this.chat_history.push({line:this.number_line, type: "R",msg: this.responseMessage});
+        this.chat_history.push({line:this.number_line, type: "R",msg: this.responseMessage,msgClean:this.responseMessage});
+        this.responseMessage=""
         this.number_line++
         })
 /*    for (let n=1;n<50;n++) {
@@ -128,8 +131,8 @@ export class ConversationComponent {
     this.showRecord=false
     
     if (this.inputText.trim()!='') {
-      this.chat_history.push({line:this.number_line, type: "H",msg: this.inputText.trim()})
-      this.isLoading=true
+      this.chat_history.push({line:this.number_line, type: "H",msg: this.inputText.trim(),msgClean: this.inputText.trim()})
+      //this.isLoading=true
       this.responseMessage=""
 
       const response = await fetch(`${this.backendUrl}/send-question`, {
@@ -147,8 +150,7 @@ export class ConversationComponent {
           const { done, value } = await reader.read();
           if (done) break;
           const chunk = decoder.decode(value, { stream: true });
-          this.responseMessage+= chunk;
-          console.log('Chunk received:', chunk); // Update UI with each streamed chunk
+          this.responseMessage+= chunk;       
         }
       }
       else{
@@ -157,7 +159,18 @@ export class ConversationComponent {
       console.log("I have all")
       this.isLoading=false
       this.number_line++
-      this.chat_history.push({line:this.number_line,type: "R",msg: this.responseMessage})
+      const msg=await this.toHtml(this.responseMessage)
+      if (this.id_conversation=="")
+      {
+        var conversation=await this.back.initConversation(this.user, this.inputText);
+        console.log("Conversation: ",   conversation)      
+        this.id_conversation=conversation.id
+      }
+      conversation=await this.back.saveConversation(this.id_conversation,this.user, "H",this.inputText);      
+      conversation=await this.back.saveConversation(this.id_conversation,this.user, "R",this.responseMessage);
+      
+      this.chat_history.push({line:this.number_line,type: "R",msg: msg,msgClean:this.responseMessage})
+      this.responseMessage="";
       this.number_line++
       const numWords=this.responseMessage.split(" ").length
       if (this.sw_talk_response && numWords <this.max_words_tts) {
@@ -197,13 +210,16 @@ export class ConversationComponent {
 
 
   async speak_aloud_response(i:number){  
-      
-      const response = await this.back.text_to_sound(this.cleanText( this.chat_history[i].msg));
-      this.prepareAudio(response)
+    const cleanText=this.cleanText( this.chat_history[i].msgClean)
+    
+    const response = await this.back.text_to_sound(cleanText);
+    this.prepareAudio(response)
   }
   cleanText(text:string):string
   {
-    const cleanedText = text.replace(/[^a-zA-Z0-9\s]/g, '');
+    console.log("before clean: ",text)
+    const cleanedText = text.replace(/[^a-zA-Z0-9\s\'\,\.\!\?]/g, '');
+    console.log("After clean: ",cleanedText)
     return cleanedText;
   }
   playAudio(audioUrl: string): void {
@@ -242,13 +258,14 @@ export class ConversationComponent {
     
     this.response_back=msg.message     
     setTimeout(() => {
-      this.response_back = ''; // Clear message
+      this.response_back = ''; 
     }, 3000);
   }
   async clearConversation()
   {
     this.chat_history.length=0
     this.number_line=0  
+    this.id_conversation=""
     this.showLanguageOptions=false
     const response=await this.back.clear_conversation();
     this.put_message(response)
@@ -336,7 +353,7 @@ export class ConversationComponent {
     for (const c of response.conversation)
     {
       this.chat_history.push(
-        {"line": i,"type": c.type,"msg": c.msg}        
+        {"line": i,"type": c.type,"msg": c.msg,"msgClean":c.msg}        
       )
       i+=1
     }    
@@ -361,8 +378,7 @@ export class ConversationComponent {
         console.log('ALT + V pressed!');
         this.speak_aloud(this.inputText);
         this.inputElement.nativeElement.focus();   
-      }
-      
+      }      
 
   }
   async changeLanguage() {

@@ -7,8 +7,8 @@ import persistence as db
 from api.audio  import audio_bp
 from api.context  import context_bp
 import api.context  as context
-from api.conversation import conversation_bp
-from langchain_core.messages import  AIMessage
+from api.conversation import conversation_bp,user,id_conversation
+from langchain_core.messages import  AIMessage,HumanMessage
 
 app = Quart(__name__)
 app=cors(app,allow_origin="*")  # Enable Cross-Origin Resource Sharing
@@ -20,43 +20,33 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 graph= ai.graph  
 config= ai.config
 vd=False
-id = None
-user='default'
 
-async def generate(graph,msg_graph):
-    for msg, metadata  in graph.stream(msg_graph, config, stream_mode="messages"):      
-      if isinstance(msg,AIMessage):
-        print (msg.content)
-        yield msg.content
-async def generate1():
-    for i in range(100):
-        await asyncio.sleep(0.1)
-        yield f"{i}\n" 
 
-def generate2():
-    for i in range(100):
-        asyncio.sleep(0.1)
-        yield f"{i}\n" 
+async def generate(msg_graph):
+  async for msg  in  ai.call_llm(msg_graph):
+      yield msg
 
 @app.route('/send-question', methods=['POST'])
 async def send_question():    
-    global id
     data = await request.get_json()  # Get JSON data from the request body
     question =  data.get('text')
     if question is None:
        return ""
-    id = db.init_conversation(id,user,question)
+    #id = db.init_conversation(id,user,question)
     print(f"In send-question {question} \ncontext: {context.context_text}")
     msg_graph={"messages": question,"chat_history": ai.chat_history,
-               "retrieved_context": []
-                ,"vd": vd,
+               "retrieved_context": [],
+               "response":"",
+                "vd": vd,
                 "system_msg": context.context_text,
                 "id": id,
                 "label": context.context_label,
                 "user":user }     
-  
-    #return Response(generate1(), mimetype='text/plain')
-    return Response(generate(graph,msg_graph))
+    
+   
+         #print ("         Msg:", type(msg), " --- ",msg)   
+    return Response(generate(msg_graph), mimetype='text/plain')
+    #return Response()
 
 
 @app.route('/clear', methods=['GET'])

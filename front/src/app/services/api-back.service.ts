@@ -10,24 +10,6 @@ export class ApiBackService {
 
   constructor(private http: HttpClient) {}
 
-  
-
-  async sendMsg1(inputText:string): Promise<string>  {
-    return new Promise((resolve, reject) => {  
-      const payload = { text: inputText };
-      this.http.post<{ message: string; text: string }>(`${this.backendUrl}/send-question`, payload).subscribe({
-        next: (response) => {
-          console.log('Send Msg OK:', response.text);
-          resolve(response.text);
-        },
-        error: (error) => {
-          console.error('Send Msg failed:', error);
-          reject(error);
-        }
-      });     
-    });
-  }
-
 
   async text_to_sound(inputText:string) : Promise<Response>  {  
     const response = await fetch(`${this.backendUrl}/audio/tts`, {
@@ -37,6 +19,7 @@ export class ApiBackService {
     });
    return response
   }
+  
   uploadAudio(audioChunks:Blob[]): Promise<string> {
     return new Promise((resolve, reject) => {
       const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
@@ -114,7 +97,26 @@ export class ApiBackService {
       console.error('conversation_user failed!:', error);
       throw error;
     }      
-
+  }
+  async saveConversation(id:string,user:string,type:string,msg:string)
+  {
+    try {
+      const payload={msg:msg,type:type,user:user}
+      return await firstValueFrom(this.http.post<{ id: string;}>(`${this.backendUrl}/conversation/id/${id}`,payload));
+    } catch (error) {
+      console.error('conversation_user failed!:', error);
+      throw error;
+    }          
+  }
+  async initConversation(user:string,msg:string)
+  {
+    try {
+      const payload={msg:msg,user:user}
+      return await firstValueFrom(this.http.post<{ id: string;}>(`${this.backendUrl}/conversation/init`,payload));
+    } catch (error) {
+      console.error('Init conversation failed!:', error);
+      throw error;
+    }          
   }
   async conversation_by_id(id:string): Promise<any> {    
     try {
