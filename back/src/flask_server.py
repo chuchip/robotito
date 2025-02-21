@@ -1,5 +1,4 @@
 from quart import Quart, Response,request,jsonify
-import asyncio
 from quart_cors import cors
 import os
 import robotito_ai as ai
@@ -17,7 +16,6 @@ UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Create folder if not exists
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-graph= ai.graph  
 config= ai.config
 vd=False
 

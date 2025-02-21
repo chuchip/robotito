@@ -2,33 +2,16 @@ from langchain_community.embeddings  import OpenAIEmbeddings
 from langchain_openai import ChatOpenAI,OpenAIEmbeddings
 from langchain.prompts import ChatPromptTemplate
 from langchain_core.messages import  HumanMessage, AIMessage
-from typing_extensions import Annotated, TypedDict
-from typing import Sequence, List
-from langchain_core.messages import BaseMessage
-from langgraph.graph.message import add_messages
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langgraph.checkpoint.memory import MemorySaver
-from langgraph.graph import START,END, MessagesState, StateGraph
 from langchain_chroma import Chroma
-from typing import AsyncIterator
 
 import torch
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 import persistence as db
 
-class State(TypedDict):
-    messages: Annotated[Sequence[BaseMessage], add_messages]
-    chat_history: List[BaseMessage]
-    retrieved_context: List[str]
-    system_msg: str
-    vd: bool
-    id: int
-    label: str
-    user:str
-    response: str
 
-async def call_llm(state)  -> AsyncIterator[State]:    
+async def call_llm(state) :    
     #print(f"call_llm: {state['messages']}")
     prompt = ChatPromptTemplate.from_messages( [
           ("system", "{system_msg}"),
@@ -62,7 +45,7 @@ def restore_history(jsonHistory):
       chat_history.append(AIMessage(content=line['msg']))
     else:
        chat_history.append(HumanMessage(content=line['msg']))
-def initial(state: State):    
+def initial(state):    
     #print(f"--- Searching in Vector Database --- {state['messages'][-1].content}")
     if state["vd"]: 
       results_with_scores = vector_store.similarity_search_with_score(
@@ -75,10 +58,10 @@ def initial(state: State):
       filtered_results = [res for res, score in results_with_scores if score <= similarity_threshold]        
       retrieved_context = "\n".join([res.page_content for res in filtered_results])
       # print(f"Retrieved Context in initial: {retrieved_context}")
-      state['retrieved_context']=retrieved_context
-    return state
+#      state['retrieved_context']=retrieved_context
+# return state
 
-def save(state: State):
+def save(state):
     chat_documents=[]
     message=state["messages"][0]
     if (isinstance(message, HumanMessage)):
@@ -107,7 +90,9 @@ model = ChatOpenAI(model_name="gpt-4o",
                    temperature=0.7)
 
 embeddings = OpenAIEmbeddings( model="text-embedding-3-large")
+vector_store=None
 def configure_vector_store():
+  global vector_store
   vector_store = Chroma(
       collection_name="user1",
       embedding_function=embeddings,
@@ -142,18 +127,5 @@ def configureWhisper():
 chat_history=[]
 
 
-# Define a new graph
-workflow = StateGraph(State)
-#workflow.add_node("initial", initial)
-workflow.add_node("call_llm", call_llm)
-#workflow.add_node("save", save)
-
-# Set the entrypoint as conversation
-workflow.add_edge(START, "call_llm")
-#workflow.add_edge("save", END)
-# Compile
-#memory = MemorySaver()
-#graph = workflow.compile(checkpointer=memory)
-graph = workflow.compile()
 pipe_whisper=None
 configureWhisper()

@@ -1,7 +1,12 @@
 Start using 'start.sh' 
 
-Example of context:
+In the back,I'm using Angular 19.
+In the front I'm using python 3.9.21. You can use the command: 
 
+- conda env create -f environment.yml
 
-You are going to pretend that you are my English teacher. You can only speak English. It is very important that you correct me if I make any mistakes or if my answer does not make sense or it doesn't sound natural.  Don't be overly helpful, the idea is having a conversation so  you have to make the conversation flow.
-Remember, the most importance in our conversation is tell me if my sentence was correct.
+to recreate the conda environment.
+
+In the back, i use hexgrad/Kokoro-82M  (https://huggingface.co/hexgrad/Kokoro-82M/blob/main/VOICES.md#spanish) as TTS and openai/whisper-large-v3-turbo (https://huggingface.co/openai/whisper-large-v3-turbo) as STT.
+As database I'm using Sqllite and Chroma.
+
