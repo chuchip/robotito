@@ -189,7 +189,7 @@ export class ConversationComponent {
           //console.log(`pIni: ${pIni} pfin: ${pFin} len: ${this.responseMessage.length} `)
           if (pFin!=-1) {
             txt+=this.responseMessage.substring(pIni,pFin)
-            if (txt.length>50){              
+            if (txt.length>200){              
               const cleanText=this.back.cleanText(txt)
               const response=await this.back.text_to_sound(cleanText)      
               console.log(`Punctuaction in pos: ${pFin} ${cleanText}`)
