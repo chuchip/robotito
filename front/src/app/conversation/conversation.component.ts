@@ -25,6 +25,8 @@ import { MatSliderModule } from '@angular/material/slider';
  */
 export class ConversationComponent {
   playbackSpeed=1
+  swStopAudio=false
+  endAudio=true;
   private readonly backendUrl = 'http://localhost:5000'; 
   ttsArray:Response[]=[]
   ttsStart=false
@@ -103,12 +105,6 @@ export class ConversationComponent {
         this.responseMessage=""
         this.number_line++
         })
-/*    for (let n=1;n<50;n++) {
-
-      this.chat_history.push({line:this.number_line, type: "H",
-        msg: "adfaf das fasdfasdfafasd fasdfasdjkfasdfpásdfkasd asdfasdfasdf fasdfadfasdf dfadfasdf asdfasdf asdfasf asdfa dfasfd fasdf "});    
-      this.number_line++    
-    }*/
   }
 
   async toggleRecording() {
@@ -160,10 +156,10 @@ export class ConversationComponent {
   }
   async sendData() {
     this.showRecord=false
-    
+    this.swStopAudio=false
     if (this.inputText.trim()!='') {
       this.chat_history.push({line:this.number_line, type: "H",msg: this.inputText.trim(),msgClean: this.inputText.trim()})
-      this.isLoading=true
+      //this.isLoading=true
       this.responseMessage=""
 
       const response = await fetch(`${this.backendUrl}/send-question`, {
@@ -195,7 +191,6 @@ export class ConversationComponent {
             if (txt.length>200){              
               const cleanText=this.back.cleanText(txt)
               const response=await this.back.text_to_sound(cleanText)      
-              console.log(`Punctuaction in pos: ${pFin} ${cleanText}`)
               this.ttsArray.push(response)
               txt=""
               if (swStart)
@@ -211,8 +206,7 @@ export class ConversationComponent {
         if (this.responseMessage.length>pFin) {              
           txt+=this.responseMessage.substring(pIni)
           const cleanText=this.back.cleanText(txt)
-          if (cleanText.length>0) {
-            console.log(`Final in pos: ${pFin} ${cleanText}`)
+          if (cleanText.length>0) {        
             const response=await this.back.text_to_sound(cleanText)      
             this.ttsArray.push(response)
             if (swStart)
@@ -250,22 +244,21 @@ export class ConversationComponent {
   async ttsWait()
   {
     let i=0;
-   // console.log("in ttsWait---------------------------")
+   // console.log("in ttsWait---------------------------")    
     while (true){
+      if (this.swStopAudio)
+        return;
+
       const response=this.ttsArray[i];
-     // console.log(`ttsWait ${i}:`)
-      let endAudio=false;
-      while (this.audio && !endAudio)
-      {        
-        this.audio.onended = () => {
-          endAudio=true
-        };
-        if (!endAudio) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }
-      }
-      
-      this.prepareAudio(response)
+      while (this.audio!=null && i>0 && !this.audio.paused)
+      {                 
+        
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+      console.log(`prepare Audio ${i}:`)
+      if (this.swStopAudio)
+        return;
+      await this.prepareAudio(response)
       i++     
       while (this.ttsStart)
       {
@@ -313,6 +306,7 @@ export class ConversationComponent {
   
     const audioBlob = await response.blob();
     const audioUrl = URL.createObjectURL(audioBlob);   
+    
     this.playAudio(audioUrl);
   }
 
@@ -333,11 +327,21 @@ export class ConversationComponent {
     }
   
     this.audio = new Audio(audioUrl);
-    this.audio.playbackRate = this.playbackSpeed;
-    this.audio.play();
+    this.audio.playbackRate = this.playbackSpeed;   
+    this.endAudio=false
+    this.audio.play(); 
+   /* this.audio.ontimeupdate = () => {
+      if (this.audio)
+      {
+        console.log("Audio is playing:", !this.audio.paused);
+
+      }
+    };*/
+    
   }
   
   stopAudio(): void {
+    this.swStopAudio=true
     if (this.audio) {
       this.audio.pause();
       this.audio.currentTime = 0;
@@ -407,6 +411,8 @@ export class ConversationComponent {
   }
   async context_send(event:any)    {
     const textArea = event.target as HTMLTextAreaElement;
+    if (!textArea)
+      return;
     this.contextValue = textArea.value;
   
     if (this.contextValue) {      
