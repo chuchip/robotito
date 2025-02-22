@@ -10,12 +10,12 @@ import { marked } from 'marked';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { ChangeDetectorRef } from '@angular/core';
-import { BehaviorSubject, timeout } from 'rxjs';
+import { MatSliderModule } from '@angular/material/slider';
 @Component({  
   selector: 'app-conversation',   
   imports: [CommonModule, MatTooltipModule, MatCheckboxModule,FormsModule,
      MatButtonModule, MatIconModule, // Required for Angular Material animations
-    MatProgressSpinnerModule], // 
+    MatProgressSpinnerModule,MatSliderModule], // 
   templateUrl: './conversation.component.html',
   styleUrls: ['./conversation.component.scss']
 })
@@ -24,8 +24,8 @@ import { BehaviorSubject, timeout } from 'rxjs';
  * Conversation component
  */
 export class ConversationComponent {
+  playbackSpeed=1
   private readonly backendUrl = 'http://localhost:5000'; 
-  max_words_tts=250
   ttsArray:Response[]=[]
   ttsStart=false
   isSidebarOpen = false;
@@ -118,6 +118,9 @@ export class ConversationComponent {
       this.startRecording()
     }
     this.isRecording = !this.isRecording;
+  }
+  changeSpeed(event: any) {
+    this.playbackSpeed =event.target.value;   
   }
   async startRecording()
   {
@@ -239,11 +242,6 @@ export class ConversationComponent {
       this.chat_history.push({line:this.number_line,type: "R",msg: msg,msgClean:this.responseMessage})
       this.responseMessage="";
       this.number_line++
-      
-    /*  const numWords=this.responseMessage.split(" ").length
-      if (this.swTalkResponse && numWords <this.max_words_tts) {
-        this.speak_aloud_response(this.number_line-1) 
-      }*/
       this.inputText=""
       setTimeout(() => this.scrollToBottom(), 0)
     }
@@ -335,6 +333,7 @@ export class ConversationComponent {
     }
   
     this.audio = new Audio(audioUrl);
+    this.audio.playbackRate = this.playbackSpeed;
     this.audio.play();
   }
   

@@ -223,8 +223,16 @@ mat-checkbox .mat-checkbox-label {
 .configuration_horizontal
 {
   display: flex;  
-  margin-top: 10px;
+  align-items: center;
+  margin-top: 2px;
+  height: 20px;
   flex-direction: row;
+}
+.configuration_horizontal label
+{
+  height: 20px;
+  width: 200px;
+  margin-left: 8px;
 }
 .configuration_horizontal select
 {
