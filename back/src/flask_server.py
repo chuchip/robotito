@@ -41,10 +41,7 @@ async def send_question():
                 "label": context.context_label,
                 "user":user }     
     
-   
-         #print ("         Msg:", type(msg), " --- ",msg)   
     return Response(generate(msg_graph), mimetype='text/plain')
-    #return Response()
 
 
 @app.route('/clear', methods=['GET'])
@@ -58,8 +55,9 @@ def clear():
 @app.route('/last_user', methods=['GET'])
 def get_last_user(): 
   global user
-  user=db.get_last_user()
-  return jsonify({'user':user})
+  data=db.get_last_user()
+  print("Last user: ",data)
+  return jsonify(data)
 
 app.register_blueprint(audio_bp, url_prefix='/audio')
 app.register_blueprint(context_bp, url_prefix='/context')

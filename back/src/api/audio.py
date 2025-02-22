@@ -4,6 +4,8 @@ import persistence as db
 import robotito_ai as ai
 import soundfile as sf
 from kokoro import KPipeline
+import persistence
+from api.conversation import user
 import subprocess
 import numpy as np
 
@@ -23,7 +25,7 @@ async def upload_audio():
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
     print(file)
-    print("Uplaod folder ",current_app.config['UPLOAD_FOLDER'])
+    print("Upload folder ",current_app.config['UPLOAD_FOLDER'])
     filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], file.filename)
     await  file.save(filepath) 
     result = ai.pipe_whisper(filepath,return_timestamps=True)
@@ -34,6 +36,7 @@ async def upload_audio():
 async def tts():     
     data = await request.get_json()  # Get JSON data from the request body
     text = data.get('text') 
+    user = data.get('user') 
     if text=='':
         return Response(None, mimetype='audio/webm')  
     #print(f"In tts {text}")
@@ -48,8 +51,8 @@ async def tts():
             total = audio
         else:
             total=np.concatenate((total, audio), axis=0)
-    wav_file= "audio/audio.wav"
-    webm_file="audio/text.webm"
+    wav_file= f"audio/{user}-tts.wav"
+    webm_file=f"audio/{user}-tts.webm"
     sf.write(wav_file, total, 24000)
     command = [
     'ffmpeg',"-y",
@@ -77,5 +80,6 @@ async def set_language():
   print(language , voice_name)
   if languageInput != language:
     language=languageInput
-    kpipeline = KPipeline(lang_code=language) 
+    kpipeline = KPipeline(lang_code=language)
+  persistence.update_language(user,languageInput,voice_name)
   return jsonify({'message': f'Voice changed to {voice_name}'})

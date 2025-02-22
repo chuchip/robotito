@@ -50,7 +50,7 @@
       <span class="input_text">
         <textarea #human_input class="expandable-input" #inputField [value]="inputText"
           (keydown)="this.inputText=human_input.value;onKeydownInput($event)"
-          (keydown.enter)="this.inputText=human_input.value; sendData()" (keydown.F2)="toggleRecording()"
+          (keydown.enter)="this.inputText=human_input.value; sendData()" 
           placeholder="Type and press Enter">
         </textarea>
       </span>
@@ -71,7 +71,7 @@
       <button class="stop-btn" (click)="copy_to_input(record_text.value)"> <span
           class="material-icons">content_copy</span></button>
       <textarea #record_text [value]="audio_to_text" style="width: 500px;"
-        (keydown.enter)="copy_to_input(record_text.value);sendData()" (keydown.F2)="toggleRecording()"
+        (keydown.enter)="copy_to_input(record_text.value);sendData()" 
         (keydown.esc)="focus_input()"></textarea>
     </div>
     
@@ -106,7 +106,7 @@
               value="{{selectLanguageDesc}}" readonly> </span>
           Actual Voice: <span class="configuration_line_text"><input type="text" value="{{selectVoice}}" readonly>
           </span>
-          <span  class="name_user">User: {{user}} Conv: {{id_conversation}}</span>
+          <span  class="name_user">User: {{back.user}} Conv: {{id_conversation}}</span>
         </div>
       </div>      
       <div class="context">

@@ -76,8 +76,6 @@ def save(state):
     return state
 
 
-print (f"__name__ in robotito{__name__}")
-
 # Define the configuration
 print("--------------------------------")
 print("Initializing Robotito ...")

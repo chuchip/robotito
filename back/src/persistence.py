@@ -12,6 +12,8 @@ def init_db():
                            name TEXT,
                            email TEXT,
                            password TEXT,
+                           language text ,
+                           voice text,
                            last_date DATETIME DEFAULT CURRENT_TIMESTAMP)
                            """)        
         connection.execute("""INSERT INTO users ( user,name) VALUES ('default','No Name')""")
@@ -46,12 +48,11 @@ def init_db():
         connection.commit()
 
 def get_last_user():
-    cursor=connection.execute("""SELECT user FROM users order by last_date desc""")
+    cursor=connection.execute("""SELECT user,language,voice FROM users order by last_date desc""")
     data=cursor.fetchall()
-    if len(data)==0:
-        return 'default'
-    return data[0][0] # User
-
+    row=data[0]
+    result = {"user": row[0], "language": row[1], "voice": row[2]}
+    return result
 def get_all_context(user):
     query=connection.execute(f"""select label,context,last_time 
                              from context where user = ? order by last_time desc""",(user,))
@@ -132,6 +133,12 @@ def conversation_get_list(user):
 def conversation_delete_by_id(id):
     sql="delete from conversation where id = ? "
     connection.execute(sql,(id,))    
+    connection.commit()
+    return 
+def update_language(user,language,voice):    
+    sql="update users set language = ?, voice=? where user = ? "
+    connection.execute(sql,(language,voice,user))    
+    print("Save language preferences")
     connection.commit()
     return 
 

@@ -83,17 +83,20 @@ export class ConversationComponent {
     { 'language':'e', label: 'em_alex' },    
     { 'language':'e', label: 'em_santa' },    
   ]
-  user:string=''
-  constructor(private back: ApiBackService,private sound: SoundService,private cdr: ChangeDetectorRef) {
+
+  constructor(public back: ApiBackService,private sound: SoundService,private cdr: ChangeDetectorRef) {
     
     this.back.get_last_user()
       .then(response=> response.json())
       .then((data:any) => {        
-        this.user=data.user
+        this.back.user=data.user
+        this.selectVoice=data.voice
+        this.selectLanguage=data.language
+        this.back.change_language(this.selectLanguage,this.selectVoice);
         this.clearConversation()
         this.list_context()
         this.get_conversations_history()
-        this.setContext(this.user,"NEW","") 
+        this.setContext("NEW","") 
         this.chat_history.push({line:this.number_line, type: "R",msg: this.responseMessage,msgClean:this.responseMessage});
         this.responseMessage=""
         this.number_line++
@@ -132,7 +135,7 @@ export class ConversationComponent {
     
     if (this.inputText.trim()!='') {
       this.chat_history.push({line:this.number_line, type: "H",msg: this.inputText.trim(),msgClean: this.inputText.trim()})
-      //this.isLoading=true
+      this.isLoading=true
       this.responseMessage=""
 
       const response = await fetch(`${this.backendUrl}/send-question`, {
@@ -162,12 +165,12 @@ export class ConversationComponent {
       const msg=await this.toHtml(this.responseMessage)
       if (this.id_conversation=="")
       {
-        var conversation=await this.back.initConversation(this.user, this.inputText);
+        var conversation=await this.back.initConversation( this.inputText);
         console.log("Conversation: ",   conversation)      
         this.id_conversation=conversation.id
       }
-      conversation=await this.back.saveConversation(this.id_conversation,this.user, "H",this.inputText);      
-      conversation=await this.back.saveConversation(this.id_conversation,this.user, "R",this.responseMessage);
+      conversation=await this.back.saveConversation(this.id_conversation, "H",this.inputText);      
+      conversation=await this.back.saveConversation(this.id_conversation, "R",this.responseMessage);
       
       this.chat_history.push({line:this.number_line,type: "R",msg: msg,msgClean:this.responseMessage})
       this.responseMessage="";
@@ -192,7 +195,7 @@ export class ConversationComponent {
   async speak_aloud(inputText:string){
     
     if (inputText.trim()!='') {      
-      const response= await this.back.text_to_sound(this.cleanText(this.inputText));
+      const response= await this.back.text_to_sound(this.back.cleanText(this.inputText));
       this.prepareAudio(response)
     }
   }
@@ -210,18 +213,12 @@ export class ConversationComponent {
 
 
   async speak_aloud_response(i:number){  
-    const cleanText=this.cleanText( this.chat_history[i].msgClean)
+    const cleanText=this.back.cleanText( this.chat_history[i].msgClean)
     
     const response = await this.back.text_to_sound(cleanText);
     this.prepareAudio(response)
   }
-  cleanText(text:string):string
-  {
-    console.log("before clean: ",text)
-    const cleanedText = text.replace(/[^a-zA-Z0-9\s\'\,\.\!\?]/g, '');
-    console.log("After clean: ",cleanedText)
-    return cleanedText;
-  }
+
   playAudio(audioUrl: string): void {
     // Stop the previous audio if it’s playing
     if (this.audio) {
@@ -290,7 +287,7 @@ export class ConversationComponent {
   }
   async list_context()
   {
-    const response= await this.back.context_get(this.user);
+    const response= await this.back.context_get();
     this.contexts=response.contexts
     const value={"label":"NEW","context":"","last_timestamp":""}
     this.contexts.splice(0,0,value)
@@ -298,7 +295,7 @@ export class ConversationComponent {
   async context_delete(label:string)
   {
     this.isLoading=true
-    const response= await this.back.context_delete(this.user,this.selectContext);    
+    const response= await this.back.context_delete(this.selectContext);    
     this.list_context()
     this.isLoading=false
     this.put_message(response)
@@ -311,7 +308,7 @@ export class ConversationComponent {
   
     if (this.contextValue) {      
       this.isLoading=true
-      const response=await this.setContext(this.user,this.labelContext,
+      const response=await this.setContext(this.labelContext,
                 this.contextValue);
       this.list_context()
       this.selectContext=this.labelContext
@@ -320,9 +317,9 @@ export class ConversationComponent {
       this.put_message(response)
     }
   }
-  async setContext(user:string,labelContext:string, contextValue:string)
+  async setContext(labelContext:string, contextValue:string)
   {
-    return await this.back.context_send(user,labelContext,contextValue);
+    return await this.back.context_send(labelContext,contextValue);
   }
 
 
@@ -335,7 +332,7 @@ export class ConversationComponent {
   }
   async get_conversations_history()
   {
-    const response=await this.back.conversation_user(this.user);
+    const response=await this.back.conversation_user();
     this.conversationHistory=response.conversations;    
   }
   
@@ -346,7 +343,7 @@ export class ConversationComponent {
     this.labelContext=context;   
     this.selectContext=context
     this.setTextContext(context)
-    const response_context=await this.setContext(this.user,this.labelContext,this.contextValue)      
+    const response_context=await this.setContext(this.labelContext,this.contextValue)      
     this.context_send(this.labelContext)
     this.chat_history.length=0
     var i=0;  
@@ -405,6 +402,14 @@ export class ConversationComponent {
     }
     if (this.showLanguageOptions && !this.configurationWinElement.nativeElement.contains(event.target)) {
       this.showLanguageOptions = false;
+    }
+  }
+  @HostListener('document:keydown', ['$event'])
+  handleKeydown(event: KeyboardEvent) {
+    if (event.key === 'F2') {      
+      event.preventDefault(); // Prevent default browser behavior (e.g., renaming files)
+      this.toggleRecording()
+      //console.log('F2 key pressed!');
     }
   }
 }
