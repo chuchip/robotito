@@ -10,7 +10,7 @@ import { marked } from 'marked';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { ChangeDetectorRef } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, timeout } from 'rxjs';
 @Component({  
   selector: 'app-conversation',   
   imports: [CommonModule, MatTooltipModule, MatCheckboxModule,FormsModule,
@@ -26,6 +26,8 @@ import { BehaviorSubject } from 'rxjs';
 export class ConversationComponent {
   private readonly backendUrl = 'http://localhost:5000'; 
   max_words_tts=250
+  ttsArray:Response[]=[]
+  ttsStart=false
   isSidebarOpen = false;
   clicksWindow=0;
   conversationHistory:{"id":string,"user":string,"label":string,
@@ -171,13 +173,54 @@ export class ConversationComponent {
       const decoder = new TextDecoder();
     
       if (reader) {
-        let result = "";
-        while (true) {
+        
+        let pFin=0
+        let pIni=0
+        let txt=""
+        let swStart=true
+        this.ttsArray.length=0
+        while (true) {          
           const { done, value } = await reader.read();
           if (done) break;
           const chunk = decoder.decode(value, { stream: true });
-          this.responseMessage+= chunk;       
+          
+          this.responseMessage+= chunk;
+          pFin=this.findNextPunctuation(this.responseMessage,pIni)
+          //console.log(`pIni: ${pIni} pfin: ${pFin} len: ${this.responseMessage.length} `)
+          if (pFin!=-1) {
+            txt+=this.responseMessage.substring(pIni,pFin)
+            if (txt.length>50){              
+              const cleanText=this.back.cleanText(txt)
+              const response=await this.back.text_to_sound(cleanText)      
+              console.log(`Punctuaction in pos: ${pFin} ${cleanText}`)
+              this.ttsArray.push(response)
+              txt=""
+              if (swStart)
+              {
+                this.ttsStart=true
+                swStart=false
+                this.ttsWait()         
+              }
+            }
+            pIni=pFin+1
+          }          
         }
+        if (this.responseMessage.length>pFin) {              
+          txt+=this.responseMessage.substring(pIni)
+          const cleanText=this.back.cleanText(txt)
+          if (cleanText.length>0) {
+            console.log(`Final in pos: ${pFin} ${cleanText}`)
+            const response=await this.back.text_to_sound(cleanText)      
+            this.ttsArray.push(response)
+            if (swStart)
+            {
+              this.ttsStart=true
+              swStart=false
+              this.ttsWait()         
+            }
+          }
+        }
+        this.ttsStart=false
       }
       else{
         console.log("No reader")
@@ -190,20 +233,64 @@ export class ConversationComponent {
         var conversation=await this.back.initConversation( this.inputText);        
         this.id_conversation=conversation.id
       }
-      conversation=await this.back.saveConversation(this.id_conversation, "H",this.inputText);      
-      conversation=await this.back.saveConversation(this.id_conversation, "R",this.responseMessage);
+      this.back.saveConversation(this.id_conversation, "H",this.inputText);      
+      this.back.saveConversation(this.id_conversation, "R",this.responseMessage);
       
       this.chat_history.push({line:this.number_line,type: "R",msg: msg,msgClean:this.responseMessage})
       this.responseMessage="";
       this.number_line++
-      const numWords=this.responseMessage.split(" ").length
+      
+    /*  const numWords=this.responseMessage.split(" ").length
       if (this.swTalkResponse && numWords <this.max_words_tts) {
         this.speak_aloud_response(this.number_line-1) 
-      }
+      }*/
       this.inputText=""
       setTimeout(() => this.scrollToBottom(), 0)
     }
   }
+
+  async ttsWait()
+  {
+    let i=0;
+   // console.log("in ttsWait---------------------------")
+    while (true){
+      const response=this.ttsArray[i];
+     // console.log(`ttsWait ${i}:`)
+      let endAudio=false;
+      while (this.audio && !endAudio)
+      {        
+        this.audio.onended = () => {
+          endAudio=true
+        };
+        if (!endAudio) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+      
+      this.prepareAudio(response)
+      i++     
+      while (this.ttsStart)
+      {
+        if (this.ttsArray.length<=i)  {
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+        else {
+          break
+        }
+      }
+      if (i>=this.ttsArray.length && !this.ttsStart)  {        
+        break;
+      }
+    }
+    //console.log("out ttsWait---------------------------")
+  }
+  findNextPunctuation(text: string, startIndex: number): number {
+    const substring = text.substring(startIndex);
+    const match = substring.match(/[.,:?!]/);
+  
+    return match ? startIndex + match.index! : -1;
+  }
+
   toHtml(txt: string) {
     const txt1=  marked(txt);    
     return txt1
