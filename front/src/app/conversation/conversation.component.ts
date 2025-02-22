@@ -251,26 +251,20 @@ export class ConversationComponent {
 
       const response=this.ttsArray[i];
       while (this.audio!=null && i>0 && !this.audio.paused)
-      {                 
-        
+      {                         
         await new Promise(resolve => setTimeout(resolve, 100));
-    }
+      }
       console.log(`prepare Audio ${i}:`)
       if (this.swStopAudio)
         return;
       await this.prepareAudio(response)
       i++     
-      while (this.ttsStart)
+      while (this.ttsStart && this.ttsArray.length<=i)
       {
-        if (this.ttsArray.length<=i)  {
-          await new Promise(resolve => setTimeout(resolve, 300));
-        }
-        else {
-          break
-        }
+         await new Promise(resolve => setTimeout(resolve, 300));
       }
       if (i>=this.ttsArray.length && !this.ttsStart)  {        
-        break;
+        return;
       }
     }
     //console.log("out ttsWait---------------------------")
