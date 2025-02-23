@@ -159,7 +159,7 @@ export class ConversationComponent {
     
     if (this.inputText.trim()!='') {
       this.chat_history.push({line:this.number_line, type: "H",msg: this.inputText.trim(),msgClean: this.inputText.trim()})
-      //this.isLoading=true
+      this.isLoading=true
       this.responseMessage=""
 
       const response = await fetch(`${this.backendUrl}/send-question`, {
