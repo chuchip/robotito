@@ -5,7 +5,7 @@ import { firstValueFrom } from 'rxjs';
   providedIn: 'root'
 })
 export class ApiBackService {
-  user: string='default'
+  public user: string='default'
   labelContext=""
   private readonly backendUrl = 'http://localhost:5000'; // Change this to your backend
 

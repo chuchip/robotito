@@ -33,7 +33,7 @@ export class ConversationComponent {
   clicksWindow=0;
   conversationHistory:{"id":string,"user":string,"label":string,
     "name":string,"initial_time": string,"final_date":string}[]=[];
-  id_conversation=""
+  conversationId=""
   labelContext:string=""
   isLoading=false;
   contextValue=""
@@ -177,6 +177,10 @@ export class ConversationComponent {
         let pIni=0
         let txt=""
         let swStart=true
+        if (!this.swTalkResponse)
+        {
+          swStart=false
+        }
         this.ttsArray.length=0
         while (true) {          
           const { done, value } = await reader.read();
@@ -225,13 +229,13 @@ export class ConversationComponent {
       this.isLoading=false
       this.number_line++
       const msg=await this.toHtml(this.responseMessage)
-      if (this.id_conversation=="")
+      if (this.conversationId=="")
       {
         var conversation=await this.back.initConversation( this.inputText);        
-        this.id_conversation=conversation.id
+        this.conversationId=conversation.id
       }
-      this.back.saveConversation(this.id_conversation, "H",this.inputText);      
-      this.back.saveConversation(this.id_conversation, "R",this.responseMessage);
+      this.back.saveConversation(this.conversationId, "H",this.inputText);      
+      this.back.saveConversation(this.conversationId, "R",this.responseMessage);
       
       this.chat_history.push({line:this.number_line,type: "R",msg: msg,msgClean:this.responseMessage})
       this.responseMessage="";
@@ -246,6 +250,7 @@ export class ConversationComponent {
     let pFin=0
     let txt=""
     let swStart=true
+ 
     this.ttsArray.length=0
     
     while (pFin!=-1 && pFin<cleanText.length) {
@@ -359,9 +364,6 @@ export class ConversationComponent {
   }
 
 
-
-
-
   playAudio(audioUrl: string): void {
     // Stop the previous audio if it’s playing
     if (this.audio) {
@@ -405,7 +407,7 @@ export class ConversationComponent {
   {
     this.chat_history.length=0
     this.number_line=0  
-    this.id_conversation=""
+    this.conversationId=""
     this.showLanguageOptions=false
     const response=await this.back.clear_conversation();
     this.put_message(response)
@@ -483,6 +485,7 @@ export class ConversationComponent {
   async history_choose(id:string,context:string)
   {    
     this.isLoading=true
+    this.conversationId=id
     const response=await this.back.conversation_by_id(id);
     this.labelContext=context;   
     this.selectContext=context
@@ -520,7 +523,6 @@ export class ConversationComponent {
         this.speak_aloud(this.inputText);
         this.inputElement.nativeElement.focus();   
       }      
-
   }
   async changeLanguage() {
     if (this.selectVoice=='')
