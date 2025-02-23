@@ -1,7 +1,7 @@
 from datetime  import datetime
 import sqlite3
 import uuid
-
+import robotito_ai as ai
 def init_db():
     cursor=connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users'" )
     # Create table to create User
@@ -12,6 +12,8 @@ def init_db():
                            name TEXT,
                            email TEXT,
                            password TEXT,
+                           language text ,
+                           voice text,
                            last_date DATETIME DEFAULT CURRENT_TIMESTAMP)
                            """)        
         connection.execute("""INSERT INTO users ( user,name) VALUES ('default','No Name')""")
@@ -46,12 +48,11 @@ def init_db():
         connection.commit()
 
 def get_last_user():
-    cursor=connection.execute("""SELECT user FROM users order by last_date desc""")
+    cursor=connection.execute("""SELECT user,language,voice FROM users order by last_date desc""")
     data=cursor.fetchall()
-    if len(data)==0:
-        return 'default'
-    return data[0][0] # User
-
+    row=data[0]
+    result = {"user": row[0], "language": row[1], "voice": row[2]}
+    return result
 def get_all_context(user):
     query=connection.execute(f"""select label,context,last_time 
                              from context where user = ? order by last_time desc""",(user,))
@@ -60,7 +61,8 @@ def get_all_context(user):
     return result
 
 def save_context(user,label,context):
-    cursor=connection.execute(f"select * from context where label='{label}' and user='{user}'")
+    sql=f"select * from context where label=? and user=?"    
+    cursor=connection.execute(sql,(label,user))
     if cursor.fetchone() is  None:
         print(f"Insert context: {label}")
         sql=f"INSERT INTO context (label,user,context) VALUES (?, ?, ?)"        
@@ -93,7 +95,10 @@ def init_conversation(id ,user,msg,force=False):
     return id
 
 # Conversation
-def conversation_save(id , label,type,msg):
+def conversation_save(id ,user, label,type,msg):
+    if id=='X':
+        id=init_conversation(None,user,msg,True)
+    ai.save_msg(type,msg)
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     sql="update conversation set final_date = ?, label=? where id = ? "
     connection.execute(sql,(now,label,id))
@@ -130,5 +135,12 @@ def conversation_delete_by_id(id):
     connection.execute(sql,(id,))    
     connection.commit()
     return 
+def update_language(user,language,voice):    
+    sql="update users set language = ?, voice=? where user = ? "
+    connection.execute(sql,(language,voice,user))    
+    print("Save language preferences")
+    connection.commit()
+    return 
+
 connection=sqlite3.connect("robotito_db/sqllite.db", check_same_thread=False)
 init_db()

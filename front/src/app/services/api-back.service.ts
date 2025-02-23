@@ -5,37 +5,22 @@ import { firstValueFrom } from 'rxjs';
   providedIn: 'root'
 })
 export class ApiBackService {
-
+  public user: string='default'
+  labelContext=""
   private readonly backendUrl = 'http://localhost:5000'; // Change this to your backend
 
   constructor(private http: HttpClient) {}
-
- 
-  async sendMsg(inputText:string): Promise<string>  {
-    return new Promise((resolve, reject) => {  
-      const payload = { text: inputText };
-      this.http.post<{ message: string; text: string }>(`${this.backendUrl}/send-question`, payload).subscribe({
-        next: (response) => {
-          console.log('Send Msg OK:', response.text);
-          resolve(response.text);
-        },
-        error: (error) => {
-          console.error('Send Msg failed:', error);
-          reject(error);
-        }
-      });     
-    });
-  }
 
 
   async text_to_sound(inputText:string) : Promise<Response>  {  
     const response = await fetch(`${this.backendUrl}/audio/tts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: inputText }),
+      body: JSON.stringify({ text: inputText,user:this.user }),
     });
    return response
   }
+  
   uploadAudio(audioChunks:Blob[]): Promise<string> {
     return new Promise((resolve, reject) => {
       const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
@@ -79,41 +64,59 @@ export class ApiBackService {
   }
   
  
-
-  // Context
-  async context_send(user:string,label:string,context:string):  Promise<Response> {          
+ // Context
+  async context_send(label:string,context:string):  Promise<Response> {          
     const response = await fetch(`${this.backendUrl}/context`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 'user': user,'label':label,'context':context }),
+      body: JSON.stringify({ 'user': this.user,'label':label,'context':context }),
     });    
     return  response;
   }
-  async context_get(user:string):  Promise<any> {   
+  async context_get():  Promise<any> {   
     try {
-      return await firstValueFrom(this.http.get(`${this.backendUrl}/context/user/${user}`));
+      return await firstValueFrom(this.http.get(`${this.backendUrl}/context/user/${this.user}`));
     } catch (error) {
       console.error('get-contexts failed!:', error);
       throw error;
     }
   }
-  async context_delete(user:string,label:string):  Promise<Response> {          
+  async context_delete(label:string):  Promise<Response> {          
     const response = await fetch(`${this.backendUrl}/context`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 'user': user,'label':label }),
+      body: JSON.stringify({ 'user': this.user,'label':label }),
     });    
     return  response;
   }
 
-  async conversation_user(user:string):  Promise<any> {    
+  async conversation_user():  Promise<any> {    
     try {
-      return await firstValueFrom(this.http.get(`${this.backendUrl}/conversation/user/${user}`));
+      return await firstValueFrom(this.http.get(`${this.backendUrl}/conversation/user/${this.user}`));
     } catch (error) {
       console.error('conversation_user failed!:', error);
       throw error;
     }      
-
+  }
+  async saveConversation(id:string,type:string,msg:string)
+  {
+    try {
+      const payload={msg:msg,type:type,user:this.user}
+      return await firstValueFrom(this.http.post<{ id: string;}>(`${this.backendUrl}/conversation/id/${id}`,payload));
+    } catch (error) {
+      console.error('conversation_user failed!:', error);
+      throw error;
+    }          
+  }
+  async initConversation(msg:string)
+  {
+    try {
+      const payload={msg:msg,user:this.user}
+      return await firstValueFrom(this.http.post<{ id: string;}>(`${this.backendUrl}/conversation/init`,payload));
+    } catch (error) {
+      console.error('Init conversation failed!:', error);
+      throw error;
+    }          
   }
   async conversation_by_id(id:string): Promise<any> {    
     try {
@@ -130,4 +133,17 @@ export class ApiBackService {
     });    
     return  response;
   }    
+  cleanText(text:string):string
+  {   
+    const caracteresPermitidos = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ñáéíóúüÁÉÍÓÚÜ .,\'"?!¿:-\n';
+    let textoLimpio = '';
+
+    for (const char of text) {
+      if (caracteresPermitidos.includes(char)) {
+        textoLimpio += char;
+      }
+    }
+    //console.log(textoLimpio)
+    return textoLimpio;
+  }
 }

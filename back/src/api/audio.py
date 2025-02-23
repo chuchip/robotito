@@ -1,9 +1,11 @@
-from flask import current_app,Blueprint,  request, jsonify,Response
+from quart import current_app,Blueprint,  request, jsonify,Response
 import os
 import persistence as db
 import robotito_ai as ai
 import soundfile as sf
 from kokoro import KPipeline
+import persistence
+from api.conversation import user
 import subprocess
 import numpy as np
 
@@ -13,28 +15,31 @@ kpipeline = KPipeline(lang_code=language)
 voice_name="af_heart"
 
 @audio_bp.route('/stt', methods=['POST'])
-def upload_audio():
+async def upload_audio():
     print("In upload audio")
-    if 'audio' not in request.files:
+    f=await request.files
+    if 'audio' not in f:
         return jsonify({'error': 'No file part'}), 400
 
-    file = request.files['audio']
+    file = f['audio']
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
- 
+    print(file)
+    print("Upload folder ",current_app.config['UPLOAD_FOLDER'])
     filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], file.filename)
-    file.save(filepath)
+    await  file.save(filepath) 
     result = ai.pipe_whisper(filepath,return_timestamps=True)
     print(result)
     return jsonify({'message': 'Audio uploaded successfully!', 'text': result["text"]})
 
 @audio_bp.route('/tts', methods=['POST'])
-def tts():     
-    data = request.get_json()  # Get JSON data from the request body
+async def tts():     
+    data = await request.get_json()  # Get JSON data from the request body
     text = data.get('text') 
+    user = data.get('user') 
     if text=='':
         return Response(None, mimetype='audio/webm')  
-    print(f"In tts {text}")
+    #print(f"In tts {text}")
     generator = kpipeline(
             text, 
             voice= voice_name,
@@ -46,8 +51,8 @@ def tts():
             total = audio
         else:
             total=np.concatenate((total, audio), axis=0)
-    wav_file= "audio/audio.wav"
-    webm_file="audio/text.webm"
+    wav_file= f"audio/{user}-tts.wav"
+    webm_file=f"audio/{user}-tts.webm"
     sf.write(wav_file, total, 24000)
     command = [
     'ffmpeg',"-y",
@@ -66,14 +71,15 @@ def tts():
     return Response(generate(), mimetype='audio/webm')  # Set proper MIME type  
 
 @audio_bp.route('/language', methods=['POST'])
-def set_language(): 
+async def set_language(): 
   global voice_name,kpipeline,language
-  data = request.get_json()  # Get JSON data from the request body
+  data = await request.get_json()  # Get JSON data from the request body
   
   languageInput = data.get('language') 
   voice_name = data.get('voice') 
   print(language , voice_name)
   if languageInput != language:
     language=languageInput
-    kpipeline = KPipeline(lang_code=language) 
+    kpipeline = KPipeline(lang_code=language)
+  persistence.update_language(user,languageInput,voice_name)
   return jsonify({'message': f'Voice changed to {voice_name}'})

@@ -200,10 +200,10 @@ mat-checkbox .mat-checkbox-label {
 
 .overlay {
   position: fixed;
-  top: 0;
+  bottom: 5px;
   left: 0;
-  width: 100%;
-  height: 100%;
+  height:60px;
+  width: 100%;  
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
@@ -223,8 +223,16 @@ mat-checkbox .mat-checkbox-label {
 .configuration_horizontal
 {
   display: flex;  
-  margin-top: 10px;
+  align-items: center;
+  margin-top: 2px;
+  height: 20px;
   flex-direction: row;
+}
+.configuration_horizontal label
+{
+  height: 20px;
+  width: 200px;
+  margin-left: 8px;
 }
 .configuration_horizontal select
 {
