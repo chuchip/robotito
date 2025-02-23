@@ -258,7 +258,7 @@ export class ConversationComponent {
       pFin=this.findNextPunctuation(cleanText,pIni)
       if (pFin!=-1) {
         txt+=cleanText.substring(pIni,pFin)
-        if (txt.length>100){                      
+        if (txt.length>150){                      
           const response=await this.back.text_to_sound(txt)      
           this.ttsArray.push(response)
           txt=""
@@ -329,10 +329,13 @@ export class ConversationComponent {
     console.log("out ttsWait---------------------------")
   }
   findNextPunctuation(text: string, startIndex: number): number {
-    const substring = text.substring(startIndex);
+    const p=text.indexOf('\n',startIndex)
+    console.log("Find carriage return: ",p)
+    return p;
+    /*const substring = text.substring(startIndex);
     const match = substring.match(/[.,:?!]/);
   
-    return match ? startIndex + match.index! : -1;
+    return match ? startIndex + match.index! : -1;*/
   }
 
   toHtml(txt: string) {
@@ -344,8 +347,7 @@ export class ConversationComponent {
       this.conversationElement.nativeElement.scrollTop = this.conversationElement.nativeElement.scrollHeight;
     }
   }
-  async speak_aloud(inputText:string){
-    
+  async speak_aloud(inputText:string){    
     if (inputText.trim()!='') {      
       const response= await this.back.text_to_sound(this.back.cleanText(this.inputText));
       this.prepareAudio(response)
