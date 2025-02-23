@@ -25,8 +25,7 @@ import { MatSliderModule } from '@angular/material/slider';
  */
 export class ConversationComponent {
   playbackSpeed=1
-  swStopAudio=false
-  endAudio=true;
+  semaphoreStopAudio:number=0
   private readonly backendUrl = 'http://localhost:5000'; 
   ttsArray:Response[]=[]
   ttsStart=false
@@ -154,9 +153,10 @@ export class ConversationComponent {
       setTimeout(() =>  this.inputElement.nativeElement.focus(),0) 
     }
   }
+
   async sendData() {
     this.showRecord=false
-    this.swStopAudio=false
+    
     if (this.inputText.trim()!='') {
       this.chat_history.push({line:this.number_line, type: "H",msg: this.inputText.trim(),msgClean: this.inputText.trim()})
       //this.isLoading=true
@@ -195,7 +195,7 @@ export class ConversationComponent {
               txt=""
               if (swStart)
               {
-                this.ttsStart=true
+                this.ttsStart=true                
                 swStart=false
                 this.ttsWait()         
               }
@@ -240,34 +240,88 @@ export class ConversationComponent {
       setTimeout(() => this.scrollToBottom(), 0)
     }
   }
-
-  async ttsWait()
-  {
-    let i=0;
-   // console.log("in ttsWait---------------------------")    
-    while (true){
-      if (this.swStopAudio)
-        return;
-
-      const response=this.ttsArray[i];
-      while (this.audio!=null && i>0 && !this.audio.paused)
-      {                         
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-      console.log(`prepare Audio ${i}:`)
-      if (this.swStopAudio)
-        return;
-      await this.prepareAudio(response)
-      i++     
-      while (this.ttsStart && this.ttsArray.length<=i)
-      {
-         await new Promise(resolve => setTimeout(resolve, 300));
-      }
-      if (i>=this.ttsArray.length && !this.ttsStart)  {        
-        return;
+  async speak_aloud_response(i:number){      
+    const cleanText=this.back.cleanText( this.chat_history[i].msgClean)
+    let pIni=0
+    let pFin=0
+    let txt=""
+    let swStart=true
+    this.ttsArray.length=0
+    
+    while (pFin!=-1 && pFin<cleanText.length) {
+    
+      pFin=this.findNextPunctuation(cleanText,pIni)
+      if (pFin!=-1) {
+        txt+=cleanText.substring(pIni,pFin)
+        if (txt.length>100){                      
+          const response=await this.back.text_to_sound(txt)      
+          this.ttsArray.push(response)
+          txt=""
+          if (swStart)
+          {
+            this.ttsStart=true
+            swStart=false
+            this.ttsWait()         
+          }
+        }
+        pIni=pFin+1
+      }    
+    }
+    if (this.responseMessage.length>pFin) {              
+      txt+=cleanText.substring(pIni)
+      if (txt.length>0) {        
+        const response=await this.back.text_to_sound(txt)      
+        this.ttsArray.push(response)
+        if (swStart)
+        {
+          this.ttsStart=true
+          swStart=false
+          this.ttsWait()         
+        }
       }
     }
-    //console.log("out ttsWait---------------------------")
+    this.ttsStart=false
+  }
+  async sleep(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+  async ttsWait()
+  { 
+    this.semaphoreStopAudio++
+    while (this.semaphoreStopAudio>1)
+    {
+      await this.sleep(100)
+    }     
+    let i=0;
+   // console.log("in ttsWait---------------------------")    
+    while (this.semaphoreStopAudio==1){
+
+      const response=this.ttsArray[i];
+      while (this.audio!=null && i>0 && !this.audio.paused && this.semaphoreStopAudio==1)
+      {                         
+        await this.sleep(100)
+      }
+      console.log(`prepare Audio ${i}:`)
+      if (this.semaphoreStopAudio!=1)
+      {
+        console.log("Stopped Audio")        
+        break;
+      }
+      await this.prepareAudio(response)
+      i++     
+      while (this.ttsStart && this.ttsArray.length<=i && this.semaphoreStopAudio==1)
+      {
+        await this.sleep(200)
+      }
+      if (i>=this.ttsArray.length && !this.ttsStart)  {        
+        break;
+      }
+    }
+    this.semaphoreStopAudio--
+    if (this.semaphoreStopAudio<0) {
+      this.semaphoreStopAudio=0
+    }
+    console.log("out ttsWait---------------------------")
   }
   findNextPunctuation(text: string, startIndex: number): number {
     const substring = text.substring(startIndex);
@@ -306,12 +360,7 @@ export class ConversationComponent {
 
 
 
-  async speak_aloud_response(i:number){  
-    const cleanText=this.back.cleanText( this.chat_history[i].msgClean)
-    
-    const response = await this.back.text_to_sound(cleanText);
-    this.prepareAudio(response)
-  }
+
 
   playAudio(audioUrl: string): void {
     // Stop the previous audio if it’s playing
@@ -319,23 +368,16 @@ export class ConversationComponent {
       this.audio.pause();
       this.audio.currentTime = 0; // Reset to the beginning
     }
-  
-    this.audio = new Audio(audioUrl);
-    this.audio.playbackRate = this.playbackSpeed;   
-    this.endAudio=false
-    this.audio.play(); 
-   /* this.audio.ontimeupdate = () => {
-      if (this.audio)
-      {
-        console.log("Audio is playing:", !this.audio.paused);
 
-      }
-    };*/
+    this.audio = new Audio(audioUrl);
+    this.audio.playbackRate = this.playbackSpeed;       
+    this.audio.play(); 
     
   }
   
   stopAudio(): void {
-    this.swStopAudio=true
+    if (this.semaphoreStopAudio>0)
+      this.semaphoreStopAudio=-1
     if (this.audio) {
       this.audio.pause();
       this.audio.currentTime = 0;
@@ -424,7 +466,6 @@ export class ConversationComponent {
   {
     return await this.back.context_send(labelContext,contextValue);
   }
-
 
   async toggleSidebar() {
     if (! this.isSidebarOpen)
