@@ -1,5 +1,7 @@
-from langchain_community.embeddings  import OpenAIEmbeddings
 from langchain_openai import ChatOpenAI,OpenAIEmbeddings
+from langchain_google_genai import ChatGoogleGenerativeAI
+
+
 from langchain.prompts import ChatPromptTemplate
 from langchain_core.messages import  HumanMessage, AIMessage
 from langchain_core.documents import Document
@@ -82,11 +84,20 @@ print("Initializing Robotito ...")
 print("--------------------------------")
 config = {"configurable": {"thread_id": "1"}}
 
-model = ChatOpenAI(model_name="gpt-4o",
+def configureOpenAI():
+  model = ChatOpenAI(model_name="gpt-4o",
                     presence_penalty=1.2,
                    streaming=True,
-                   temperature=0.7)
+                   temperature=0.8)
 
+model = ChatGoogleGenerativeAI(
+    model="gemini-2.0-flash",
+    temperature=.8,
+    streaming=True,
+    max_tokens=None,
+    timeout=None,
+    max_retries=2,  
+)
 embeddings = OpenAIEmbeddings( model="text-embedding-3-large")
 vector_store=None
 def configure_vector_store():
