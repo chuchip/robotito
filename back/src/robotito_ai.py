@@ -92,7 +92,7 @@ def configureOpenAI():
 
 model = ChatGoogleGenerativeAI(
     model="gemini-2.0-flash",
-    temperature=.8,
+    temperature=1.0,
     streaming=True,
     max_tokens=None,
     timeout=None,
