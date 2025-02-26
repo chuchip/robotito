@@ -330,7 +330,7 @@ export class ConversationComponent {
   }
   findNextPunctuation(text: string, startIndex: number): number {
     const p=text.indexOf('\n',startIndex)
-    console.log("Find carriage return: ",p)
+   // console.log("Find carriage return: ",p)
     return p;
     /*const substring = text.substring(startIndex);
     const match = substring.match(/[.,:?!]/);
@@ -555,9 +555,11 @@ export class ConversationComponent {
   @HostListener('document:keydown', ['$event'])
   handleKeydown(event: KeyboardEvent) {
     if (event.key === 'F2') {      
-      event.preventDefault(); // Prevent default browser behavior (e.g., renaming files)
+      event.preventDefault(); 
       this.toggleRecording()
-      //console.log('F2 key pressed!');
+    }    
+    if (event.key === 'Escape') {
+      this.stopAudio()
     }
   }
 }

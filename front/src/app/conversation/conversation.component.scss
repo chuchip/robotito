@@ -153,7 +153,7 @@ mat-checkbox .mat-checkbox-label {
   font-size: 1rem;
   color:blue;
 }
-.stop-button {
+.button-action {
   border: 1px solid rgb(130, 221, 135); /* Red border */
   border-radius: 4px; /* Rounded edges */
   padding: 2px 4px; /* Spacing inside button */
@@ -165,7 +165,7 @@ mat-checkbox .mat-checkbox-label {
   gap: 1px; /* Space between icon and text */
 }
 
-.stop-button:hover {
+.button-action:hover {
   background-color: rgb(216, 228, 196);
   color: white;
 }

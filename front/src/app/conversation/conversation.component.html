@@ -40,10 +40,10 @@
     <div class="spacer"></div>
     <!-- Input and controls -->
     <div class='input'>
-      <button class="stop-button" (click)="toggleSidebar()" matTooltip="Show Conversations list">
+      <button class="button-action" (click)="toggleSidebar()" matTooltip="Show Conversations list">
         <span class="material-icons">{{ isSidebarOpen ? 'close' : 'menu' }}</span>
       </button>
-      <button class="stop-button" (click)="clicksWindow=0; showLanguageOptions=!showLanguageOptions"   matTooltip="Show Language Options">
+      <button class="button-action" (click)="clicksWindow=0; showLanguageOptions=!showLanguageOptions"   matTooltip="Show Language Options">
           <span class="material-icons">settings</span>
       </button>    
 
@@ -54,14 +54,14 @@
           placeholder="Type and press Enter">
         </textarea>
       </span>
-      <button class="stop-button" (click)="speak_aloud(human_input.value)" matTooltip="Speak Input text (Alt+V)">
+      <button class="button-action" (click)="speak_aloud(human_input.value)" matTooltip="Speak Input text (Alt+V)">
         <span class="material-icons">volume_up</span>
       </button>
      
-      <button class="stop-button" (click)="toggleRecording()" matTooltip="Record voice (F2)">
+      <button class="button-action" (click)="toggleRecording()" matTooltip="Record voice (F2)">
         <span class="material-icons">{{ isRecording ? 'stop' : 'mic' }}</span>
       </button>
-      <button class="stop-button" (click)="stopAudio()" matTooltip="Stop Talk">
+      <button class="button-action" (click)="stopAudio()" matTooltip="Stop Talk">
         <span class="material-icons">stop</span>
       </button>
 
