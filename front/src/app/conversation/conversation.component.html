@@ -21,13 +21,13 @@
 
   <div class="container">
     <!-- Body of the page when I will show the conversation  -->
-    <div #conversation class="conversation">
-      <div class="line" *ngFor="let line_chat of chat_history; let i = index">
+    <div #conversation class="conversation" (mouseup)="getSelectedText()" (keyup)="getSelectedText()">
+      <div [ngClass]="line_chat.type=='H'? 'line-human':'line-robot'" class="line" *ngFor="let line_chat of chat_history; let i = index">
         <div class="buttons-conversation">
           <button (click)="speak_aloud_response(i)"> <span class="material-icons">volume_up</span></button>
           <span class="material-icons" style="color: blue">{{line_chat.type=='H'?"face":"smart_toy" }}</span>
         </div>
-        <span class="line-text">
+        <span [ngClass]="line_chat.type=='H'? 'line-text-human':'line-text-robot'">
           <span [innerHTML]="toHtml(line_chat.msg)"> </span>
         </span>
       </div>
@@ -39,7 +39,7 @@
     </div>
     <div class="spacer"></div>
     <!-- Input and controls -->
-    <div class='input'>
+    <div #input class='input' >
       <button class="button-action" (click)="toggleSidebar()" matTooltip="Show Conversations list">
         <span class="material-icons">{{ isSidebarOpen ? 'close' : 'menu' }}</span>
       </button>
@@ -48,7 +48,7 @@
       </button>    
 
       <span class="input_text">
-        <textarea #human_input class="expandable-input" #inputField [value]="inputText"
+        <textarea #human_input class="expandable-input"[value]="inputText"  (input)="adjustHeight(human_input)"
           (keydown)="this.inputText=human_input.value;onKeydownInput($event)"
           (keydown.enter)="this.inputText=human_input.value; sendData()" 
           placeholder="Type and press Enter">

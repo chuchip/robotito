@@ -119,7 +119,7 @@ def configureWhisper():
   model_id = "openai/whisper-large-v3-turbo"
 
   model_audio = AutoModelForSpeechSeq2Seq.from_pretrained(
-      model_id, torch_dtype=torch_dtype, low_cpu_mem_usage=False, use_safetensors=True
+      model_id, torch_dtype=torch_dtype, low_cpu_mem_usage=True, use_safetensors=True
   )
   model_audio.to(device)
 

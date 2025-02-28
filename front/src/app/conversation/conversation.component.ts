@@ -39,7 +39,8 @@ export class ConversationComponent {
   contextValue=""
   contexts:{"label":string,"context":string,"last_timestamp":string}[]=[]
   
-  @ViewChild('inputField') inputElement!: ElementRef;
+  @ViewChild('input') divInputElement!: ElementRef;
+  @ViewChild('humanInput') inputElement!: ElementRef;
   @ViewChild('context') contextElement!: ElementRef;
   @ViewChild('conversation') conversationElement!: ElementRef;
   @ViewChild('record_text') recordElement!: ElementRef;
@@ -349,7 +350,7 @@ export class ConversationComponent {
   }
   async speak_aloud(inputText:string){    
     if (inputText.trim()!='') {      
-      const response= await this.back.text_to_sound(this.back.cleanText(this.inputText));
+      const response= await this.back.text_to_sound(this.back.cleanText(inputText));
       this.prepareAudio(response)
     }
   }
@@ -558,8 +559,24 @@ export class ConversationComponent {
       event.preventDefault(); 
       this.toggleRecording()
     }    
+    if (event.key === 'F4') {      
+      event.preventDefault(); 
+      if (this.selectedText.trim()!='')
+        this.speak_aloud(this.selectedText);
+    }    
     if (event.key === 'Escape') {
       this.stopAudio()
     }
+  }
+  adjustHeight(textArea: HTMLTextAreaElement) {
+    textArea.style.height = 'auto'; // Reset height
+    textArea.style.height = textArea.scrollHeight + 'px'; // Set new height
+    this.divInputElement.nativeElement.style.height = (textArea.scrollHeight + 20) + 'px'; // Set new height
+  }
+  selectedText: string = '';
+  getSelectedText() {
+    const selection = window.getSelection();
+    this.selectedText = selection ? selection.toString().trim() : '';
+    console.log('Selected text:', this.selectedText);
   }
 }

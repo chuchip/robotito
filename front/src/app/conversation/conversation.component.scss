@@ -28,7 +28,7 @@
   overflow-y: auto;   /* Enables vertical scrolling */
   display: flex;
   flex-direction: column;
-  align-items: top;
+  align-items: baseline;
   //height: 100vh;
   margin-top: 5px;
   border: 2px solid #ccc;
@@ -38,7 +38,7 @@
   padding-right: 3px;
   border-radius: 8px;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
-  background-color: #f4f4f4;
+  background-color: #adb2b4;
   //margin-top: 5px;
 }
 
@@ -47,11 +47,21 @@
   display: flex;
   position: relative;  
   padding-top: 3px;
-  background: #f8f9fa;
+  
   border-radius: 8px;
   border: 2px solid #dddddd;
   box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.2); /* 3D effect */
   margin-bottom: 2px;
+}
+.line-robot {
+  max-width: 90%;
+  background: #dce3eb;
+  align-self: flex-end;
+}
+.line-human {
+  max-width: 90%;
+  background: #d0dacf;
+  align-self: flex-start;
 }
 .buttons-conversation
 {
@@ -62,19 +72,26 @@
   gap: 5px; /* Space between buttons */
   cursor: pointer;
 }
-.line-text {
+.line-text-human {
   margin-left: 15px;
   margin-top: -10px;
   margin-bottom: -5px; /* Push text down to avoid overlap */    
-  color: white;
+  font-size: 1rem;
+  line-height: 1.60rem;
+  font-family:'Google Sans,Helvetica Neue,sans-serif';
+  color: #333;  
+  word-wrap: break-word;
+}
+.line-text-robot {
+  margin-left: 15px;
+  margin-top: -10px;
+  margin-bottom: -5px; /* Push text down to avoid overlap */      
   font-size: 1rem;
   line-height: 1.60rem;
   font-family:'Google Sans,Helvetica Neue,sans-serif';
   color: #333;
-  //flex: 1;
   word-wrap: break-word;
 }
-
 
 .input
 {    
@@ -111,6 +128,10 @@
 .expandable-input {
   width: 98%;
   font-size: 1rem;  
+  resize: none; /* Disable manual resizing */
+  overflow: hidden;
+  border: none;
+  outline: none;
 }
 mat-checkbox {    
     margin: 0;  
