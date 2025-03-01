@@ -24,6 +24,9 @@ import { MatSliderModule } from '@angular/material/slider';
  * Conversation component
  */
 export class ConversationComponent {
+  textSpeakAloud=""
+  responseTextToSound: Response | null = null;
+  audioUrl = '';
   playbackSpeed=1
   semaphoreStopAudio:number=0
   private readonly backendUrl = 'http://localhost:5000'; 
@@ -349,32 +352,41 @@ export class ConversationComponent {
     }
   }
   async speak_aloud(inputText:string){    
-    if (inputText.trim()!='') {      
-      const response= await this.back.text_to_sound(this.back.cleanText(inputText));
-      this.prepareAudio(response)
+    if (inputText.trim()!='') {
+      
+      if (this.textSpeakAloud!=inputText ) {
+        this.textSpeakAloud=inputText
+        this.responseTextToSound= await this.back.text_to_sound(this.back.cleanText(inputText));
+      }  
+      else{
+        if (this.audio) {
+          this.audio.playbackRate = this.playbackSpeed;                 
+          this.audio.pause();
+          this.audio.currentTime = 0; 
+          this.audio.playbackRate = this.playbackSpeed;       
+          this.audio.play(); 
+        }
+      }
+      this.prepareAudio(this.responseTextToSound!)
     }
   }
 
   async prepareAudio(response:Response) {
+    
     if (!response.ok) {
       console.error('Error fetching audio:', response.statusText);
     }
   
     const audioBlob = await response.blob();
-    const audioUrl = URL.createObjectURL(audioBlob);   
+    this.audioUrl = URL.createObjectURL(audioBlob);   
     
-    this.playAudio(audioUrl);
-  }
-
-
-  playAudio(audioUrl: string): void {
-    // Stop the previous audio if it’s playing
+     // Stop the previous audio if it’s playing
     if (this.audio) {
       this.audio.pause();
       this.audio.currentTime = 0; // Reset to the beginning
     }
 
-    this.audio = new Audio(audioUrl);
+    this.audio = new Audio(this.audioUrl);
     this.audio.playbackRate = this.playbackSpeed;       
     this.audio.play(); 
     
