@@ -84,23 +84,26 @@ print("Initializing Robotito ...")
 print("--------------------------------")
 config = {"configurable": {"thread_id": "1"}}
 
-def configureOpenAI():
-  model = ChatOpenAI(model_name="gpt-4o",
+def configOpenAI():
+  model = ChatOpenAI(model_name="gpt-4.5-preview",
                     presence_penalty=1.2,
                    streaming=True,
                    temperature=0.8)
-
-model = ChatGoogleGenerativeAI(
+  return model
+def configGeminiAI():  
+  model = ChatGoogleGenerativeAI(
     model="gemini-2.0-flash",
     temperature=1.0,
     streaming=True,
     max_tokens=None,
     timeout=None,
     max_retries=2,  
-)
-embeddings = OpenAIEmbeddings( model="text-embedding-3-large")
+  )
+  return model
+
 vector_store=None
 def configure_vector_store():
+  embeddings = OpenAIEmbeddings( model="text-embedding-3-large")
   global vector_store
   vector_store = Chroma(
       collection_name="user1",
@@ -111,8 +114,7 @@ def configure_vector_store():
   ai={"model":model,"pipeline":pipeline,"embeddings":embeddings,"vector_store":vector_store,"text_splitter":text_splitter}  
 
 # Configure Whisper
-def configureWhisper():   
-  global pipe_whisper
+def configureWhisper():     
   device = "cuda:0" if torch.cuda.is_available() else "cpu"
   torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
 
@@ -133,8 +135,8 @@ def configureWhisper():
       torch_dtype=torch_dtype,
       device=device,
   )
+  return pipe_whisper
 chat_history=[]
 
-
-pipe_whisper=None
-configureWhisper()
+pipe_whisper=configureWhisper()
+model=configGeminiAI()

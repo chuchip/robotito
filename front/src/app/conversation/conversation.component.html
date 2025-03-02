@@ -31,9 +31,9 @@
           <span [innerHTML]="toHtml(line_chat.msg)"> </span>
         </span>
       </div>
-      <div *ngIf="responseMessage!=''"  class="line" >
-        <span class="line-text">
-          <span [innerHTML]="toHtml(responseMessage)"> </span>
+      <div *ngIf="responseMessage!=''"  class="line line-robot" >
+        <span class="line-text-robot">
+          <span [innerHTML]="toHtml(responseMessage)"></span>
         </span>
       </div>
     </div>
@@ -49,12 +49,12 @@
 
       <span class="input_text">
         <textarea #human_input class="expandable-input"[value]="inputText"  (input)="adjustHeight(human_input)"
-          (keydown)="this.inputText=human_input.value;onKeydownInput($event)"
+          (keydown)="speakOnF4($event,human_input.value); human_input.focus(); "
           (keydown.enter)="this.inputText=human_input.value; sendData()" 
           placeholder="Type and press Enter">
         </textarea>
       </span>
-      <button class="button-action" (click)="speak_aloud(human_input.value)" matTooltip="Speak Input text (Alt+V)">
+      <button class="button-action" (click)="speak_aloud(human_input.value)" matTooltip="Speak Input text (F4)">
         <span class="material-icons">volume_up</span>
       </button>
      
@@ -72,6 +72,7 @@
           class="material-icons">content_copy</span></button>
       <textarea #record_text [value]="sttText" style="width: 500px;"
         (keydown.enter)="copySttToInput(record_text.value,true)" 
+        (keydown)="speakOnF4($event,record_text.value);record_text.focus();"
         (keydown.esc)="focus_input()"></textarea>
     </div>
     

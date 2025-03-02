@@ -531,11 +531,10 @@ export class ConversationComponent {
   getFormattedDate(dateString: string): Date {
     return new Date(dateString);
   }  
-  onKeydownInput(event: KeyboardEvent) {      
-      if (event.altKey && event.key.toLowerCase() === 'v') {
-        event.preventDefault(); // Prevent default behavior if needed
-        console.log('ALT + V pressed!');
-        this.speak_aloud(this.inputText);
+  speakOnF4(event: KeyboardEvent, text: string) {      
+      if (event.key === 'F4') {        
+        event.preventDefault(); // Prevent default behavior if needed        
+        this.speak_aloud(text);
         this.inputElement.nativeElement.focus();   
       }      
   }
