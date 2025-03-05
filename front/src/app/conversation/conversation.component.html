@@ -28,12 +28,12 @@
           <span class="material-icons" style="color: blue">{{line_chat.type=='H'?"face":"smart_toy" }}</span>
         </div>
         <span [ngClass]="line_chat.type=='H'? 'line-text-human':'line-text-robot'">
-          <span [innerHTML]="toHtml(line_chat.msg)"> </span>
+          <span [innerHTML]="toHtml(line_chat.msg,line_chat.type)"> </span>
         </span>
       </div>
       <div *ngIf="responseMessage!=''"  class="line line-robot" >
         <span class="line-text-robot">
-          <span [innerHTML]="toHtml(responseMessage)"></span>
+          <span [innerHTML]="toHtml(responseMessage,'R')"></span>
         </span>
       </div>
     </div>

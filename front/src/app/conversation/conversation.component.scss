@@ -54,14 +54,17 @@
   margin-bottom: 2px;
 }
 .line-robot {
-  max-width: 90%;
+  max-width: 95%;
+  //width: 95%;
   background: #dce3eb;
   align-self: flex-end;
+  padding-right: 15px;
 }
 .line-human {
-  max-width: 90%;
+  max-width: 95%;
   background: #d0dacf;
   align-self: flex-start;
+  padding-right: 15px;
 }
 .buttons-conversation
 {

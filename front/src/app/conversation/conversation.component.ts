@@ -160,15 +160,14 @@ export class ConversationComponent {
 
   async sendData() {
     this.showRecord=false
-    
-    if (this.inputText.trim()!='') {
+    this.inputText=this.inputText.trim()
+    if (this.inputText!='') {
       this.chat_history.push({line:this.number_line, type: "H",msg: this.inputText.trim(),msgClean: this.inputText.trim()})
       this.isLoading=true
       this.responseMessage=""
-
       const response = await fetch(`${this.backendUrl}/send-question`, {
         method: 'POST',
-        body: JSON.stringify({ text: this.inputText.trim() }),
+        body: JSON.stringify({ text: this.inputText }),
         headers: { 'Content-Type': 'application/json' },
       });
       
@@ -193,10 +192,10 @@ export class ConversationComponent {
           
           this.responseMessage+= chunk;
           pFin=this.findNextPunctuation(this.responseMessage,pIni)
-          //console.log(`pIni: ${pIni} pfin: ${pFin} len: ${this.responseMessage.length} `)
           if (pFin!=-1) {
             txt+=this.responseMessage.substring(pIni,pFin)
-            if (txt.length>200){              
+            if (txt.length>200){            
+              setTimeout(() => this.scrollToBottom(), 0)  
               const cleanText=this.back.cleanText(txt)
               const response=await this.back.text_to_sound(cleanText)      
               this.ttsArray.push(response)
@@ -232,7 +231,7 @@ export class ConversationComponent {
       }  
       this.isLoading=false
       this.number_line++
-      const msg=await this.toHtml(this.responseMessage)
+      const msg=await this.toHtml(this.responseMessage,"R")
       if (this.conversationId=="")
       {
         var conversation=await this.back.initConversation( this.inputText);        
@@ -342,8 +341,12 @@ export class ConversationComponent {
     return match ? startIndex + match.index! : -1;*/
   }
 
-  toHtml(txt: string) {
-    const txt1=  marked(txt);    
+  toHtml(txt: string,type:string=""){
+    if (type!="R")
+    {
+      return "<p>"+txt.replace(/\n/g, '<br>')+"</p>";
+    }
+    const txt1=   marked(txt);    
     return txt1
   }
   scrollToBottom() {
