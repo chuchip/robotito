@@ -2,6 +2,7 @@ from quart import Blueprint,  request, jsonify,Response
 import persistence as db
 import robotito_ai as ai
 import api.context as context
+from flask_server import sessions
 conversation_bp = Blueprint('conversation', __name__)
 id_conversation = None
 user='default'

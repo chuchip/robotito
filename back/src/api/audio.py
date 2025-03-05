@@ -3,16 +3,15 @@ import os
 import persistence as db
 import robotito_ai as ai
 import soundfile as sf
-from kokoro import KPipeline
 import persistence
 from api.conversation import user
 import subprocess
 import numpy as np
-
+from flask_server import sessions,get_session
+from kokoro import KPipeline
 language='a'
 audio_bp = Blueprint('audio', __name__)
-kpipeline = KPipeline(lang_code=language) 
-voice_name="af_heart"
+
 
 @audio_bp.route('/stt', methods=['POST'])
 async def upload_audio():
@@ -74,12 +73,16 @@ async def tts():
 async def set_language(): 
   global voice_name,kpipeline,language
   data = await request.get_json()  # Get JSON data from the request body
-  
+  sessionId= request.headers.get('sessionId')  
+  session=get_session(sessionId)
   languageInput = data.get('language') 
   voice_name = data.get('voice') 
   print(language , voice_name)
   if languageInput != language:
     language=languageInput
     kpipeline = KPipeline(lang_code=language)
+    session['language']=language
+    session['voice_name']=voice_name   
+    session['kpipeline']=kpipeline
   persistence.update_language(user,languageInput,voice_name)
   return jsonify({'message': f'Voice changed to {voice_name}'})

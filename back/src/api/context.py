@@ -2,8 +2,7 @@ from quart import Blueprint,  request, jsonify
 import persistence as db
 
 context_bp = Blueprint('context', __name__)
-context_text="You are a robot designed to interact with non-technical people and we are having a friendly conversation."
-context_label="NEW"
+
 
 ## Work with context
 @context_bp.route('', methods=['POST'])

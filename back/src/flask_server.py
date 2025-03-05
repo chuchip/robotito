@@ -8,6 +8,7 @@ from api.context  import context_bp
 import api.context  as context
 from api.conversation import conversation_bp,user,id_conversation
 from langchain_core.messages import  AIMessage,HumanMessage
+from kokoro import KPipeline
 
 app = Quart(__name__)
 app=cors(app,allow_origin="*")  # Enable Cross-Origin Resource Sharing
@@ -18,11 +19,14 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 config= ai.config
 vd=False
+sessions=[]
 
 
+   
 async def generate(msg_graph):
   async for msg  in  ai.call_llm(msg_graph):
       yield msg
+
 
 @app.route('/send-question', methods=['POST'])
 async def send_question():    
@@ -58,6 +62,21 @@ def get_last_user():
   data=db.get_last_user()
   print("Last user: ",data)
   return jsonify(data)
+
+@app.route('/session/<string:session>', methods=['GET'])
+async def create_session(session):
+   sessions.append({"id":session,
+                    "chat_history": [],
+                    "context_text":"You are a robot designed to interact with non-technical people and we are having a friendly conversation." ,
+                    "context_label":"NEW",
+                    "language":"en",
+                    "voice_name":"af_heart",
+                    "kpipeline": KPipeline(lang_code="en") })
+def get_session(session_id):
+ session = next((s for s in sessions if s["id"] == session_id), None)
+ if session is None:
+    raise ValueError(f"Session {session_id} not found") 
+ return session
 
 app.register_blueprint(audio_bp, url_prefix='/audio')
 app.register_blueprint(context_bp, url_prefix='/context')
