@@ -24,6 +24,8 @@ import { MatSliderModule } from '@angular/material/slider';
  * Conversation component
  */
 export class ConversationComponent {
+  xPos = 0
+  yPos =0
   textSpeakAloud=""
   responseTextToSound: Response | null = null;
   audioUrl = '';
@@ -33,6 +35,7 @@ export class ConversationComponent {
   ttsArray:Response[]=[]
   ttsStart=false
   isSidebarOpen = false;
+  isSoundLoading=false
   clicksWindow=0;
   conversationHistory:{"id":string,"user":string,"label":string,
     "name":string,"initial_time": string,"final_date":string}[]=[];
@@ -355,11 +358,13 @@ export class ConversationComponent {
     }
   }
   async speak_aloud(inputText:string){    
+    this.showSoundLoading()
     if (inputText.trim()!='') {
       
       if (this.textSpeakAloud!=inputText ) {
         this.textSpeakAloud=inputText
         this.responseTextToSound= await this.back.text_to_sound(this.back.cleanText(inputText));
+        this.isSoundLoading=false
       }  
       else{
         if (this.audio) {
@@ -368,10 +373,11 @@ export class ConversationComponent {
           this.audio.currentTime = 0; 
           this.audio.playbackRate = this.playbackSpeed;       
           this.audio.play(); 
+          this.isSoundLoading=false
           return
         }
       }
-      this.prepareAudio(this.responseTextToSound!)
+      this.prepareAudio(this.responseTextToSound!)     
     }
   }
 
@@ -391,11 +397,22 @@ export class ConversationComponent {
     }
 
     this.audio = new Audio(this.audioUrl);
-    this.audio.playbackRate = this.playbackSpeed;       
-    this.audio.play(); 
-    
+    this.audio.playbackRate = this.playbackSpeed; 
+    this.isSoundLoading=false    
+    this.audio.play();     
   }
-  
+  showSoundLoading()
+  {    
+    const selection = window.getSelection();
+
+    if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        this.xPos = rect.left;
+        this.yPos = rect.top;
+    }
+    this.isSoundLoading=true  
+  }
   stopAudio(): void {
     if (this.semaphoreStopAudio>0)
       this.semaphoreStopAudio=-1
