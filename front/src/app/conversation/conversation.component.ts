@@ -43,7 +43,7 @@ export class ConversationComponent {
   contexts:{"label":string,"context":string,"last_timestamp":string}[]=[]
   
   @ViewChild('input') divInputElement!: ElementRef;
-  @ViewChild('humanInput') inputElement!: ElementRef;
+  @ViewChild('human_input') inputElement!: ElementRef;
   @ViewChild('context') contextElement!: ElementRef;
   @ViewChild('conversation') conversationElement!: ElementRef;
   @ViewChild('record_text') recordElement!: ElementRef;
@@ -368,6 +368,7 @@ export class ConversationComponent {
           this.audio.currentTime = 0; 
           this.audio.playbackRate = this.playbackSpeed;       
           this.audio.play(); 
+          return
         }
       }
       this.prepareAudio(this.responseTextToSound!)
@@ -533,7 +534,8 @@ export class ConversationComponent {
   }
   getFormattedDate(dateString: string): Date {
     return new Date(dateString);
-  }  
+  }
+
   speakOnF4(event: KeyboardEvent, text: string) {      
       if (event.key === 'F4') {        
         event.preventDefault(); // Prevent default behavior if needed        
@@ -569,11 +571,13 @@ export class ConversationComponent {
   }
   @HostListener('document:keydown', ['$event'])
   handleKeydown(event: KeyboardEvent) {
+    const activeElement = document.activeElement as HTMLElement;
+ 
     if (event.key === 'F2') {      
       event.preventDefault(); 
       this.toggleRecording()
     }    
-    if (event.key === 'F4') {      
+    if (event.key === 'F4'  && activeElement.tagName !== 'TEXTAREA') {      
       event.preventDefault(); 
       if (this.selectedText.trim()!='')
         this.speak_aloud(this.selectedText);
@@ -591,6 +595,5 @@ export class ConversationComponent {
   getSelectedText() {
     const selection = window.getSelection();
     this.selectedText = selection ? selection.toString().trim() : '';
-    console.log('Selected text:', this.selectedText);
   }
 }
