@@ -358,6 +358,7 @@ export class ConversationComponent {
     }
   }
   async speak_aloud(inputText:string){    
+    this.stopAudio()
     this.showSoundLoading()
     if (inputText.trim()!='') {
       
@@ -554,7 +555,8 @@ export class ConversationComponent {
   }
 
   speakOnF4(event: KeyboardEvent, text: string) {      
-      if (event.key === 'F4') {        
+      if (event.key === 'F4') { 
+        this.textSpeakAloud=""
         event.preventDefault(); // Prevent default behavior if needed        
         this.speak_aloud(text);
         this.inputElement.nativeElement.focus();   
@@ -596,6 +598,7 @@ export class ConversationComponent {
     }    
     if (event.key === 'F4'  && activeElement.tagName !== 'TEXTAREA') {      
       event.preventDefault(); 
+      this.textSpeakAloud=""
       if (this.selectedText.trim()!='')
         this.speak_aloud(this.selectedText);
     }    
