@@ -598,7 +598,7 @@ export class ConversationComponent {
     }    
     if (event.key === 'F4'  && activeElement.tagName !== 'TEXTAREA') {      
       event.preventDefault(); 
-      this.textSpeakAloud=""
+      // this.textSpeakAloud=""
       if (this.selectedText.trim()!='')
         this.speak_aloud(this.selectedText);
     }    
