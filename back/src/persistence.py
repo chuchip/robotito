@@ -80,9 +80,14 @@ def delete_context(user,label):
     connection.execute(sql,(label,user))
     connection.commit()
 
-def init_conversation(id ,user,msg,force=False):    
+def init_conversation(id ,user,msg,force=False):
+    label=msg
     if id is None or force:
-        
+        if len(msg.split())>15:
+            # Do a sumary of the message
+            resp=ai.model.invoke(f"Create a summary of less than 12 words from this sentence: '{msg}'")
+            msg=resp.content
+            print("Summary: ",msg)
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         random_uuid = uuid.uuid4()  # Generate a random UUID
         id = str(random_uuid)
@@ -90,7 +95,7 @@ def init_conversation(id ,user,msg,force=False):
         sql="""
                 insert into conversation (id,user,label,name,final_date) values (?,?,?,?,?)
             """
-        connection.execute(sql,(id,user,msg,msg,now))
+        connection.execute(sql,(id,user,label,msg,now))
         connection.commit()
     return id
 

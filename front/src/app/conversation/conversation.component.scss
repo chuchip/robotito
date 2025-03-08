@@ -10,13 +10,15 @@
   display: flex;
   flex-direction: row;
   height: 100vh;
+  
   transition: margin-left 0.3s ease;
 }
 .container {
-  flex: 2;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  height: 95vh;
+  height: 98vh;
+  width: 95vw;
   transition: margin-left 0.3s ease;
 }
 .spacer {
@@ -26,6 +28,7 @@
   max-height: 92%;  
   flex: 0 0 auto;
   overflow-y: auto;   /* Enables vertical scrolling */
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   align-items: baseline;
@@ -37,8 +40,8 @@
   padding-left: 3px;
   padding-right: 3px;
   border-radius: 8px;
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
-  background-color: #adb2b4;
+//  background-color: red;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);  
   //margin-top: 5px;
 }
 
@@ -47,21 +50,18 @@
   display: flex;
   position: relative;  
   padding-top: 3px;
-  
+  width: 95vw;
   border-radius: 8px;
   border: 2px solid #dddddd;
   box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.2); /* 3D effect */
   margin-bottom: 2px;
 }
 .line-robot {
-  max-width: 95%;
-  //width: 95%;
   background: #dce3eb;
   align-self: flex-end;
   padding-right: 15px;
 }
 .line-human {
-  max-width: 95%;
   background: #d0dacf;
   align-self: flex-start;
   padding-right: 15px;
