@@ -150,11 +150,12 @@ export class ConversationComponent {
       this.recordElement.nativeElement.focus();   
     }
   }
+
   async copySttToInput(text:string,pushEnter:boolean)
-  {
+  {    
     if (this.isRecording && pushEnter) 
     {
-      await this.stopRecording(false)
+      await this.stopRecording(false,false)
       text=this.sttText
     }
     this.inputText=text

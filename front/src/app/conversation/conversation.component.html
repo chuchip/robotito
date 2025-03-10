@@ -71,11 +71,11 @@
     </div>
     <!-- Output of record -->
     <div *ngIf="showRecord" class="output_record">
-      <button class="stop-btn" (click)="copySttToInput(record_text.value,false)"> <span
+      <button class="stop-btn" (click)="copySttToInput(sttText,false)"> <span
           class="material-icons">content_copy</span></button>
       <textarea #record_text  [(ngModel)]="sttText" style="width: 500px;"
-        (keydown.enter)="copySttToInput(record_text.value,true)" 
-        (keydown)="speakOnF4($event,record_text.value);record_text.focus();"
+        (keydown.enter)="copySttToInput(sttText,true)" 
+        (keydown)="speakOnF4($event,sttText);record_text.focus();"
         (keydown.esc)="focus_input();sttText=''"></textarea>
     </div>
     
