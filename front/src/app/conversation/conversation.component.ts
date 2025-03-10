@@ -11,10 +11,11 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { ChangeDetectorRef } from '@angular/core';
 import { MatSliderModule } from '@angular/material/slider';
+import { PersistenceService } from '../services/persistence.service';
 @Component({  
   selector: 'app-conversation',   
   imports: [CommonModule, MatTooltipModule, MatCheckboxModule,FormsModule,
-     MatButtonModule, MatIconModule, // Required for Angular Material animations
+     MatButtonModule, MatIconModule, 
     MatProgressSpinnerModule,MatSliderModule], // 
   templateUrl: './conversation.component.html',
   styleUrls: ['./conversation.component.scss']
@@ -94,12 +95,12 @@ export class ConversationComponent {
     { 'language':'e', label: 'em_santa' },    
   ]
 
-  constructor(public back: ApiBackService,private sound: SoundService,private cdr: ChangeDetectorRef) {
+  constructor(public back: ApiBackService,private sound: SoundService,public persistence: PersistenceService) {
     
     this.back.get_last_user()
       .then(response=> response.json())
       .then((data:any) => {        
-        this.back.user=data.user
+        this.persistence.user=data.user
         this.selectVoice=data.voice
         this.selectLanguage=data.language
         this.back.change_language(this.selectLanguage,this.selectVoice);
@@ -113,32 +114,36 @@ export class ConversationComponent {
         })
   }
 
-  async toggleRecording() {
+  async toggleRecording(shiftKey:boolean=true) {    
     if (this.isRecording) {     
-      this.stopRecording(this.swSendAudio)
+      this.stopRecording(this.swSendAudio,shiftKey)
     } else {
-      this.startRecording()
+      this.startRecording(shiftKey)
     }
     this.isRecording = !this.isRecording;
   }
   changeSpeed(event: any) {
     this.playbackSpeed =event.target.value;   
   }
-  async startRecording()
+  async startRecording(shiftKey:boolean=false)
   {
-    this.sttText="Recording audio ...."
+    if (shiftKey)
+      this.sttText=""
+    this.isLoading=true
     this.showRecord=true
     this.stopAudio()
     this.sound.startRecording();
     setTimeout(() => this.recordElement.nativeElement.focus() , 0)
     
   }
-  async stopRecording(swSendAudio:boolean)
+  async stopRecording(swSendAudio:boolean,shiftKey:boolean=true)
   {
-    this.sttText= await this.sound.stopRecording();      
+    const text= await this.sound.stopRecording();
+    this.sttText=(shiftKey?"":this.sttText)+" "+ text    
+    this.isLoading=false
     if (swSendAudio)
     {
-      this.inputText=this.sttText
+      this.inputText=  this.sttText      
       this.sendData()
     }
     else{
@@ -162,6 +167,7 @@ export class ConversationComponent {
   }
 
   async sendData() {
+    this.sttText = '';
     this.showRecord=false
     this.inputText=this.inputText.trim()
     if (this.inputText!='') {
@@ -425,6 +431,8 @@ export class ConversationComponent {
 
   focus_input()
   {
+    this.isRecording=false
+    this.isLoading=false
     this.showRecord=false
     setTimeout(() => {
       this.inputElement.nativeElement.focus();   
@@ -433,6 +441,9 @@ export class ConversationComponent {
 
   private async put_message( response:any )
   {
+    if (!response.ok) {
+      return
+    }
     const msg=await response.json()
     
     this.response_back=msg.message     
@@ -592,9 +603,9 @@ export class ConversationComponent {
   handleKeydown(event: KeyboardEvent) {
     const activeElement = document.activeElement as HTMLElement;
  
-    if (event.key === 'F2') {      
+    if (event.key === 'F2') {           
       event.preventDefault(); 
-      this.toggleRecording()
+      this.toggleRecording(event.shiftKey)
     }    
     if (event.key === 'F4'  && activeElement.tagName !== 'TEXTAREA') {      
       event.preventDefault(); 

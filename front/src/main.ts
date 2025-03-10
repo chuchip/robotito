@@ -1,10 +1,11 @@
 import { bootstrapApplication } from '@angular/platform-browser';
 
 import { AppComponent } from './app/app.component';
-import { provideHttpClient } from '@angular/common/http'; // Import provideHttpClient
+import { provideHttpClient,withInterceptors } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { importProvidersFrom } from '@angular/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { authInterceptor } from './app/interceptors/auth-interceptor.service';
 
 const appConfig = {
   providers: [
@@ -12,5 +13,8 @@ const appConfig = {
     provideAnimations(), importProvidersFrom(MatTooltipModule) // Add provideHttpClient here  
   ]
 };
-bootstrapApplication(AppComponent, appConfig)
-  .catch((err) => console.error(err));
+bootstrapApplication(AppComponent, {
+  providers: [
+    provideHttpClient(withInterceptors([authInterceptor]))
+  ]
+}).catch(err => console.error(err));

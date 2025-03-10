@@ -6,7 +6,7 @@
 </div>
 
 <div class="system" *ngIf="response_back!=''">{{response_back}}</div>
-<div class="page">
+<div class="page">  
   <div *ngIf="isSidebarOpen" class="sidebar">
     <button class="button-option button-clear"  (click)="clearConversation()" matTooltip="Clear conversation">
       <span class="material-icons">refresh</span>
@@ -76,7 +76,7 @@
       <textarea #record_text [value]="sttText" style="width: 500px;"
         (keydown.enter)="copySttToInput(record_text.value,true)" 
         (keydown)="speakOnF4($event,record_text.value);record_text.focus();"
-        (keydown.esc)="focus_input()"></textarea>
+        (keydown.esc)="focus_input();sttText=''"></textarea>
     </div>
     
     
@@ -109,7 +109,7 @@
               value="{{selectLanguageDesc}}" readonly> </span>
           Actual Voice: <span class="configuration_line_text"><input type="text" value="{{selectVoice}}" readonly>
           </span>
-          <span  class="name_user">User: {{back.user}} Conv: {{conversationId}}</span>
+          <span  class="name_user">User: {{persistence.user}} Conv: {{conversationId}}</span>
         </div>
       </div>      
       <div class="context">

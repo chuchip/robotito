@@ -50,7 +50,7 @@
   display: flex;
   position: relative;  
   padding-top: 3px;
-  width: 95vw;
+  max-width: 75vw;
   border-radius: 8px;
   border: 2px solid #dddddd;
   box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.2); /* 3D effect */
@@ -307,13 +307,10 @@ mat-checkbox .mat-checkbox-label {
   flex: 0 0 auto;
   overflow-y: auto;
   height: 88%;
-  max-width: 15%;
+  max-width: 22vw;
   background-color: #e2e9ec;
   color: rgb(6, 1, 17);  
   transition: width 0.3s ease;
-  padding-bottom: 0px;
-  padding-left: 3px;
-  padding-right: 3px;
   border-radius: 8px;
   box-shadow: 2px 2px 5px rgba(133, 20, 20, 0.2);
   padding: 1px;
