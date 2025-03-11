@@ -99,15 +99,25 @@ export class ConversationComponent {
     
     this.back.get_last_user()
       .then(response=> response.json())
-      .then((data:any) => {        
+      .then(async (data:any) => {        
         this.persistence.user=data.user
         this.selectVoice=data.voice
         this.selectLanguage=data.language
-        this.back.change_language(this.selectLanguage,this.selectVoice);
+        await this.back.change_language(this.selectLanguage,this.selectVoice);
         this.clearConversation()
-        this.list_context()
-        this.get_conversations_history()
-        this.setContext("NEW","") 
+        await this.list_context()
+        await this.get_conversations_history()
+        
+        if  (this.conversationHistory.length>0)
+        {
+          this.labelContext= this.conversationHistory[0].label
+          this.setTextContext(this.labelContext)
+          await this.setContext(this.labelContext,this.contextValue)                
+        }
+        else
+        {
+             this.setContext("NEW","") 
+        }
         this.chat_history.push({line:this.number_line, type: "R",msg: this.responseMessage,msgClean:this.responseMessage});
         this.responseMessage=""
         this.number_line++
@@ -150,7 +160,10 @@ export class ConversationComponent {
       this.recordElement.nativeElement.focus();   
     }
   }
-
+  playRecorded()
+  {
+    this.sound.playAudio();
+  }
   async copySttToInput(text:string,pushEnter:boolean)
   {    
     if (this.isRecording && pushEnter) 
@@ -530,7 +543,7 @@ export class ConversationComponent {
     const response=await this.back.conversation_user();
     this.conversationHistory=response.conversations;    
   }
-  
+
   async history_choose(id:string,context:string)
   {    
     this.isLoading=true

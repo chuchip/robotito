@@ -156,6 +156,18 @@ mat-checkbox .mat-checkbox-label {
   background-color: rgb(174, 180, 173); /* Optional: Set background */    
   padding: 3px;
 }
+.buttons_record
+{  
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.buttons_record button
+{
+  height: 20px;
+  margin-top: 3px;
+  margin-bottom: 5px;
+} 
 .output_record textarea
 {
   flex: 1;

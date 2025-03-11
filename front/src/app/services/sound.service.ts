@@ -8,6 +8,7 @@ export class SoundService {
   private mediaRecorder!: MediaRecorder;
   private audioChunks: Blob[] = [];
   private isRecording = false;
+  private audioUrl: string | null = null; // Property to store the audio URL
 
   constructor(private back: ApiBackService) { }
   async startRecording() {
@@ -34,6 +35,8 @@ export class SoundService {
         this.mediaRecorder.onstop = async () => {
           try {
             const message = await this.back.uploadAudio(this.audioChunks);
+            const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+            this.audioUrl = URL.createObjectURL(audioBlob); // Create an object URL for the audio
             this.audioChunks = [];
             resolve(message);
           } catch (error) {
@@ -47,5 +50,13 @@ export class SoundService {
         resolve('No active recording to stop');
       }
     });
+  }
+  playAudio() {
+    if (this.audioUrl) {
+      const audio = new Audio(this.audioUrl);
+      audio.play();
+    } else {
+      console.error('No audio available to play');
+    }
   }
 }

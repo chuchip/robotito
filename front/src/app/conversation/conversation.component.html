@@ -71,8 +71,12 @@
     </div>
     <!-- Output of record -->
     <div *ngIf="showRecord" class="output_record">
+      <span class="buttons_record">
       <button class="stop-btn" (click)="copySttToInput(sttText,false)"> <span
           class="material-icons">content_copy</span></button>
+      <button class="stop-btn" (click)="playRecorded()"> <span
+            class="material-icons">play_arrow</span></button>
+      </span>
       <textarea #record_text  [(ngModel)]="sttText" style="width: 500px;"
         (keydown.enter)="copySttToInput(sttText,true)" 
         (keydown)="speakOnF4($event,sttText);record_text.focus();"
