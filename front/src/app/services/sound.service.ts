@@ -9,7 +9,7 @@ export class SoundService {
   private audioChunks: Blob[] = [];
   private isRecording = false;
   private audioUrl: string | null = null; // Property to store the audio URL
-
+  private audio !: HTMLAudioElement;
   constructor(private back: ApiBackService) { }
   async startRecording() {
     try {
@@ -53,8 +53,12 @@ export class SoundService {
   }
   playAudio() {
     if (this.audioUrl) {
-      const audio = new Audio(this.audioUrl);
-      audio.play();
+      if (this.audio) {
+        this.audio.pause();
+      }
+      this.audio = new Audio(this.audioUrl);
+
+      this.audio.play();
     } else {
       console.error('No audio available to play');
     }
