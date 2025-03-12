@@ -77,13 +77,33 @@ export class ApiBackService {
   
  
  // Context
-  async context_send(label:string,context:string):  Promise<Response> {          
-    const response = await fetch(`${this.backendUrl}/context`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 'user': this.persistence.user,'label':label,'context':context }),
-    });    
-    return  response;
+  async context_send(label: string, context: string): Promise<any> {
+    const url = `${this.backendUrl}/context`;
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    });
+    const body = { user: this.persistence.user, label, context };
+
+    try {
+      return await firstValueFrom(this.http.post(url, body, { headers }));
+    } catch (error) {
+      console.error('context_send failed!:', error);
+      throw error;
+    }
+  }
+  async contextRemember_send(label: string, contextRemember: string): Promise<any> {
+    const url = `${this.backendUrl}/context/remember`;
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    });
+    const body = { user: this.persistence.user, label, contextRemember };
+
+    try {
+      return await firstValueFrom(this.http.post(url, body, { headers }));
+    } catch (error) {
+      console.error('context Remember_send failed!:', error);
+      throw error;
+    }
   }
   async context_get():  Promise<any> {   
     try {

@@ -1,6 +1,6 @@
 from quart import Blueprint,  request, jsonify
 import persistence as db
-
+import  robotito_ai as ai
 context_bp = Blueprint('context', __name__)
 context_text="You are a robot designed to interact with non-technical people and we are having a friendly conversation."
 context_label="NEW"
@@ -17,6 +17,16 @@ async def context_update():
   context_text=data['context']
   
   return jsonify({'message': f"Context updated successfully!. Update Context of: '{context_label}'", 'text': data['label']})
+
+@context_bp.route('remember', methods=['POST'])
+async def contextRemember_update():     
+  global context_text,context_label
+  data = await request.get_json()  # Get JSON data from the request body    
+
+  context_label=data['label']
+  ai.setContextRemember(data['contextRemember'])
+  
+  return jsonify({'message': f"Context Remember updated successfully!. Update Context of: '{context_label}'", 'text': data['label']})
 
 @context_bp.route('', methods=['DELETE'])
 async def context_delete(): 

@@ -129,5 +129,7 @@
         </div>
         <textarea #context class="context_textarea" (keydown.enter)="context_send($event)"
           (keydown.esc)="showLanguageOptions=false" [value]="contextValue" placeholder="Type an context..."></textarea>
+        <textarea #context_remember class="context_textarea" (keydown.enter)="contextRemember_send($event)"
+          (keydown.esc)="showLanguageOptions=false" [value]="contextRememberValue" placeholder="Type something the AI has to remember ..."></textarea>
       </div>
     </div>

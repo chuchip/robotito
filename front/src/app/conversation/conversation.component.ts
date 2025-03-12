@@ -44,6 +44,7 @@ export class ConversationComponent {
   labelContext:string=""
   isLoading=false;
   contextValue=""
+  contextRememberValue=""
   contexts:{"label":string,"context":string,"last_timestamp":string}[]=[]
   
   @ViewChild('input') divInputElement!: ElementRef;
@@ -184,6 +185,7 @@ export class ConversationComponent {
     this.sttText = '';
     this.showRecord=false
     this.inputText=this.inputText.trim()
+    this.stopAudio()
     if (this.inputText!='') {
       this.chat_history.push({line:this.number_line, type: "H",msg: this.inputText.trim(),msgClean: this.inputText.trim()})
       this.isLoading=true
@@ -441,6 +443,9 @@ export class ConversationComponent {
       this.audio.pause();
       this.audio.currentTime = 0;
     }
+    if (this.sound.audio) {
+      this.sound.audio.pause();
+    }
   }
 
   focus_input()
@@ -519,6 +524,23 @@ export class ConversationComponent {
       this.isLoading=true
       const response=await this.setContext(this.labelContext,
                 this.contextValue);
+      this.list_context()
+      this.selectContext=this.labelContext
+      this.isLoading=false
+      this.showLanguageOptions=false
+      this.put_message(response)
+    }
+  }
+  async contextRemember_send(event:any)    {
+    const textArea = event.target as HTMLTextAreaElement;
+    if (!textArea)
+      return;
+    this.contextRememberValue = textArea.value;
+  
+    if (this.contextRememberValue) {      
+      this.isLoading=true
+      const response=await this.back.contextRemember_send(this.labelContext,
+                this.contextRememberValue);
       this.list_context()
       this.selectContext=this.labelContext
       this.isLoading=false

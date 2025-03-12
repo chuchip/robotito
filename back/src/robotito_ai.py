@@ -12,8 +12,16 @@ import torch
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 import persistence as db
 
+contextRemember_text=""
+contextRemember_number=3
+
+def setContextRemember(text):
+  global contextRemember_text,contextRemember_number
+  contextRemember_text=text
+  contextRemember_number=3
 
 async def call_llm(state) :    
+    global contextRemember_text,contextRemember_number
     #print(f"call_llm: {state['messages']}")
     prompt = ChatPromptTemplate.from_messages( [
           ("system", "{system_msg}"),
@@ -21,13 +29,17 @@ async def call_llm(state) :
           ("placeholder","{msgs}"),
           ("user","{question}")
     ])
-    #print("Chat History: ",state['chat_history']) 
-    #print("retrieved_context: ",state['retrieved_context']) 
+    msg=state["messages"]
+    if contextRemember_text!="":      
+      if contextRemember_number%3==0:
+        msg+=f"Just a reminder: {contextRemember_text}" 
+        print("Remember: ",msg)
+      contextRemember_number+=1
     chat_prompt =  prompt.format_messages(
       system_msg=state['system_msg'],
       context=state['retrieved_context'], 
       msgs=state['chat_history'],
-      question=state["messages"]
+      question=msg
     )  
      
     #response = model.invoke(chat_prompt)    
@@ -104,7 +116,7 @@ def configGeminiAISync():
 def configGeminiAI(): 
   model = ChatGoogleGenerativeAI(
     model="gemini-2.0-flash",
-    temperature=1.0,
+    temperature=0.5,
     streaming=True,
     max_tokens=None,
     timeout=None,
@@ -151,3 +163,4 @@ chat_history=[]
 
 pipe_whisper=configureWhisper()
 model=configGeminiAI()
+#model=configOpenAI()

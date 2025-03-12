@@ -9,7 +9,7 @@ export class SoundService {
   private audioChunks: Blob[] = [];
   private isRecording = false;
   private audioUrl: string | null = null; // Property to store the audio URL
-  private audio !: HTMLAudioElement;
+  audio !: HTMLAudioElement;
   constructor(private back: ApiBackService) { }
   async startRecording() {
     try {
