@@ -41,6 +41,8 @@ async def conversation_init():
   id_conversation=db.init_conversation(None,data['user'],data['msg'])
   
   return jsonify({'message': f'Conversation saved on id {id_conversation} !', 'id': id_conversation})
+
+
 @conversation_bp.route('/user/<string:user>', methods=['GET'])
 def conversation_getUser(user): 
   print("GET All conversations of the user: ",user)

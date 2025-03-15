@@ -25,6 +25,7 @@ def init_db():
                            user TEXT, 
                            label TEXT,
                            context TEXT,
+                           remember TEXT,
                            last_time DATETIME DEFAULT CURRENT_TIMESTAMP,
                            PRIMARY KEY (user, label) 
                            ) """)
@@ -53,27 +54,28 @@ def get_last_user():
     row=data[0]
     result = {"user": row[0], "language": row[1], "voice": row[2]}
     return result
+
 def get_all_context(user):
-    query=connection.execute(f"""select label,context,last_time 
+    query=connection.execute(f"""select label,context,remember,last_time 
                              from context where user = ? order by last_time desc""",(user,))
     data=query.fetchall()
-    result = [{"label": row[0], "context": row[1], "last_time": row[2]} for row in data]
+    result = [{"label": row[0], "context": row[1], "contextRemember": row[2],"last_time": row[3]} for row in data]
     return result
 
-def save_context(user,label,context):
+def save_context(user,label,context,remember):
     sql=f"select * from context where label=? and user=?"    
     cursor=connection.execute(sql,(label,user))
     if cursor.fetchone() is  None:
         print(f"Insert context: {label}")
-        sql=f"INSERT INTO context (label,user,context) VALUES (?, ?, ?)"        
-        connection.execute(sql, (label,user,context))
+        sql=f"INSERT INTO context (label,user,context,remember) VALUES (?, ?, ?,?)"        
+        connection.execute(sql, (label,user,context,remember))
     else:
         print(f"Update context: {label}")
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        sql=f"""UPDATE context SET context = ?,last_time='{now}'
+        sql=f"""UPDATE context SET context = ?,remember= ?, last_time='{now}'
                            where label= ?  and user= ?
                            """    
-        connection.execute(sql,(context,label,user))
+        connection.execute(sql,(context,remember,label,user))
     connection.commit()
 def delete_context(user,label):
     sql=f"""delete from context where label=? and user=? """ 
@@ -119,7 +121,7 @@ def conversation_get_by_id(id):
     """
 
     data=connection.execute(sql,(id,))
-    result = [{"user": row[0], "label": row[1], "name": row[2],
+    result = [{"user": row[0], "labelContext": row[1], "name": row[2],
             "initial_time": row[3],"final_date":row[4],"type": row[5],"msg": row[6]} for row in data]
     
     return result
@@ -130,7 +132,7 @@ def conversation_get_list(user):
     """
 
     data=connection.execute(sql,(user,))
-    result = [{"id":row[0] , "user": row[1], "label": row[2], "name": row[3],
+    result = [{"id":row[0] , "user": row[1], "labelContext": row[2], "name": row[3],
             "initial_time": row[4],"final_date":row[5]} for row in data]
     
     return result

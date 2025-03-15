@@ -38,14 +38,14 @@ export class ConversationComponent {
   isSidebarOpen = false;
   isSoundLoading=false
   clicksWindow=0;
-  conversationHistory:{"id":string,"user":string,"label":string,
+  conversationHistory:{"id":string,"user":string,"labelContext":string,
     "name":string,"initial_time": string,"final_date":string}[]=[];
   conversationId=""
   labelContext:string=""
   isLoading=false;
   contextValue=""
   contextRememberValue=""
-  contexts:{"label":string,"context":string,"last_timestamp":string}[]=[]
+  contexts:{"label":string,"context":string,"contextRemember":string,"last_timestamp":string}[]=[]
   
   @ViewChild('input') divInputElement!: ElementRef;
   @ViewChild('human_input') inputElement!: ElementRef;
@@ -107,17 +107,16 @@ export class ConversationComponent {
         await this.back.change_language(this.selectLanguage,this.selectVoice);
         this.clearConversation()
         await this.list_context()
-        await this.get_conversations_history()
-        
+        await this.get_conversations_history()        
         if  (this.conversationHistory.length>0)
         {
-          this.labelContext= this.conversationHistory[0].label
+          this.labelContext= this.conversationHistory[0].labelContext
           this.setTextContext(this.labelContext)
-          await this.setContext(this.labelContext,this.contextValue)                
+          await this.back.context_send(this.labelContext,this.contextValue,this.contextRememberValue)
         }
         else
         {
-             this.setContext("NEW","") 
+          await this.back.context_send(this.labelContext,this.contextValue,this.contextRememberValue)
         }
         this.chat_history.push({line:this.number_line, type: "R",msg: this.responseMessage,msgClean:this.responseMessage});
         this.responseMessage=""
@@ -488,22 +487,26 @@ export class ConversationComponent {
   }
 
   setTextContext(label:string)  {   
-    this.labelContext=label=='NEW'?"":label;    
+    this.labelContext=label=='NEW'?"":label; 
+    debugger
     for (const c of  this.contexts)
     {
       if (c['label']==label)
       {
         this.contextValue=c['context']
+        this.contextRememberValue=c['contextRemember']
       }
     }
   }
   async list_context()
   {
     const response= await this.back.context_get();
+    debugger    
     this.contexts=response.contexts
-    const value={"label":"NEW","context":"","last_timestamp":""}
+    const value={"label":"NEW","context":"","contextRemember":"","last_timestamp":""}
     this.contexts.splice(0,0,value)
   }
+
   async context_delete(label:string)
   {
     this.isLoading=true
@@ -522,8 +525,8 @@ export class ConversationComponent {
   
     if (this.contextValue) {      
       this.isLoading=true
-      const response=await this.setContext(this.labelContext,
-                this.contextValue);
+      const response=await this.back.context_send(this.labelContext,
+                this.contextValue,this.contextRememberValue);
       this.list_context()
       this.selectContext=this.labelContext
       this.isLoading=false
@@ -535,23 +538,13 @@ export class ConversationComponent {
     const textArea = event.target as HTMLTextAreaElement;
     if (!textArea)
       return;
-    this.contextRememberValue = textArea.value;
-  
-    if (this.contextRememberValue) {      
-      this.isLoading=true
-      const response=await this.back.contextRemember_send(this.labelContext,
-                this.contextRememberValue);
-      this.list_context()
-      this.selectContext=this.labelContext
-      this.isLoading=false
-      this.showLanguageOptions=false
-      this.put_message(response)
-    }
+    this.contextRememberValue = textArea.value;           
+    this.isLoading=true
+    await this.back.context_send(this.labelContext,
+                this.contextValue, this.contextRememberValue);    
+    this.isLoading=false   
   }
-  async setContext(labelContext:string, contextValue:string)
-  {
-    return await this.back.context_send(labelContext,contextValue);
-  }
+
 
   async toggleSidebar() {
     if (! this.isSidebarOpen)
@@ -574,7 +567,8 @@ export class ConversationComponent {
     this.labelContext=context;   
     this.selectContext=context
     this.setTextContext(context)
-    const response_context=await this.setContext(this.labelContext,this.contextValue)      
+    await this.back.context_send(this.labelContext,
+      this.contextValue,this.contextRememberValue);  
     this.context_send(this.labelContext)
     this.chat_history.length=0
     var i=0;  

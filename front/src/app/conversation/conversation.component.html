@@ -14,7 +14,7 @@
     <div *ngFor="let line of conversationHistory; let i = index">
       <span class="sidebar_line" [matTooltipClass]="'custom-tooltip'"
         matTooltip="{{getFormattedDate(line.final_date) | date: 'dd/MMM HH:mm'}}"
-        (click)="history_choose(line.id,line.label)">
+        (click)="history_choose(line.id,line.labelContext)">
         <button (click)="history_delete(line.id)" matTooltip="Remove Conversation"> <span
             class="material-icons">remove_circle</span></button>
         {{ line.name}}
@@ -128,8 +128,8 @@
           <input #inputField type="text" [(ngModel)]="labelContext" placeholder="Choose a new Label">
         </div>
         <textarea #context class="context_textarea" (keydown.enter)="context_send($event)"
-          (keydown.esc)="showLanguageOptions=false" [value]="contextValue" placeholder="Type an context..."></textarea>
+          (keydown.esc)="showLanguageOptions=false" [(ngModel)]="contextValue" placeholder="Type an context..."></textarea>
         <textarea #context_remember class="context_textarea" (keydown.enter)="contextRemember_send($event)"
-          (keydown.esc)="showLanguageOptions=false" [value]="contextRememberValue" placeholder="Type something the AI has to remember ..."></textarea>
+          (keydown.esc)="showLanguageOptions=false" [(ngModel)]="contextRememberValue" placeholder="Type something the AI has to remember ..."></textarea>
       </div>
     </div>

@@ -13,12 +13,12 @@ from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 import persistence as db
 
 contextRemember_text=""
-contextRemember_number=3
+contextRemember_number=0
 
 def setContextRemember(text):
   global contextRemember_text,contextRemember_number
   contextRemember_text=text
-  contextRemember_number=3
+  contextRemember_number=0
 
 async def call_llm(state) :    
     global contextRemember_text,contextRemember_number
@@ -30,10 +30,11 @@ async def call_llm(state) :
           ("user","{question}")
     ])
     msg=state["messages"]
+    swRemember=False
     if contextRemember_text!="":      
-      if contextRemember_number%3==0:
-        msg+=f"Just a reminder: {contextRemember_text}" 
-        print("Remember: ",msg)
+      if contextRemember_number==0 or contextRemember_number%5==0:
+        msg+=f". {contextRemember_text}"
+        swRemember=True        
       contextRemember_number+=1
     chat_prompt =  prompt.format_messages(
       system_msg=state['system_msg'],
@@ -44,9 +45,10 @@ async def call_llm(state) :
      
     #response = model.invoke(chat_prompt)    
     
-    async for chunk in model.astream(chat_prompt):
-        #print(chunk.content, end="", flush=True)  # Stream response in real-time
-        yield  chunk.content  # 
+    async for chunk in model.astream(chat_prompt):        
+        yield  chunk.content
+    if swRemember:
+      yield "*"
 def save_msg(type,msg):
     if type=='R':
       chat_history.append(AIMessage(content=msg))
@@ -116,7 +118,7 @@ def configGeminiAISync():
 def configGeminiAI(): 
   model = ChatGoogleGenerativeAI(
     model="gemini-2.0-flash",
-    temperature=0.5,
+    temperature=0.7,
     streaming=True,
     max_tokens=None,
     timeout=None,
