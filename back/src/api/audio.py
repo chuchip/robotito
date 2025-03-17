@@ -28,8 +28,8 @@ async def upload_audio():
     # print("Upload folder ",current_app.config['UPLOAD_FOLDER'])
     filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], file.filename)
     await  file.save(filepath) 
-    # text = ai.pipe_whisper(filepath,return_timestamps=True)['text']
-    text = ai.testWhisper(filepath)
+    text = ai.getTextFromAudio(filepath)
+    
     # print(result)
     return jsonify({'message': 'Audio uploaded successfully!', 'text': text})
 

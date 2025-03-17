@@ -172,6 +172,7 @@ def configureWhisper():
       device=device,
   )
   return pipe_whisper
+
 def testWhisper(audio_file):
   audio_file= open(audio_file, "rb")
   transcription = client.audio.transcriptions.create(
