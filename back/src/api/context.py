@@ -2,31 +2,20 @@ from quart import Blueprint,  request, jsonify
 import persistence as db
 import  robotito_ai as ai
 context_bp = Blueprint('context', __name__)
-context_text="You are a robot designed to interact with non-technical people and we are having a friendly conversation."
-context_label="NEW"
+
 
 ## Work with context/
 @context_bp.route('', methods=['POST'])
-async def context_update():     
-  global context_text,context_label
+async def context_update():       
   data = await request.get_json()  # Get JSON data from the request body    
 
-  context_label=data['label']
-  if context_label != 'NEW' and context_label !='':
-    db.save_context(user=data['user'],label=context_label,context=data['context'],remember=data['contextRemember'])  
-  context_text=data['context']
-  
-  return jsonify({'message': f"Context updated successfully!. Update Context of: '{context_label}'", 'text': data['label']})
-
-@context_bp.route('remember', methods=['POST'])
-async def contextRemember_update():     
-  global context_text,context_label
-  data = await request.get_json()  # Get JSON data from the request body    
-
-  context_label=data['label']
+  ai.setContextLabel(data['label'])
+  if data['label'] != 'NEW' and data['label'] !='':
+    db.save_context(user=data['user'],label=data['label'],context=data['context'],remember=data['contextRemember'])  
+  ai.setContextText=data['context']
   ai.setContextRemember(data['contextRemember'])
-  db.save_context(user=data['user'],label=context_label,context=data['context'],remember=data['contextRemember'])
-  return jsonify({'message': f"Context Remember updated successfully!. Update Context of: '{context_label}'", 'text': data['label']})
+  return jsonify({'message': f"Context updated successfully!. Update Context of: '{data['label']}'", 'text': data['context']})
+
 
 @context_bp.route('', methods=['DELETE'])
 async def context_delete(): 

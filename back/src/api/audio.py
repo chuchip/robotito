@@ -24,13 +24,14 @@ async def upload_audio():
     file = f['audio']
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
-    print(file)
-    print("Upload folder ",current_app.config['UPLOAD_FOLDER'])
+    # print(file)
+    # print("Upload folder ",current_app.config['UPLOAD_FOLDER'])
     filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], file.filename)
     await  file.save(filepath) 
-    result = ai.pipe_whisper(filepath,return_timestamps=True)
-    print(result)
-    return jsonify({'message': 'Audio uploaded successfully!', 'text': result["text"]})
+    # text = ai.pipe_whisper(filepath,return_timestamps=True)['text']
+    text = ai.testWhisper(filepath)
+    # print(result)
+    return jsonify({'message': 'Audio uploaded successfully!', 'text': text})
 
 @audio_bp.route('/tts', methods=['POST'])
 async def tts():     

@@ -8,17 +8,28 @@ from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
 
+from openai import OpenAI
 import torch
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 import persistence as db
 
 contextRemember_text=""
 contextRemember_number=0
+context_text="You are a robot designed to interact with non-technical people and we are having a friendly conversation."
+context_label="NEW"
 
 def setContextRemember(text):
   global contextRemember_text,contextRemember_number
   contextRemember_text=text
   contextRemember_number=0
+
+def setContextText(text):
+  global context_text
+  context_text=text
+  
+def setContextLabel(label):
+  global context_label
+  context_label=label
 
 async def call_llm(state) :    
     global contextRemember_text,contextRemember_number
@@ -161,8 +172,20 @@ def configureWhisper():
       device=device,
   )
   return pipe_whisper
+def testWhisper(audio_file):
+  audio_file= open(audio_file, "rb")
+  transcription = client.audio.transcriptions.create(
+      model="whisper-1", 
+      file=audio_file
+  )
+  return transcription.text
+def getTextFromAudio(filepath):
+   text = pipe_whisper(filepath,return_timestamps=True)['text']
+   return text
+   #text = ai.testWhisper(filepath)
+  
 chat_history=[]
-
+client = OpenAI()
 pipe_whisper=configureWhisper()
 model=configGeminiAI()
 #model=configOpenAI()

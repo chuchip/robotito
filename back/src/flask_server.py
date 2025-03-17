@@ -31,14 +31,14 @@ async def send_question():
     if question is None:
        return ""
     #id = db.init_conversation(id,user,question)
-    print(f"In send-question {question} \ncontext: {context.context_text}")
+    print(f"In send-question {question} \ncontext: {ai.context_text}")
     msg_graph={"messages": question,"chat_history": ai.chat_history,
                "retrieved_context": [],
                "response":"",
                 "vd": vd,
-                "system_msg": context.context_text,
+                "system_msg": ai.context_text,
                 "id": id,
-                "label": context.context_label,
+                "label": ai.context_label,
                 "user":user }     
     
     return Response(generate(msg_graph), mimetype='text/plain')

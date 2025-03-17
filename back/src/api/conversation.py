@@ -27,9 +27,9 @@ async def conversation_saveId(id):
   global id_conversation
   
   data = await request.get_json()
-  print(f"Save  conversation with id: {id}{data} ")
+  # print(f"Save  conversation with id: {id}{data} ")
   id_conversation=db.conversation_save(id,data['user'],
-                                       context.context_label,data['type'] ,data['msg'])
+                                       ai.context_label,data['type'] ,data['msg'])
 
   return jsonify({'message': f'Conversation saved on id {id_conversation} !', 'id': id_conversation})
 @conversation_bp.route('/init', methods=['POST'])
@@ -37,7 +37,7 @@ async def conversation_init():
   global id_conversation
   
   data = await request.get_json()
-  print(f"Save  conversation with id: {id}{data} ")
+  # print(f"Save  conversation with id: {id}{data} ")
   id_conversation=db.init_conversation(None,data['user'],data['msg'])
   
   return jsonify({'message': f'Conversation saved on id {id_conversation} !', 'id': id_conversation})
