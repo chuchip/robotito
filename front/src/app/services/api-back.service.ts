@@ -2,6 +2,7 @@ import { Injectable, resolveForwardRef } from '@angular/core';
 import { HttpClient,HttpHeaders  } from '@angular/common/http';
 import { firstValueFrom,Observable } from 'rxjs';
 import { PersistenceService } from './persistence.service';
+import { contextDTO } from '../model/context.dto';
 @Injectable({
   providedIn: 'root'
 })
@@ -52,38 +53,35 @@ export class ApiBackService {
 
     return  await firstValueFrom(this.http.post(url, body, { headers }));
   }
-/*
-  async change_language(language:string,voice: string) : Promise<Response>  {  
-    const response = await fetch(`${this.backendUrl}/audio/language`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ language: language,voice: voice }),
-    });
-   return response
+
+async clear_conversation(): Promise<any> {
+  try {
+    return await firstValueFrom(this.http.get(`${this.backendUrl}/clear`));
+  } catch (error) {
+    console.error('clear_conversation failed!:', error);
+    throw error;
   }
-*/
-  async clear_conversation() : Promise<Response>  {  
-    const response = await fetch(`${this.backendUrl}/clear`, {
-      method: 'GET'      
-    });
-   return response
+}
+
+async get_last_user(): Promise<any> {
+  try {
+    return await firstValueFrom(this.http.get(`${this.backendUrl}/last_user`));
+  } catch (error) {
+    console.error('get_last_user failed!:', error);
+    throw error;
   }
-  async get_last_user() : Promise<Response>  {  
-    const response = await fetch(`${this.backendUrl}/last_user`, {
-      method: 'GET'      
-    });
-   return response
-  }
+}
   
  
  // Context
-  async context_send(label: string, context: string,rememberContext:string): Promise<any> {
+  async context_send(context:contextDTO): Promise<any> {
     const url = `${this.backendUrl}/context`;
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
     });
-    const body = { user: this.persistence.user, label: label,
-       context: context, contextRemember: rememberContext };
+    const body = { user: this.persistence.user, label: context.label, context: context.text, 
+      contextRemember: context.remember };
+       
 
     try {
       return await firstValueFrom(this.http.post(url, body, { headers }));
@@ -101,13 +99,19 @@ export class ApiBackService {
       throw error;
     }
   }
-  async context_delete(label:string):  Promise<Response> {          
-    const response = await fetch(`${this.backendUrl}/context`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 'user': this.persistence.user,'label':label }),
-    });    
-    return  response;
+  async context_delete(label: string): Promise<any> {
+    const url = `${this.backendUrl}/context`;
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    });
+    const body = { user: this.persistence.user, label: label };
+  
+    try {
+      return await firstValueFrom(this.http.request('delete', url, { headers, body }));
+    } catch (error) {
+      console.error('context_delete failed!:', error);
+      throw error;
+    }
   }
 
   async conversation_user():  Promise<any> {    
@@ -146,13 +150,19 @@ export class ApiBackService {
       throw error;
     }      
   }
-  async conversation_delete_by_id(id:string):  Promise<Response> {    
-    const response = await fetch(`${this.backendUrl}/conversation/id/${id}`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' }    
-    });    
-    return  response;
-  }    
+  async conversation_delete_by_id(id: string): Promise<any> {
+    const url = `${this.backendUrl}/conversation/id/${id}`;
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    });
+  
+    try {
+      return await firstValueFrom(this.http.request('delete', url, { headers }));
+    } catch (error) {
+      console.error('conversation_delete_by_id failed!:', error);
+      throw error;
+    }
+  } 
   cleanText(text:string):string
   {   
     const caracteresPermitidos = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ñáéíóúüÁÉÍÓÚÜ .,\'"?!¿:-\n';

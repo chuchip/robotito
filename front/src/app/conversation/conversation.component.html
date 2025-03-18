@@ -125,11 +125,11 @@
           </select>
           <button (click)="context_delete(selectComponent.value)" matTooltip="Remove Context"> <span
               class="material-icons">remove_circle</span></button>
-          <input #inputField type="text" [(ngModel)]="labelContext" placeholder="Choose a new Label">
+          <input #inputField type="text" [(ngModel)]="this.context.label" placeholder="Choose a new Label">
         </div>
         <textarea #context class="context_textarea" (keydown.enter)="context_send($event)"
-          (keydown.esc)="showLanguageOptions=false" [(ngModel)]="contextValue" placeholder="Type an context..."></textarea>
+          (keydown.esc)="showLanguageOptions=false" [(ngModel)]="this.context.text" placeholder="Type an context..."></textarea>
         <textarea #context_remember class="context_textarea" (keydown.enter)="contextRemember_send($event)"
-          (keydown.esc)="showLanguageOptions=false" [(ngModel)]="contextRememberValue" placeholder="Type something the AI has to remember ..."></textarea>
+          (keydown.esc)="showLanguageOptions=false" [(ngModel)]="this.context.remember" placeholder="Type something the AI has to remember ..."></textarea>
       </div>
     </div>

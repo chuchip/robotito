@@ -5,7 +5,7 @@ import robotito_ai as ai
 import persistence as db
 from api.audio  import audio_bp
 from api.context  import context_bp
-from api.conversation import conversation_bp,user,id_conversation
+from api.conversation import conversation_bp,user
 from langchain_core.messages import  AIMessage,HumanMessage
 from robotito_ai import context
 app = Quart(__name__)

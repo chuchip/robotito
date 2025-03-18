@@ -12,6 +12,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { ChangeDetectorRef } from '@angular/core';
 import { MatSliderModule } from '@angular/material/slider';
 import { PersistenceService } from '../services/persistence.service';
+import { contextDTO } from '../model/context.dto';
+import { conversationHistoryDTO } from '../model/conversationHistory.dto';
 @Component({  
   selector: 'app-conversation',   
   imports: [CommonModule, MatTooltipModule, MatCheckboxModule,FormsModule,
@@ -39,13 +41,11 @@ export class ConversationComponent {
   isSidebarOpen = false;
   isSoundLoading=false
   clicksWindow=0;
-  conversationHistory:{"id":string,"user":string,"labelContext":string,
-    "name":string,"initial_time": string,"final_date":string}[]=[];
+  conversationHistory:conversationHistoryDTO[]=[];
   conversationId=""
-  labelContext:string=""
   isLoading=false;
-  contextValue=""
-  contextRememberValue=""
+  context:contextDTO={label:"",text:"",remember:""}
+ 
   contexts:{"label":string,"context":string,"contextRemember":string,"last_timestamp":string}[]=[]
   
   @ViewChild('input') divInputElement!: ElementRef;
@@ -99,8 +99,7 @@ export class ConversationComponent {
 
   constructor(public back: ApiBackService,private sound: SoundService,public persistence: PersistenceService) {
     
-    this.back.get_last_user()
-      .then(response=> response.json())
+    this.back.get_last_user()     
       .then(async (data:any) => {        
         this.persistence.user=data.user
         this.selectVoice=data.voice
@@ -113,13 +112,13 @@ export class ConversationComponent {
         await this.get_conversations_history()        
         if  (this.conversationHistory.length>0)
         {
-          this.labelContext= this.conversationHistory[0].labelContext
-          this.setTextContext(this.labelContext)
-          await this.back.context_send(this.labelContext,this.contextValue,this.contextRememberValue)
+          this.context.label= this.conversationHistory[0].labelContext
+          this.setTextContext(this.context.label)
+          await this.back.context_send(this.context)
         }
         else
         {
-          await this.back.context_send(this.labelContext,this.contextValue,this.contextRememberValue)
+          await this.back.context_send(this.context)
         }
         this.chat_history.push({line:this.number_line, type: "R",msg: this.responseMessage,msgClean:this.responseMessage});
         this.responseMessage=""
@@ -490,13 +489,13 @@ export class ConversationComponent {
   }
 
   setTextContext(label:string)  {   
-    this.labelContext=label=='NEW'?"":label;     
+    this.context.label=label=='NEW'?"":label;     
     for (const c of  this.contexts)
     {
       if (c['label']==label)
       {
-        this.contextValue=c['context']
-        this.contextRememberValue=c['contextRemember']
+        this.context.text=c['context']
+        this.context.remember=c['contextRemember']
       }
     }
   }
@@ -515,21 +514,21 @@ export class ConversationComponent {
     this.list_context()
     this.isLoading=false
     this.put_message(response)
-    this.contextValue=""
-    this.labelContext=""
+    this.context.text=""
+    this.context.label=""
+    this.context.remember=""
   }
   async context_send(event:any)    {
     const textArea = event.target as HTMLTextAreaElement;
     if (!textArea)
       return;
-    this.contextValue = textArea.value;
+    this.context.text = textArea.value;
   
-    if (this.contextValue) {      
+    if (this.context.text) {      
       this.isLoading=true
-      const response=await this.back.context_send(this.labelContext,
-                this.contextValue,this.contextRememberValue);
+      const response=await this.back.context_send(this.context);
       this.list_context()
-      this.selectContext=this.labelContext
+      this.selectContext=this.context.label
       this.isLoading=false
       this.showLanguageOptions=false
       this.put_message(response)
@@ -539,10 +538,9 @@ export class ConversationComponent {
     const textArea = event.target as HTMLTextAreaElement;
     if (!textArea)
       return;
-    this.contextRememberValue = textArea.value;           
+    this.context.text = textArea.value;           
     this.isLoading=true
-    await this.back.context_send(this.labelContext,
-                this.contextValue, this.contextRememberValue);    
+    await this.back.context_send(this.context);    
     this.isLoading=false   
   }
 
@@ -565,12 +563,11 @@ export class ConversationComponent {
     this.isLoading=true
     this.conversationId=id
     const response=await this.back.conversation_by_id(id);
-    this.labelContext=context;   
+    this.context.label=context;   
     this.selectContext=context
     this.setTextContext(context)
-    await this.back.context_send(this.labelContext,
-      this.contextValue,this.contextRememberValue);  
-    this.context_send(this.labelContext)
+    this.context_send(this.context.label)
+    await this.back.context_send(this.context);
     this.chat_history.length=0
     var i=0;  
     for (const c of response.conversation)

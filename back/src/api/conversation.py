@@ -52,3 +52,14 @@ def conversation_getUser(user):
   data = db.conversation_get_list(user)
   
   return jsonify({'message': f'Conversations of user {user}!', 'conversations': data})
+
+@conversation_bp.route('/history/<string:id>', methods=['GET'])
+def current_history(id): 
+  history=[]
+ 
+  return jsonify({
+      'message': f'History of conversation id: {id}',
+      'history': [{'content': msg.content, 'type': msg.type} for msg in ai.chat_history]
+  })
+
+

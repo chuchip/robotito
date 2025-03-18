@@ -9,10 +9,13 @@ from api.conversation import user
 import subprocess
 import numpy as np
 
-language='a'
 audio_bp = Blueprint('audio', __name__)
-kpipeline = KPipeline(lang_code=language) 
-voice_name="af_heart"
+class AudioData:
+    language='a'
+    kpipeline = KPipeline(lang_code=language) 
+    voice_name="af_heart"
+
+audioData=AudioData()
 
 @audio_bp.route('/stt', methods=['POST'])
 async def upload_audio():
@@ -41,9 +44,9 @@ async def tts():
     if text=='':
         return Response(None, mimetype='audio/webm')  
     #print(f"In tts {text}")
-    generator = kpipeline(
+    generator = audioData.kpipeline(
             text, 
-            voice= voice_name,
+            voice= audioData.voice_name,
             speed=1, split_pattern=r'\n+'
         )    
     
@@ -73,14 +76,13 @@ async def tts():
 
 @audio_bp.route('/language', methods=['POST'])
 async def set_language(): 
-  global voice_name,kpipeline,language
   data = await request.get_json()  # Get JSON data from the request body
   
   languageInput = data.get('language') 
-  voice_name = data.get('voice') 
-  print(language , voice_name)
-  if languageInput != language:
-    language=languageInput
-    kpipeline = KPipeline(lang_code=language)
-  persistence.update_language(user,languageInput,voice_name)
-  return jsonify({'message': f'Voice changed to {voice_name}'})
+  audioData.voice_name = data.get('voice') 
+  
+  if languageInput != audioData.language:
+    audioData.language=languageInput
+    audioData.kpipeline = KPipeline(lang_code=languageInput)
+  persistence.update_language(user,languageInput,audioData.voice_name)
+  return jsonify({'message': f'Voice changed to {audioData.voice_name} and language to {audioData.language}!'})

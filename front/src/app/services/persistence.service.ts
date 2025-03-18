@@ -6,6 +6,7 @@ import { Injectable } from '@angular/core';
 export class PersistenceService {
   public user: string='default'
   labelContext=""
+  
   uuid:string = '';
 
   constructor() {
