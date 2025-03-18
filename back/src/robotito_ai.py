@@ -13,26 +13,34 @@ import torch
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 import persistence as db
 
-contextRemember_text=""
-contextRemember_number=0
-context_text="You are a robot designed to interact with non-technical people and we are having a friendly conversation."
-context_label="NEW"
+class context:
+  remember_text=""
+  remember_number=0
+  remember_each=5
+  text="You are a robot designed to interact with non-technical people and we are having a friendly conversation."
+  label="NEW"
+  def setRememberText(self,text):
+    self.remember_text=text
+    self.remember_number=0
+  def setText(self,text):
+    self.text=text
+  def setLabel(self,label):
+    self.label=label 
+  def getText(self):
+    return self.text
+  def getLabel(self):
+    return self.label 
+  def getRememberText(self):
+    return self.remember_text
+  def getRememberNumber(self):
+    return self.remember_number
+  def incrementRememberNumber(self):
+    self.remember_number+=1
+  def hasToRemember(self):
+    return self.remember_number%self.remember_each==0 or self.remember_number==0
+context = context()
 
-def setContextRemember(text):
-  global contextRemember_text,contextRemember_number
-  contextRemember_text=text
-  contextRemember_number=0
-
-def setContextText(text):
-  global context_text
-  context_text=text
-  
-def setContextLabel(label):
-  global context_label
-  context_label=label
-
-async def call_llm(state) :    
-    global contextRemember_text,contextRemember_number
+async def call_llm(state) :       
     #print(f"call_llm: {state['messages']}")
     prompt = ChatPromptTemplate.from_messages( [
           ("system", "{system_msg}"),
@@ -42,11 +50,11 @@ async def call_llm(state) :
     ])
     msg=state["messages"]
     swRemember=False
-    if contextRemember_text!="":      
-      if contextRemember_number==0 or contextRemember_number%5==0:
-        msg+=f". {contextRemember_text}"
+    if context.getRememberText()!="":      
+      if context.hasToRemember():
+        msg+=f". {context.getRememberText()}"
         swRemember=True        
-      contextRemember_number+=1
+      context.incrementRememberNumber()
     chat_prompt =  prompt.format_messages(
       system_msg=state['system_msg'],
       context=state['retrieved_context'], 

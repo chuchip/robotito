@@ -21,13 +21,13 @@ def init_db():
     # Create table to create context
     cursor=connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='context'" )
     if cursor.fetchone() is  None:
-        connection.execute("""CREATE TABLE context (                           
+        connection.execute("""CREATE TABLE context ( 
+                           id INTEGER PRIMARY KEY AUTOINCREMENT,                          
                            user TEXT, 
                            label TEXT,
                            context TEXT,
                            remember TEXT,
-                           last_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-                           PRIMARY KEY (user, label) 
+                           last_time DATETIME DEFAULT CURRENT_TIMESTAMP                           
                            ) """)
         connection.commit()
     # Create tables to save conversations
@@ -56,10 +56,10 @@ def get_last_user():
     return result
 
 def get_all_context(user):
-    query=connection.execute(f"""select label,context,remember,last_time 
+    query=connection.execute(f"""select label,context,remember,last_time,id
                              from context where user = ? order by last_time desc""",(user,))
     data=query.fetchall()
-    result = [{"label": row[0], "context": row[1], "contextRemember": row[2],"last_time": row[3]} for row in data]
+    result = [{"label": row[0], "context": row[1], "contextRemember": row[2],"last_time": row[3],"id":row[4]} for row in data]
     return result
 
 def save_context(user,label,context,remember):
@@ -81,7 +81,10 @@ def delete_context(user,label):
     sql=f"""delete from context where label=? and user=? """ 
     connection.execute(sql,(label,user))
     connection.commit()
-
+def delete_context_by_id(id):
+    sql=f"delete from context where id=? " 
+    connection.execute(sql,(id))
+    connection.commit()
 def init_conversation(id ,user,msg,force=False):
     label=msg
     if id is None or force:

@@ -25,6 +25,7 @@ import { PersistenceService } from '../services/persistence.service';
  * Conversation component
  */
 export class ConversationComponent {
+  selectedText: string = '';
   xPos = 0
   yPos =0
   textSpeakAloud=""
@@ -104,6 +105,8 @@ export class ConversationComponent {
         this.persistence.user=data.user
         this.selectVoice=data.voice
         this.selectLanguage=data.language
+        this.selectLanguageDesc=this.getDescriptionLanguage(this.selectLanguage)
+        this.selectVoice=data.voice
         await this.back.change_language(this.selectLanguage,this.selectVoice);
         this.clearConversation()
         await this.list_context()
@@ -487,8 +490,7 @@ export class ConversationComponent {
   }
 
   setTextContext(label:string)  {   
-    this.labelContext=label=='NEW'?"":label; 
-    debugger
+    this.labelContext=label=='NEW'?"":label;     
     for (const c of  this.contexts)
     {
       if (c['label']==label)
@@ -500,8 +502,7 @@ export class ConversationComponent {
   }
   async list_context()
   {
-    const response= await this.back.context_get();
-    debugger    
+    const response= await this.back.context_get();    
     this.contexts=response.contexts
     const value={"label":"NEW","context":"","contextRemember":"","last_timestamp":""}
     this.contexts.splice(0,0,value)
@@ -652,7 +653,7 @@ export class ConversationComponent {
     textArea.style.height = textArea.scrollHeight + 'px'; // Set new height
     this.divInputElement.nativeElement.style.height = (textArea.scrollHeight + 20) + 'px'; // Set new height
   }
-  selectedText: string = '';
+  
   getSelectedText() {
     const selection = window.getSelection();
     this.selectedText = selection ? selection.toString().trim() : '';

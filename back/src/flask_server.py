@@ -5,10 +5,9 @@ import robotito_ai as ai
 import persistence as db
 from api.audio  import audio_bp
 from api.context  import context_bp
-import api.context  as context
 from api.conversation import conversation_bp,user,id_conversation
 from langchain_core.messages import  AIMessage,HumanMessage
-
+from robotito_ai import context
 app = Quart(__name__)
 app=cors(app,allow_origin="*")  # Enable Cross-Origin Resource Sharing
 
@@ -31,14 +30,13 @@ async def send_question():
     if question is None:
        return ""
     #id = db.init_conversation(id,user,question)
-    print(f"In send-question {question} \ncontext: {ai.context_text}")
     msg_graph={"messages": question,"chat_history": ai.chat_history,
                "retrieved_context": [],
                "response":"",
                 "vd": vd,
-                "system_msg": ai.context_text,
+                "system_msg": context.getText(),
                 "id": id,
-                "label": ai.context_label,
+                "label": context.getLabel(),
                 "user":user }     
     
     return Response(generate(msg_graph), mimetype='text/plain')
