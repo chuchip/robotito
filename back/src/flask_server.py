@@ -8,6 +8,7 @@ from api.context  import context_bp
 from api.conversation import conversation_bp,user
 from langchain_core.messages import  AIMessage,HumanMessage
 from robotito_ai import context
+from memory import memoryDTO
 app = Quart(__name__)
 app=cors(app,allow_origin="*")  # Enable Cross-Origin Resource Sharing
 
@@ -43,20 +44,21 @@ async def send_question():
 
 
 @app.route('/clear', methods=['GET'])
-def clear(): 
-  global id
+def clear():   
   print("Clear conversation")
-  id = None
+  uuid= request.headers.get('X-Request-ID')
+  memory.append(memoryDTO(uuid))
   ai.chat_history =[]
   return jsonify({'message': 'Conversation cleared'})
 
 @app.route('/last_user', methods=['GET'])
-def get_last_user(): 
-  global user
+def get_last_user():   
   data=db.get_last_user()
   print("Last user: ",data)
   return jsonify(data)
 
+
+memory=[]
 app.register_blueprint(audio_bp, url_prefix='/audio')
 app.register_blueprint(context_bp, url_prefix='/context')
 app.register_blueprint(conversation_bp, url_prefix='/conversation')

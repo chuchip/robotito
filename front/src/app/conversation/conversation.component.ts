@@ -527,7 +527,7 @@ export class ConversationComponent {
     if (this.context.text) {      
       this.isLoading=true
       const response=await this.back.context_send(this.context);
-      this.list_context()
+      await this.list_context()
       this.selectContext=this.context.label
       this.isLoading=false
       this.showLanguageOptions=false
@@ -538,10 +538,18 @@ export class ConversationComponent {
     const textArea = event.target as HTMLTextAreaElement;
     if (!textArea)
       return;
-    this.context.text = textArea.value;           
+    
+    this.context.remember = textArea.value;
     this.isLoading=true
-    await this.back.context_send(this.context);    
-    this.isLoading=false   
+    await this.back.context_send(this.context); 
+    await this.list_context()
+    this.selectContext=this.context.label
+    this.isLoading=false 
+    this.response_back="Changed text to remember"
+    setTimeout(() => {
+      this.response_back = ''; 
+    }, 3000);
+    
   }
 
 
