@@ -1,14 +1,14 @@
 from quart import Blueprint,  request, jsonify
 import persistence as db
 import  robotito_ai as ai
-from robotito_ai import context
+import memory
 context_bp = Blueprint('context', __name__)
 
 ## Work with context/
 @context_bp.route('', methods=['POST'])
 async def context_update():       
   data = await request.get_json()  # Get JSON data from the request body    
-
+  context = memory.getMemory(request.headers.get("uuid")).getContext()  
   context.setLabel(data['label'])
   if data['label'] != 'NEW' and data['label'] !='':
     db.save_context(user=data['user'],label=data['label'],context=data['context'],remember=data['contextRemember'])  
@@ -16,9 +16,8 @@ async def context_update():
   context.setRememberText(data['contextRemember'])
   return jsonify({'message': f"Context updated successfully!. Update Context of: '{data['label']}'", 'text': data['context']})
 
-
 @context_bp.route('', methods=['DELETE'])
-async def context_delete(): 
+async def context_delete():  
   data = await request.get_json()  # Get JSON data from the request body    
   print("Deleted  Context: ",data['label'])
   db.delete_context(user=data['user'],label=data['label'])  
@@ -37,7 +36,8 @@ def context_get(user):
   data = db.get_all_context(user)  
   return jsonify({'message': 'Context updated successfully!', 'contexts': data})
 
-@context_bp.route('/current/<string:user>', methods=['GET'])
-def context_current_get(user): 
+@context_bp.route('/current', methods=['GET'])
+def context_current_get(): 
   print("GET Current Context ")  
+  context = memory.getMemory(request.headers.get("uuid")).getContext()
   return jsonify(context.__dict__)

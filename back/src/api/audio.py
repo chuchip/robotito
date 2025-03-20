@@ -5,17 +5,12 @@ import robotito_ai as ai
 import soundfile as sf
 from kokoro import KPipeline
 import persistence
-from api.conversation import user
 import subprocess
 import numpy as np
+import memory
 
 audio_bp = Blueprint('audio', __name__)
-class AudioData:
-    language='a'
-    kpipeline = KPipeline(lang_code=language) 
-    voice_name="af_heart"
 
-audioData=AudioData()
 
 @audio_bp.route('/stt', methods=['POST'])
 async def upload_audio():
@@ -39,8 +34,9 @@ async def upload_audio():
 @audio_bp.route('/tts', methods=['POST'])
 async def tts():     
     data = await request.get_json()  # Get JSON data from the request body
-    text = data.get('text') 
-    user = data.get('user') 
+    text = data.get('text')
+    uuid=request.headers.get("uuid")
+    audioData=memory.getMemory(uuid).getAudioData()
     if text=='':
         return Response(None, mimetype='audio/webm')  
     #print(f"In tts {text}")
@@ -55,8 +51,8 @@ async def tts():
             total = audio
         else:
             total=np.concatenate((total, audio), axis=0)
-    wav_file= f"audio/{user}-tts.wav"
-    webm_file=f"audio/{user}-tts.webm"
+    wav_file= f"audio/{uuid}-tts.wav"
+    webm_file=f"audio/{uuid}-tts.webm"
     sf.write(wav_file, total, 24000)
     command = [
     'ffmpeg',"-y",
@@ -77,7 +73,9 @@ async def tts():
 @audio_bp.route('/language', methods=['POST'])
 async def set_language(): 
   data = await request.get_json()  # Get JSON data from the request body
-  
+  uuid=request.headers.get("uuid")
+  audioData=memory.getMemory(uuid).getAudioData()
+  user=memory.getMemory(uuid).getUser()
   languageInput = data.get('language') 
   audioData.voice_name = data.get('voice') 
   

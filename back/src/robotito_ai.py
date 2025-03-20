@@ -12,43 +12,21 @@ from openai import OpenAI
 import torch
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 import persistence as db
+import memory
 
-class context:
-  remember_text=""
-  remember_number=0
-  remember_each=5
-  text="You are a robot designed to interact with non-technical people and we are having a friendly conversation."
-  label="NEW"
-  def setRememberText(self,text):
-    self.remember_text=text
-    self.remember_number=0
-  def setText(self,text):
-    self.text=text
-  def setLabel(self,label):
-    self.label=label 
-  def getText(self):
-    return self.text
-  def getLabel(self):
-    return self.label 
-  def getRememberText(self):
-    return self.remember_text
-  def getRememberNumber(self):
-    return self.remember_number
-  def incrementRememberNumber(self):
-    self.remember_number+=1
-  def hasToRemember(self):
-    return self.remember_number%self.remember_each==0 or self.remember_number==0
-context = context()
 
 async def call_llm(state) :       
     #print(f"call_llm: {state['messages']}")
+    memoryData=memory.getMemory(state['uuid'])
+    context = memoryData.getContext()
+    chat_history=memoryData.getChatHistory()
     prompt = ChatPromptTemplate.from_messages( [
           ("system", "{system_msg}"),
           ("system", "Here is some background information to help answer user queries:\n{context}"),
           ("placeholder","{msgs}"),
           ("user","{question}")
     ])
-    msg=state["messages"]
+    msg=state["message"]
     swRemember=False
     if context.getRememberText()!="":      
       if context.hasToRemember():
@@ -56,9 +34,9 @@ async def call_llm(state) :
         swRemember=True        
       context.incrementRememberNumber()
     chat_prompt =  prompt.format_messages(
-      system_msg=state['system_msg'],
-      context=state['retrieved_context'], 
-      msgs=state['chat_history'],
+      system_msg=context.getText(),
+      context=[], 
+      msgs=chat_history,
       question=msg
     )  
      
@@ -68,12 +46,14 @@ async def call_llm(state) :
         yield  chunk.content
     if swRemember:
       yield "*"
-def save_msg(type,msg):
+def save_msg(uuid,type,msg):
+    chat_history = memory.getMemory(uuid).getChatHistory()
     if type=='R':
       chat_history.append(AIMessage(content=msg))
     else:
       chat_history.append(HumanMessage(content=msg))
-def restore_history(jsonHistory):
+def restore_history(uuid,jsonHistory):
+  chat_history = memory.getMemory(uuid).getChatHistory()
   chat_history.clear()
   for line in jsonHistory:
     if line['type']=='R':
@@ -193,7 +173,6 @@ def getTextFromAudio(filepath):
    return text
    #text = ai.testWhisper(filepath)
   
-chat_history=[]
 client = OpenAI()
 pipe_whisper=configureWhisper()
 model=configGeminiAI()

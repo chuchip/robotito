@@ -99,14 +99,15 @@ export class ConversationComponent {
 
   constructor(public back: ApiBackService,private sound: SoundService,public persistence: PersistenceService) {
     
-    this.back.get_last_user()     
+    this.back.getLastUser()     
       .then(async (data:any) => {        
         this.persistence.user=data.user
         this.selectVoice=data.voice
         this.selectLanguage=data.language
         this.selectLanguageDesc=this.getDescriptionLanguage(this.selectLanguage)
         this.selectVoice=data.voice
-        await this.back.change_language(this.selectLanguage,this.selectVoice);
+        await this.back.clearConversation()
+        await this.back.changeLanguage(this.selectLanguage,this.selectVoice);
         this.clearConversation()
         await this.list_context()
         await this.get_conversations_history()        
@@ -114,11 +115,11 @@ export class ConversationComponent {
         {
           this.context.label= this.conversationHistory[0].labelContext
           this.setTextContext(this.context.label)
-          await this.back.context_send(this.context)
+          await this.back.contextSend(this.context)
         }
         else
         {
-          await this.back.context_send(this.context)
+          await this.back.contextSend(this.context)
         }
         this.chat_history.push({line:this.number_line, type: "R",msg: this.responseMessage,msgClean:this.responseMessage});
         this.responseMessage=""
@@ -193,8 +194,8 @@ export class ConversationComponent {
       this.responseMessage=""
       const response = await fetch(`${this.backendUrl}/send-question`, {
         method: 'POST',
-        body: JSON.stringify({ text: this.inputText }),
-        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: this.inputText}),
+        headers: { 'Content-Type': 'application/json','uuid': this.persistence.uuid },
       });
       
       const reader = response.body?.getReader();
@@ -477,7 +478,7 @@ export class ConversationComponent {
     this.number_line=0  
     this.conversationId=""
     this.showLanguageOptions=false
-    const response=await this.back.clear_conversation();
+    const response=await this.back.clearConversation();
     this.put_message(response)
   }
 
@@ -501,7 +502,7 @@ export class ConversationComponent {
   }
   async list_context()
   {
-    const response= await this.back.context_get();    
+    const response= await this.back.contextGet();    
     this.contexts=response.contexts
     const value={"label":"NEW","context":"","contextRemember":"","last_timestamp":""}
     this.contexts.splice(0,0,value)
@@ -526,7 +527,7 @@ export class ConversationComponent {
   
     if (this.context.text) {      
       this.isLoading=true
-      const response=await this.back.context_send(this.context);
+      const response=await this.back.contextSend(this.context);
       await this.list_context()
       this.selectContext=this.context.label
       this.isLoading=false
@@ -541,7 +542,7 @@ export class ConversationComponent {
     
     this.context.remember = textArea.value;
     this.isLoading=true
-    await this.back.context_send(this.context); 
+    await this.back.contextSend(this.context); 
     await this.list_context()
     this.selectContext=this.context.label
     this.isLoading=false 
@@ -575,7 +576,7 @@ export class ConversationComponent {
     this.selectContext=context
     this.setTextContext(context)
     this.context_send(this.context.label)
-    await this.back.context_send(this.context);
+    await this.back.contextSend(this.context);
     this.chat_history.length=0
     var i=0;  
     for (const c of response.conversation)
@@ -613,7 +614,7 @@ export class ConversationComponent {
     if (this.selectVoice=='')
       return;
     this.isLoading=true
-    const response= await this.back.change_language(this.selectLanguage,this.selectVoice);    
+    const response= await this.back.changeLanguage(this.selectLanguage,this.selectVoice);    
     this.put_message(response)   
     this.selectLanguageDesc=this.getDescriptionLanguage((this.selectLanguage))
     this.isLoading=false

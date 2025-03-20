@@ -42,7 +42,7 @@ export class ApiBackService {
      
     });
   }
-  async change_language(language: string, voice: string): Promise<any> {
+  async changeLanguage(language: string, voice: string): Promise<any> {
     const url = `${this.backendUrl}/audio/language`;
 
     const headers = new HttpHeaders({
@@ -54,7 +54,7 @@ export class ApiBackService {
     return  await firstValueFrom(this.http.post(url, body, { headers }));
   }
 
-async clear_conversation(): Promise<any> {
+async clearConversation(): Promise<any> {
   try {
     return await firstValueFrom(this.http.get(`${this.backendUrl}/clear`));
   } catch (error) {
@@ -63,7 +63,7 @@ async clear_conversation(): Promise<any> {
   }
 }
 
-async get_last_user(): Promise<any> {
+async getLastUser(): Promise<any> {
   try {
     return await firstValueFrom(this.http.get(`${this.backendUrl}/last_user`));
   } catch (error) {
@@ -74,7 +74,7 @@ async get_last_user(): Promise<any> {
   
  
  // Context
-  async context_send(context:contextDTO): Promise<any> {
+  async contextSend(context:contextDTO): Promise<any> {
     const url = `${this.backendUrl}/context`;
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
@@ -91,7 +91,7 @@ async get_last_user(): Promise<any> {
     }
   }
   
-  async context_get():  Promise<any> {   
+  async contextGet():  Promise<any> {   
     try {
       return await firstValueFrom(this.http.get(`${this.backendUrl}/context/user/${this.persistence.user}`));
     } catch (error) {

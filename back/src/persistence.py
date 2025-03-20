@@ -105,10 +105,10 @@ def init_conversation(id ,user,msg,force=False):
     return id
 
 # Conversation
-def conversation_save(id ,user, label,type,msg):
+def conversation_save(uuid,id ,user, label,type,msg):
     if id=='X':
         id=init_conversation(None,user,msg,True)
-    ai.save_msg(type,msg)
+    ai.save_msg(uuid,type,msg)
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     sql="update conversation set final_date = ?, label=? where id = ? "
     connection.execute(sql,(now,label,id))

@@ -5,10 +5,9 @@ import robotito_ai as ai
 import persistence as db
 from api.audio  import audio_bp
 from api.context  import context_bp
-from api.conversation import conversation_bp,user
+from api.conversation import conversation_bp
 from langchain_core.messages import  AIMessage,HumanMessage
-from robotito_ai import context
-from memory import memoryDTO
+import memory
 app = Quart(__name__)
 app=cors(app,allow_origin="*")  # Enable Cross-Origin Resource Sharing
 
@@ -26,19 +25,14 @@ async def generate(msg_graph):
 
 @app.route('/send-question', methods=['POST'])
 async def send_question():    
+    uuid=request.headers.get("uuid")
     data = await request.get_json()  # Get JSON data from the request body
     question =  data.get('text')
     if question is None:
        return ""
     #id = db.init_conversation(id,user,question)
-    msg_graph={"messages": question,"chat_history": ai.chat_history,
-               "retrieved_context": [],
-               "response":"",
-                "vd": vd,
-                "system_msg": context.getText(),
-                "id": id,
-                "label": context.getLabel(),
-                "user":user }     
+    msg_graph={"message": question,               
+                "uuid": uuid}     
     
     return Response(generate(msg_graph), mimetype='text/plain')
 
@@ -46,9 +40,10 @@ async def send_question():
 @app.route('/clear', methods=['GET'])
 def clear():   
   print("Clear conversation")
-  uuid= request.headers.get('X-Request-ID')
-  memory.append(memoryDTO(uuid))
-  ai.chat_history =[]
+  uuid=request.headers.get("uuid")
+  
+  memory.memoryData.append(memory.memoryDTO(uuid))
+  
   return jsonify({'message': 'Conversation cleared'})
 
 @app.route('/last_user', methods=['GET'])
@@ -58,7 +53,6 @@ def get_last_user():
   return jsonify(data)
 
 
-memory=[]
 app.register_blueprint(audio_bp, url_prefix='/audio')
 app.register_blueprint(context_bp, url_prefix='/context')
 app.register_blueprint(conversation_bp, url_prefix='/conversation')
