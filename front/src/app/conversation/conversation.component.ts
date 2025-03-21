@@ -9,11 +9,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { marked } from 'marked';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
-import { ChangeDetectorRef } from '@angular/core';
 import { MatSliderModule } from '@angular/material/slider';
 import { PersistenceService } from '../services/persistence.service';
 import { contextDTO } from '../model/context.dto';
 import { conversationHistoryDTO } from '../model/conversationHistory.dto';
+import { Router } from '@angular/router';
 @Component({  
   selector: 'app-conversation',   
   imports: [CommonModule, MatTooltipModule, MatCheckboxModule,FormsModule,
@@ -97,8 +97,11 @@ export class ConversationComponent {
     { 'language':'e', label: 'em_santa' },    
   ]
 
-  constructor(public back: ApiBackService,private sound: SoundService,public persistence: PersistenceService) {
-    
+  constructor(private router: Router,public back: ApiBackService,private sound: SoundService,public persistence: PersistenceService) {
+    if (persistence.user=='')
+    {
+       this.router.navigate(['/login']); 
+    }
     this.back.getLastUser()     
       .then(async (data:any) => {        
         this.persistence.user=data.user

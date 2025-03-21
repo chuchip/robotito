@@ -4,9 +4,9 @@ import { Injectable } from '@angular/core';
   providedIn: 'root'
 })
 export class PersistenceService {
-  public user: string='default'
-  labelContext=""
-  
+  public user: string=''
+  public password: string=''
+  labelContext=""  
   uuid:string = '';
 
   constructor() {
