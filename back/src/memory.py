@@ -32,11 +32,21 @@ class AudioData:
 
 class memoryDTO:
     def __init__(self, uuid):
-        self.user="default"
+        self.user=None
+        self.session=None
         self.uuid=uuid
         self.chat_history =[]
         self.context=Context()
         self.audioData=AudioData()
+    def getSession(self):
+       return self.session
+    def setSession(self,session):
+       if session is None:
+          self.user=None
+          self.session=None
+          return
+       self.user=session.getUser()
+       self.session=session
     def getUser(self):
         return self.user
     def setUser(self,user):
@@ -59,12 +69,31 @@ class memoryDTO:
         self.context=Context()   
     def getUuid(self):    
         return self.uuid
-    
+
+class Session:
+   def __init__(self,user,uuid):
+      self.user=user
+      self.uuid=uuid
+   def getUser(self):
+      return self.user
+   def getUUID(self):            
+      return self.uuid
+   
 def getMemory(uuid):
     for mem in memoryData:
         if mem.getUuid()==uuid:
             return mem
     return None
+# This is a memory cache for sessions
+def getSessionFromUUID(uuid):
+  for session in sessions:
+     if session.uuid==uuid:
+        return session
+  return None
 
+# Save in  memory cache a session
+def saveSession(user,uuid):
+  sessions.append( Session(user,uuid))
 
 memoryData=[]
+sessions=[]

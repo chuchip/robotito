@@ -113,7 +113,9 @@
               value="{{selectLanguageDesc}}" readonly> </span>
           Actual Voice: <span class="configuration_line_text"><input type="text" value="{{selectVoice}}" readonly>
           </span>
-          <span  class="name_user">User: {{persistence.user}} <br> UUID: {{this.persistence.uuid}}</span>
+          <br/>
+          <span  class="name_user">User: {{persistence.getUser()}}  <button (click)="login()" matTooltip="Login"> <span
+            class="material-icons">login</span></button>  UUID: {{this.persistence.uuid}}</span>
         </div>
       </div>      
       <div class="context">

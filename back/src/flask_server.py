@@ -6,6 +6,7 @@ import persistence as db
 from api.audio  import audio_bp
 from api.context  import context_bp
 from api.conversation import conversation_bp
+from api.security import security_bp
 from langchain_core.messages import  AIMessage,HumanMessage
 import memory
 app = Quart(__name__)
@@ -44,11 +45,12 @@ def clear():
   
   memory.memoryData.append(memory.memoryDTO(uuid))
   
-  return jsonify({'message': 'Conversation cleared'})
+  return jsonify({'message': f'Conversation with UUID: {uuid} cleared'})
 
 @app.route('/last_user', methods=['GET'])
-def get_last_user():   
-  data=db.get_last_user()
+def get_last_user():
+  mem = memory.getMemory(request.headers.get("uuid"))
+  data=db.get_last_user(mem)
   print("Last user: ",data)
   return jsonify(data)
 
@@ -56,7 +58,7 @@ def get_last_user():
 app.register_blueprint(audio_bp, url_prefix='/audio')
 app.register_blueprint(context_bp, url_prefix='/context')
 app.register_blueprint(conversation_bp, url_prefix='/conversation')
-
+app.register_blueprint(security_bp, url_prefix='/security')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -1,11 +1,9 @@
-import { Injectable, resolveForwardRef } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient,HttpHeaders  } from '@angular/common/http';
 import { firstValueFrom,Observable } from 'rxjs';
 import { PersistenceService } from './persistence.service';
 import { contextDTO } from '../model/context.dto';
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable()
 export class ApiBackService {
   labelContext=""
   
@@ -16,12 +14,20 @@ export class ApiBackService {
   async text_to_sound(inputText:string) : Promise<Response>  {  
     const response = await fetch(`${this.backendUrl}/audio/tts`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'uuid': this.persistence.uuid },
-      body: JSON.stringify({ text: inputText,user:this.persistence.user }),
+      headers: { 'Content-Type': 'application/json', 'uuid': this.persistence.uuid, "Authorization": this.persistence.getAuthorization() },
+      body: JSON.stringify({ text: inputText,user:this.persistence.getUser() }),
     });
    return response
   }
- 
+  async sendQuestion(text:string):  Promise<Response> 
+  {
+    const response= await fetch(`${this.backendUrl}/send-question`, {
+      method: 'POST',
+      body: JSON.stringify({ text }),
+      headers: { 'Content-Type': 'application/json','uuid': this.persistence.uuid,"Authorization":this.persistence.getAuthorization() },
+    });
+    return response;
+  }
   uploadAudio(audioChunks:Blob[]): Promise<string> {
     return new Promise((resolve, reject) => {
       const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
@@ -79,7 +85,7 @@ async getLastUser(): Promise<any> {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
     });
-    const body = { user: this.persistence.user, label: context.label, context: context.text, 
+    const body = { user: this.persistence.getUser(), label: context.label, context: context.text, 
       contextRemember: context.remember };
        
 
@@ -93,7 +99,7 @@ async getLastUser(): Promise<any> {
   
   async contextGet():  Promise<any> {   
     try {
-      return await firstValueFrom(this.http.get(`${this.backendUrl}/context/user/${this.persistence.user}`));
+      return await firstValueFrom(this.http.get(`${this.backendUrl}/context/user/${this.persistence.getUser()}`));
     } catch (error) {
       console.error('get-contexts failed!:', error);
       throw error;
@@ -104,7 +110,7 @@ async getLastUser(): Promise<any> {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
     });
-    const body = { user: this.persistence.user, label: label };
+    const body = { user: this.persistence.getUser(), label: label };
   
     try {
       return await firstValueFrom(this.http.request('delete', url, { headers, body }));
@@ -116,7 +122,7 @@ async getLastUser(): Promise<any> {
 
   async conversation_user():  Promise<any> {    
     try {
-      return await firstValueFrom(this.http.get(`${this.backendUrl}/conversation/user/${this.persistence.user}`));
+      return await firstValueFrom(this.http.get(`${this.backendUrl}/conversation/user/${this.persistence.getUser()}`));
     } catch (error) {
       console.error('conversation_user failed!:', error);
       throw error;
@@ -125,7 +131,7 @@ async getLastUser(): Promise<any> {
   async saveConversation(id:string,type:string,msg:string)
   {
     try {
-      const payload={msg:msg,type:type,user:this.persistence.user}
+      const payload={msg:msg,type:type,user:this.persistence.getUser()}
       return await firstValueFrom(this.http.post<{ id: string;}>(`${this.backendUrl}/conversation/id/${id}`,payload));
     } catch (error) {
       console.error('conversation_user failed!:', error);
@@ -135,7 +141,7 @@ async getLastUser(): Promise<any> {
   async initConversation(msg:string)
   {
     try {
-      const payload={msg:msg,user:this.persistence.user}
+      const payload={msg:msg,user:this.persistence.getUser()}
       return await firstValueFrom(this.http.post<{ id: string;}>(`${this.backendUrl}/conversation/init`,payload));
     } catch (error) {
       console.error('Init conversation failed!:', error);
@@ -176,4 +182,22 @@ async getLastUser(): Promise<any> {
     //console.log(textoLimpio)
     return textoLimpio;
   }
+  async getLoginUser(uuid:string): Promise<any> {    
+    try {
+      return await firstValueFrom(this.http.get(`${this.backendUrl}/security/uuid/${uuid}`));
+    } catch (error) {
+      console.error('get User failed!:', error);
+      throw error;
+    }     
+  }
+  async loginUser(user:string,password:string): Promise<any> {    
+    try {
+      const payload={user,password}
+      return await firstValueFrom(this.http.post(`${this.backendUrl}/security/login`,payload));
+    } catch (error) {
+      console.error('get User failed!:', error);
+      throw error;
+    }     
+  }
+
 }

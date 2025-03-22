@@ -1,13 +1,11 @@
-import { Component } from '@angular/core';
-import { RouterOutlet, RouterLink } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import {RouterOutlet} from "@angular/router"
+import { Component } from "@angular/core";
 @Component({
-  selector: 'app-root',  
-  standalone: true,
-  imports: [  CommonModule, RouterOutlet, RouterLink ],
+  selector: 'app-root',
+  imports: [RouterOutlet],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.scss'
+  styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  title = 'robotito_ng';
+  title = 'routing-app';
 }

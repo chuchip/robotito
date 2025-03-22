@@ -98,18 +98,18 @@ export class ConversationComponent {
   ]
 
   constructor(private router: Router,public back: ApiBackService,private sound: SoundService,public persistence: PersistenceService) {
-    if (persistence.user=='')
+    if (persistence.getAuthorization()=='')
     {
        this.router.navigate(['/login']); 
+       return
     }
-    this.back.getLastUser()     
-      .then(async (data:any) => {        
-        this.persistence.user=data.user
+    this.back.getLastUser()
+      .then(async (data:any) => {     
         this.selectVoice=data.voice
         this.selectLanguage=data.language
         this.selectLanguageDesc=this.getDescriptionLanguage(this.selectLanguage)
         this.selectVoice=data.voice
-        await this.back.clearConversation()
+       
         await this.back.changeLanguage(this.selectLanguage,this.selectVoice);
         this.clearConversation()
         await this.list_context()
@@ -195,12 +195,8 @@ export class ConversationComponent {
       this.chat_history.push({line:this.number_line, type: "H",msg: this.inputText.trim(),msgClean: this.inputText.trim()})
       this.isLoading=true
       this.responseMessage=""
-      const response = await fetch(`${this.backendUrl}/send-question`, {
-        method: 'POST',
-        body: JSON.stringify({ text: this.inputText}),
-        headers: { 'Content-Type': 'application/json','uuid': this.persistence.uuid },
-      });
-      
+      const response=await this.back.sendQuestion(this.inputText)
+            
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
     
@@ -666,5 +662,10 @@ export class ConversationComponent {
   getSelectedText() {
     const selection = window.getSelection();
     this.selectedText = selection ? selection.toString().trim() : '';
+  }
+  login()
+  {
+    this.persistence.clearLogin=true;
+    this.router.navigate(['/login']); 
   }
 }

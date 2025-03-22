@@ -1,9 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ApiBackService } from './api-back.service';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable()
 export class SoundService {
   private mediaRecorder!: MediaRecorder;
   private audioChunks: Blob[] = [];

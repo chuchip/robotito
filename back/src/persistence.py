@@ -2,7 +2,18 @@ from datetime  import datetime
 import sqlite3
 import uuid
 import robotito_ai as ai
+import memory
 def init_db():
+
+    cursor=connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='user_session'" )
+    # Create table to create User
+    if cursor.fetchone() is  None:
+        connection.execute("""CREATE TABLE user_session (
+                            user TEXT ,
+                            uuid TEXT PRIMARY KEY,
+                            last_date DATETIME DEFAULT CURRENT_TIMESTAMP)
+                            """)  
+        connection.commit()
     cursor=connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users'" )
     # Create table to create User
     if cursor.fetchone() is  None:
@@ -16,7 +27,7 @@ def init_db():
                            voice text,
                            last_date DATETIME DEFAULT CURRENT_TIMESTAMP)
                            """)        
-        connection.execute("""INSERT INTO users ( user,name) VALUES ('default','No Name')""")
+        connection.execute("""INSERT INTO users ( user,name,language,voice) VALUES ('default','No Name','b','bm_fable')""")
         connection.commit()    
     # Create table to create context
     cursor=connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='context'" )
@@ -48,8 +59,8 @@ def init_db():
                            time_msg DATETIME DEFAULT CURRENT_TIMESTAMP)""")
         connection.commit()
 
-def get_last_user():
-    cursor=connection.execute("""SELECT user,language,voice FROM users order by last_date desc""")
+def get_last_user(mem):
+    cursor=connection.execute("""SELECT user,language,voice FROM users  where user = ?""",(mem.getUser(),))
     data=cursor.fetchall()
     row=data[0]
     result = {"user": row[0], "language": row[1], "voice": row[2]}
@@ -151,6 +162,30 @@ def update_language(user,language,voice):
     print("Save language preferences")
     connection.commit()
     return 
+# Save in db and cache an uuid if it not exists
+def save_session(user,generate_uuid):
+    session= memory.getSessionFromUUID(generate_uuid)
+    if session is not None:
+        return
+    sql="select user from user_session where uuid = ?"
+    cursor=connection.execute(sql,(generate_uuid,))
+    if cursor.fetchone() is  None:
+        sql="insert into user_session  (user,uuid) values (?,?)"
+        connection.execute(sql,(user,generate_uuid))
+        connection.commit()
+    memory.saveSession(user, generate_uuid)
+def get_session(uuid,generate_uuid):
+    session= memory.getSessionFromUUID(generate_uuid)
+    if session is not None:        
+        return session
+    sql="select user,uuid from user_session where uuid = ?"
+    cursor=connection.execute(sql,(generate_uuid,))
+    data=cursor.fetchone()
+    if data is None:
+        return None
+    session=memory.Session(data[0],data[1],)        
+    memory.saveSession(session.user, generate_uuid)
+    return session
 
 connection=sqlite3.connect("robotito_db/sqllite.db", check_same_thread=False)
 init_db()
