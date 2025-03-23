@@ -65,10 +65,14 @@ async def send_question():
 def clear():   
   print("Clear conversation")
   uuid=request.headers.get("uuid")
-  
+  if len(memory.memoryData) != 0:
+    mem=memory.getMemory(uuid)
+    if mem is not None:
+      mem.getChatHistory().clear()        
+      return jsonify({'message': f'Existed conversation with UUID: {uuid} cleared'})
   memory.memoryData.append(memory.memoryDTO(uuid))
-  
   return jsonify({'message': f'Conversation with UUID: {uuid} cleared'})
+  
 
 @app.route('/last_user', methods=['GET'])
 def get_last_user():

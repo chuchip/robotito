@@ -47,6 +47,12 @@ class memoryDTO:
           return
        self.user=session.getUser()
        self.session=session
+    def clear(self):
+        self.user=None
+        self.session=None
+        self.chat_history.clear()
+        self.context=Context()
+        self.audioData=AudioData()       
     def getUser(self):
         return self.user
     def setUser(self,user):
@@ -78,7 +84,8 @@ class Session:
       return self.user
    def getAuthorization(self):            
       return self.authorization
-   
+  
+# Return a object type memoryDto or None
 def getMemory(uuid):
     for mem in memoryData:
         if mem.getUuid()==uuid:
