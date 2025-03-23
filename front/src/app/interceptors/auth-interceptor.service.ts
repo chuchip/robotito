@@ -5,12 +5,12 @@ import { inject } from '@angular/core';
 
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const uuidService = inject(PersistenceService); // Inject the UUID service
-  const uuid = uuidService.uuid; // Retrieve UUID
+  const persistenceService = inject(PersistenceService); // Inject the UUID service
+  const uuid = persistenceService.uuid; // Retrieve UUID
 
   const modifiedReq = req.clone({
     setHeaders: {
-      'Authorization': uuidService.getAuthorization(), // Replace with dynamic token if needed
+      'Authorization': persistenceService.getAuthorization(), // Replace with dynamic token if needed
       'uuid': uuid // Dynamically set UUID
     }
   });

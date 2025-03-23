@@ -1,4 +1,4 @@
-from quart import Quart, Response,request,jsonify
+from quart import Quart, Response,request,abort,jsonify
 from quart_cors import cors
 import os
 import robotito_ai as ai
@@ -9,6 +9,8 @@ from api.conversation import conversation_bp
 from api.security import security_bp
 from langchain_core.messages import  AIMessage,HumanMessage
 import memory
+#from api.security import security_check
+from functools import wraps
 app = Quart(__name__)
 app=cors(app,allow_origin="*")  # Enable Cross-Origin Resource Sharing
 
@@ -19,6 +21,27 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 config= ai.config
 vd=False
 
+@app.before_request
+def security_check():
+    if request.method == 'OPTIONS':
+        return
+    current_endpoint = request.endpoint
+    print("Current endpoint: ",current_endpoint)
+    if 'uuid' not in request.headers:
+        abort(401)   
+    if current_endpoint == 'clear' or current_endpoint == 'security.get_uuid' or current_endpoint == 'security.login': 
+        return
+    if 'Authorization' not in request.headers:
+        abort(401)  # Unauthorized
+    authorization=request.headers.get("Authorization")
+    mem= memory.getMemory(request.headers.get("uuid")) 
+    session= mem.getSession()
+    if session is None:
+          abort(401)
+    else:
+        if session.getAuthorization()!=authorization:
+          abort(401)
+    print("Security check OK")
 
 async def generate(msg_graph):
   async for msg  in  ai.call_llm(msg_graph):

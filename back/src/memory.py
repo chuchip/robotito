@@ -71,13 +71,13 @@ class memoryDTO:
         return self.uuid
 
 class Session:
-   def __init__(self,user,uuid):
+   def __init__(self,user,authorization):
       self.user=user
-      self.uuid=uuid
+      self.authorization=authorization
    def getUser(self):
       return self.user
-   def getUUID(self):            
-      return self.uuid
+   def getAuthorization(self):            
+      return self.authorization
    
 def getMemory(uuid):
     for mem in memoryData:
@@ -85,9 +85,9 @@ def getMemory(uuid):
             return mem
     return None
 # This is a memory cache for sessions
-def getSessionFromUUID(uuid):
+def getSessionFromAutorization(authorization):
   for session in sessions:
-     if session.uuid==uuid:
+     if session.authorization==authorization:
         return session
   return None
 

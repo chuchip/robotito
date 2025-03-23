@@ -5,7 +5,6 @@ import memory
 
 conversation_bp = Blueprint('conversation', __name__)
 
-
 @conversation_bp.route('/id/<string:id>', methods=['GET'])
 def conversation_getId(id):
   print("GET  conversation with id: ",id)
@@ -16,12 +15,14 @@ def conversation_getId(id):
   ai.restore_history(uuid,data)
   return jsonify({'message': f'This is the conversation with id {id}!', 'conversation': data})
 
+
 @conversation_bp.route('/id/<string:id>', methods=['DELETE'])
 def conversation_deleteId(id): 
   print("GET  conversation with id: ",id)
   db.conversation_delete_by_id(id)
   
   return jsonify({'message': f'Conversation with id {id} DELETED!', 'conversation': id})
+
 
 @conversation_bp.route('/id/<string:id>', methods=['POST'])
 async def conversation_saveId(id):     
@@ -31,11 +32,11 @@ async def conversation_saveId(id):
   # print(f"Save  conversation with id: {id}{data} ")
   id_conversation=db.conversation_save(uuid,id,data['user'],
                                        context.getLabel(),data['type'] ,data['msg'])
-
   return jsonify({'message': f'Conversation saved on id {id_conversation} !', 'id': id_conversation})
+
+
 @conversation_bp.route('/init', methods=['POST'])
-async def conversation_init():   
-  
+async def conversation_init():     
   data = await request.get_json()
   # print(f"Save  conversation with id: {id}{data} ")
   id_conversation=db.init_conversation(None,data['user'],data['msg'])

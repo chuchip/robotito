@@ -27,7 +27,7 @@ def init_db():
                            voice text,
                            last_date DATETIME DEFAULT CURRENT_TIMESTAMP)
                            """)        
-        connection.execute("""INSERT INTO users ( user,name,language,voice) VALUES ('default','No Name','b','bm_fable')""")
+        connection.execute("""INSERT INTO users ( user,name,passowrd,language,voice) VALUES ('default','Guest','changeit','b','bm_fable')""")
         connection.commit()    
     # Create table to create context
     cursor=connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='context'" )
@@ -163,29 +163,37 @@ def update_language(user,language,voice):
     connection.commit()
     return 
 # Save in db and cache an uuid if it not exists
-def save_session(user,generate_uuid):
-    session= memory.getSessionFromUUID(generate_uuid)
+def save_session(user,authorization):
+    session= memory.getSessionFromAutorization(authorization)
     if session is not None:
         return
     sql="select user from user_session where uuid = ?"
-    cursor=connection.execute(sql,(generate_uuid,))
+    cursor=connection.execute(sql,(authorization,))
     if cursor.fetchone() is  None:
         sql="insert into user_session  (user,uuid) values (?,?)"
-        connection.execute(sql,(user,generate_uuid))
+        connection.execute(sql,(user,authorization))
         connection.commit()
-    memory.saveSession(user, generate_uuid)
-def get_session(uuid,generate_uuid):
-    session= memory.getSessionFromUUID(generate_uuid)
+    memory.saveSession(user, authorization)
+def get_session(uuid,authorization):
+    session= memory.getSessionFromAutorization(authorization)
     if session is not None:        
         return session
     sql="select user,uuid from user_session where uuid = ?"
-    cursor=connection.execute(sql,(generate_uuid,))
+    cursor=connection.execute(sql,(authorization,))
     data=cursor.fetchone()
     if data is None:
         return None
     session=memory.Session(data[0],data[1],)        
-    memory.saveSession(session.user, generate_uuid)
+    memory.saveSession(session.user, authorization)
     return session
+def checkUser(user,password):
+    cursor=connection.execute("""SELECT user,password FROM users  where user = ?""",(user,))
+    data=cursor.fetchone()
+    if data is None:
+        return False
+    if data[1] != password:
+        return False
+    return True
 
 connection=sqlite3.connect("robotito_db/sqllite.db", check_same_thread=False)
 init_db()

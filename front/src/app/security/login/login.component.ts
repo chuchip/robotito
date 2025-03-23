@@ -13,9 +13,10 @@ import { ApiBackService } from '../../services/api-back.service';
 export class LoginComponent {
   userName:string=""
   password:string=""
+  error_login=""
   init=false
   constructor(public router: Router,public persistence: PersistenceService,public back: ApiBackService ) {
-    this.back.clearConversation().then(async () => {
+    this.back.clearConversation().then(async () => {      
       if (persistence.clearLogin)
       {
         this.init=true
@@ -23,15 +24,20 @@ export class LoginComponent {
       }
       const cookie= this.persistence.getCookie("robotito-uuid");
       console.log("Cookie: ",cookie)
-      const valor = await this.back.getLoginUser(cookie) 
-      if (valor.status=='OK')
+      if (cookie!='')
       {
-        this.persistence.setUser(valor.session.user)
-        this.persistence.setAuthorization(valor.session.uuid)
-        this.router.navigate(['/conversation']);
+        const valor = await this.back.getLoginUser(cookie) 
+        if (valor.status=='OK')
+        {
+          this.persistence.setUser(valor.session.user)
+          this.persistence.setAuthorization(valor.session.authorization)
+          this.router.navigate(['/conversation']);
+        }
+        this.init=true
+        console.log(valor) 
       }
       this.init=true
-      console.log(valor) 
+
     }
    )      
   }
@@ -42,13 +48,16 @@ export class LoginComponent {
       const valor= await this.back.loginUser(this.userName,this.password)
       console.log(`Valor login user`,valor)
       if (valor['status'] != 'OK' )
+      {
+        this.error_login=valor['error']
         return;
+      }
       console.log(`Valor login user`,valor)
       this.persistence.setUser(this.userName)
-      this.persistence.setAuthorization(valor['session']['uuid'])
+      this.persistence.setAuthorization(valor['session']['authorization'])
       this.persistence.setCookie({
         name: "robotito-uuid",
-        value: valor['session']['uuid']
+        value: valor['session']['authorization']
       });
       this.router.navigate(['/conversation']); 
     }

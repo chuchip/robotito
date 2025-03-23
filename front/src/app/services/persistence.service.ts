@@ -23,6 +23,10 @@ export class PersistenceService {
     return this.security.user
   }
   getAuthorization(): string {
+    if (! this.security)
+      return ""
+    if (! this.security.authorization)
+      return "" 
     return  this.security.authorization 
   }
   private generateUuid(): string {
