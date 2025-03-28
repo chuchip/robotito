@@ -27,7 +27,7 @@ def init_db():
                            voice text,
                            last_date DATETIME DEFAULT CURRENT_TIMESTAMP)
                            """)        
-        connection.execute("""INSERT INTO users ( user,name,passowrd,language,voice) VALUES ('default','Guest','changeit','b','bm_fable')""")
+        connection.execute("""INSERT INTO users ( user,name,password,language,voice) VALUES ('default','Guest','changeit','b','bm_fable')""")
         connection.commit()    
     # Create table to create context
     cursor=connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='context'" )
