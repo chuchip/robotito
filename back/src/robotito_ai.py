@@ -173,7 +173,7 @@ def getTextFromAudio(filepath):
    return text
    #text = ai.testWhisper(filepath)
   
-client = OpenAI()
+# client = OpenAI()
 pipe_whisper=configureWhisper()
 model=configGeminiAI()
 #model=configOpenAI()
