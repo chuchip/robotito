@@ -28,6 +28,7 @@ import { Router } from '@angular/router';
  */
 export class ConversationComponent {
   selectedText: string = '';
+  pressEscape=false
   xPos = 0
   yPos =0
   textSpeakAloud=""
@@ -60,7 +61,6 @@ export class ConversationComponent {
   number_line:number=0
   sttText:string=""
   responseMessage:string="Hello, I'm robotito. Do you want to talk?"
-  isRecording = false;
   inputText: string = '';
   showRecord=false
   showLanguageOptions=false
@@ -97,7 +97,7 @@ export class ConversationComponent {
     { 'language':'e', label: 'em_santa' },    
   ]
 
-  constructor(private router: Router,public back: ApiBackService,private sound: SoundService,public persistence: PersistenceService) {
+  constructor(private router: Router,public back: ApiBackService,public sound: SoundService,public persistence: PersistenceService) {
     if (persistence.getAuthorization()=='')
     {
        this.router.navigate(['/login']); 
@@ -113,7 +113,7 @@ export class ConversationComponent {
         await this.back.changeLanguage(this.selectLanguage,this.selectVoice);
         this.clearConversation()
         await this.list_context()
-        await this.get_conversations_history()        
+        await this.getConversationsHistory()        
         if  (this.conversationHistory.length>0)
         {
           this.context.label= this.conversationHistory[0].labelContext
@@ -131,28 +131,34 @@ export class ConversationComponent {
   }
 
   async toggleRecording(shiftKey:boolean=true) {    
-    if (this.isRecording) {     
+    if (this.sound.isRecording) {     
       this.stopRecording(this.swSendAudio,shiftKey)
     } else {
       this.startRecording(shiftKey)
     }
-    this.isRecording = !this.isRecording;
+   
   }
   changeSpeed(event: any) {
     this.playbackSpeed =event.target.value;   
   }
-  async startRecording(shiftKey:boolean=false)
+  async startRecording(shiftKey:boolean=false,automatic:boolean=false)
   {
     if (shiftKey)
       this.sttText=""
     this.isLoading=true
     this.showRecord=true
-    this.stopAudio()
-    this.sound.startRecording();
+    if (!automatic)
+      this.stopAudio()
+    this.sound.startRecording(this);
+    
     setTimeout(() => this.recordElement.nativeElement.focus() , 0)
     
   }
-  async stopRecording(swSendAudio:boolean,shiftKey:boolean=true)
+  async stopAutomaticRecording()
+  {
+    await this.stopRecording(this.swSendAudio,false,true)
+  }
+  async stopRecording(swSendAudio:boolean=this.swSendAudio,shiftKey:boolean=true,automatic:boolean=false)
   {
     const text= await this.sound.stopRecording();
     this.sttText=(shiftKey?"":this.sttText)+" "+ text    
@@ -160,7 +166,8 @@ export class ConversationComponent {
     if (swSendAudio)
     {
       this.inputText=  this.sttText      
-      this.sendData()
+      await this.sendData()
+      this.startRecording(shiftKey=false,automatic=automatic)
     }
     else{
       this.recordElement.nativeElement.focus();   
@@ -172,15 +179,15 @@ export class ConversationComponent {
   }
   async copySttToInput(text:string,pushEnter:boolean)
   {    
-    if (this.isRecording && pushEnter) 
+    if (this.sound.isRecording && pushEnter) 
     {
       await this.stopRecording(false,false)
       text=this.sttText
     }
     this.inputText=text
-    this.focus_input()
+    this.stopRecordingEsc()
     if (pushEnter) {
-      this.isRecording=false
+      this.sound.isRecording=false
       this.sendData() 
       setTimeout(() =>  this.inputElement.nativeElement.focus(),0) 
     }
@@ -380,11 +387,10 @@ export class ConversationComponent {
       this.conversationElement.nativeElement.scrollTop = this.conversationElement.nativeElement.scrollHeight;
     }
   }
-  async speak_aloud(inputText:string){    
+  async speakAloud(inputText:string){    
     this.stopAudio()
     this.showSoundLoading()
-    if (inputText.trim()!='') {
-      
+    if (inputText.trim()!='') {      
       if (this.textSpeakAloud!=inputText ) {
         this.textSpeakAloud=inputText
         this.responseTextToSound= await this.back.text_to_sound(this.back.cleanText(inputText));
@@ -425,6 +431,7 @@ export class ConversationComponent {
     this.isSoundLoading=false    
     this.audio.play();     
   }
+
   showSoundLoading()
   {    
     const selection = window.getSelection();
@@ -440,20 +447,21 @@ export class ConversationComponent {
   stopAudio(): void {
     if (this.semaphoreStopAudio>0)
       this.semaphoreStopAudio=-1
-    if (this.audio) {
+    if (this.audio  ) {
       this.audio.pause();
-      this.audio.currentTime = 0;
+      this.audio.currentTime = 0;      
     }
     if (this.sound.audio) {
       this.sound.audio.pause();
-    }
+    }    
   }
 
-  focus_input()
+  stopRecordingEsc()
   {
-    this.isRecording=false
+    this.sound.isRecording=false
     this.isLoading=false
     this.showRecord=false
+    this.pressEscape=true
     setTimeout(() => {
       this.inputElement.nativeElement.focus();   
     },100)
@@ -461,7 +469,7 @@ export class ConversationComponent {
 
   private async put_message( response:any )
   {
-    if (!response.ok) {
+    if (response ==null || !response.ok) {
       return
     }
     const msg=await response.json()
@@ -477,7 +485,8 @@ export class ConversationComponent {
     this.number_line=0  
     this.conversationId=""
     this.showLanguageOptions=false
-    const response=await this.back.clearConversation();
+    
+    const response=await this.back.clearConversation();    
     this.put_message(response)
   }
 
@@ -507,10 +516,10 @@ export class ConversationComponent {
     this.contexts.splice(0,0,value)
   }
 
-  async context_delete(label:string)
+  async contextDelete(label:string)
   {
     this.isLoading=true
-    const response= await this.back.context_delete(this.selectContext);    
+    const response= await this.back.contextDelete(this.selectContext);    
     this.list_context()
     this.isLoading=false
     this.put_message(response)
@@ -518,7 +527,7 @@ export class ConversationComponent {
     this.context.label=""
     this.context.remember=""
   }
-  async context_send(event:any)    {
+  async contextSend(event:any)    {
     const textArea = event.target as HTMLTextAreaElement;
     if (!textArea)
       return;
@@ -534,7 +543,7 @@ export class ConversationComponent {
       this.put_message(response)
     }
   }
-  async contextRemember_send(event:any)    {
+  async contextRememberSend(event:any)    {
     const textArea = event.target as HTMLTextAreaElement;
     if (!textArea)
       return;
@@ -556,17 +565,17 @@ export class ConversationComponent {
   async toggleSidebar() {
     if (! this.isSidebarOpen)
     {
-      this.get_conversations_history()
+      this.getConversationsHistory()
     }
     this.isSidebarOpen = !this.isSidebarOpen;
   }
-  async get_conversations_history()
+  async getConversationsHistory()
   {
     const response=await this.back.conversation_user();
     this.conversationHistory=response.conversations;    
   }
 
-  async history_choose(id:string,context:string)
+  async historyChoose(id:string,context:string)
   {    
     this.isLoading=true
     this.conversationId=id
@@ -574,7 +583,7 @@ export class ConversationComponent {
     this.context.label=context;   
     this.selectContext=context
     this.setTextContext(context)
-    this.context_send(this.context.label)
+    this.contextSend(this.context.label)
     await this.back.contextSend(this.context);
     this.chat_history.length=0
     var i=0;  
@@ -588,13 +597,14 @@ export class ConversationComponent {
     this.number_line=i
     this.isLoading=false
   }
-  async history_delete(id: string)
+  async hystoryDelete(id: string)
   {
     this.isLoading=true
     const response=await this.back.conversation_delete_by_id(id);
-    const msg=await response.json()
-    this.put_message(msg)
-    this.get_conversations_history()
+    this.put_message(response)
+    this.getConversationsHistory()
+    
+    setTimeout(() => this.clearConversation() , 200)    
     this.isLoading=false
   }
   getFormattedDate(dateString: string): Date {
@@ -605,7 +615,7 @@ export class ConversationComponent {
       if (event.key === 'F4') { 
         this.textSpeakAloud=""
         event.preventDefault(); // Prevent default behavior if needed        
-        this.speak_aloud(text);
+        this.speakAloud(text);
         this.inputElement.nativeElement.focus();   
       }      
   }
@@ -647,7 +657,7 @@ export class ConversationComponent {
       event.preventDefault(); 
       // this.textSpeakAloud=""
       if (this.selectedText.trim()!='')
-        this.speak_aloud(this.selectedText);
+        this.speakAloud(this.selectedText);
     }    
     if (event.key === 'Escape') {
       this.stopAudio()

@@ -105,7 +105,7 @@ async getLastUser(): Promise<any> {
       throw error;
     }
   }
-  async context_delete(label: string): Promise<any> {
+  async contextDelete(label: string): Promise<any> {
     const url = `${this.backendUrl}/context`;
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',

@@ -116,8 +116,8 @@ def configGeminiAISync():
 
 def configGeminiAI(): 
   model = ChatGoogleGenerativeAI(
-    model="gemini-2.0-flash",
-    temperature=0.7,
+    model="gemini-2.0-flash-lite",
+    temperature=0.6,
     streaming=True,
     max_tokens=None,
     timeout=None,

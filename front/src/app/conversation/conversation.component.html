@@ -14,8 +14,8 @@
     <div *ngFor="let line of conversationHistory; let i = index">
       <span class="sidebar_line" [matTooltipClass]="'custom-tooltip'"
         matTooltip="{{getFormattedDate(line.final_date) | date: 'dd/MMM HH:mm'}}"
-        (click)="history_choose(line.id,line.labelContext)">
-        <button (click)="history_delete(line.id)" matTooltip="Remove Conversation"> <span
+        (click)="historyChoose(line.id,line.labelContext)">
+        <button (click)="hystoryDelete(line.id)" matTooltip="Remove Conversation"> <span
             class="material-icons">remove_circle</span></button>
         {{ line.name}}
       </span>
@@ -57,12 +57,12 @@
           placeholder="Type and press Enter">
         </textarea>
       </span>
-      <button class="button-action" (click)="speak_aloud(human_input.value)" matTooltip="Speak Input text (F4)">
+      <button class="button-action" (click)="speakAloud(human_input.value)" matTooltip="Speak Input text (F4)">
         <span class="material-icons">volume_up</span>
       </button>
      
       <button class="button-action" (click)="toggleRecording()" matTooltip="Record voice (F2)">
-        <span class="material-icons">{{ isRecording ? 'stop' : 'mic' }}</span>
+        <span class="material-icons">{{ this.sound.isRecording ? 'stop' : 'mic' }}</span>
       </button>
       <button class="button-action" (click)="stopAudio()" matTooltip="Stop Talk">
         <span class="material-icons">stop</span>
@@ -80,7 +80,7 @@
       <textarea #record_text  [(ngModel)]="sttText" style="width: 500px;"
         (keydown.enter)="copySttToInput(sttText,true)" 
         (keydown)="speakOnF4($event,sttText);record_text.focus();"
-        (keydown.esc)="focus_input();sttText=''"></textarea>
+        (keydown.esc)="stopRecordingEsc();sttText=''"></textarea>
     </div>
     
     
@@ -125,13 +125,13 @@
               {{ context['label'] }}
             </option>
           </select>
-          <button (click)="context_delete(selectComponent.value)" matTooltip="Remove Context"> <span
+          <button (click)="contextDelete(selectComponent.value)" matTooltip="Remove Context"> <span
               class="material-icons">remove_circle</span></button>
           <input #inputField type="text" [(ngModel)]="this.context.label" placeholder="Choose a new Label">
         </div>
-        <textarea #context class="context_textarea" (keydown.enter)="context_send($event)"
+        <textarea #context class="context_textarea" (keydown.enter)="contextSend($event)"
           (keydown.esc)="showLanguageOptions=false" [(ngModel)]="this.context.text" placeholder="Type an context..."></textarea>
-        <textarea #context_remember class="context_textarea" (keydown.enter)="contextRemember_send($event)"
+        <textarea #context_remember class="context_textarea" (keydown.enter)="contextRememberSend($event)"
           (keydown.esc)="showLanguageOptions=false" [(ngModel)]="this.context.remember" placeholder="Type something the AI has to remember ..."></textarea>
       </div>
     </div>
