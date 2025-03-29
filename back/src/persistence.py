@@ -101,7 +101,7 @@ def init_conversation(id ,user,msg,force=False):
     if id is None or force:
         if len(msg.split())>15:
             # Do a sumary of the message
-            resp=ai.model.invoke(f"Create a summary of less than 12 words from this sentence: '{msg}'")
+            resp=ai.clientText.invoke(f"Create a summary of less than 12 words from this sentence: '{msg}'")
             msg=resp.content
             print("Summary: ",msg)
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

@@ -40,28 +40,7 @@ async def tts():
     if text=='':
         return Response(None, mimetype='audio/webm')  
     #print(f"In tts {text}")
-    generator = audioData.kpipeline(
-            text, 
-            voice= audioData.voice_name,
-            speed=1, split_pattern=r'\n+'
-        )    
-    
-    for i, (gs, ps, audio) in enumerate(generator):       
-        if (i==0):
-            total = audio
-        else:
-            total=np.concatenate((total, audio), axis=0)
-    wav_file= f"audio/{uuid}-tts.wav"
-    webm_file=f"audio/{uuid}-tts.webm"
-    sf.write(wav_file, total, 24000)
-    command = [
-    'ffmpeg',"-y",
-    '-i', wav_file,       # Input WAV file
-    '-c:a', 'libopus',     # Audio codec (Opus)
-        webm_file            # Output WebM file
-    ]
-    subprocess.run(command)
-
+    webm_file = ai.getAudioFromText(text,audioData,uuid)
 
     def generate():
         with open(webm_file, 'rb') as file:  # Open file in binary mode

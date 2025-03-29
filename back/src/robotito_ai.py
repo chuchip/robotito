@@ -1,7 +1,8 @@
 from langchain_openai import ChatOpenAI,OpenAIEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI
-
-
+import soundfile as sf
+import numpy as np
+import subprocess
 from langchain.prompts import ChatPromptTemplate
 from langchain_core.messages import  HumanMessage, AIMessage
 from langchain_core.documents import Document
@@ -42,7 +43,7 @@ async def call_llm(state) :
      
     #response = model.invoke(chat_prompt)    
     
-    async for chunk in model.astream(chat_prompt):        
+    async for chunk in clientText.astream(chat_prompt):        
         yield  chunk.content
     if swRemember:
       yield "*"
@@ -98,10 +99,15 @@ print("--------------------------------")
 config = {"configurable": {"thread_id": "1"}}
 
 def configOpenAI():
-  model = ChatOpenAI(model_name="gpt-4.5-preview",
+  if version=="3.5":
+    model = ChatOpenAI(model_name="o3-mini",                
+                   streaming=True)
+  else:
+    model = ChatOpenAI(model_name="gpt-4o",
                     presence_penalty=1.2,
                    streaming=True,
                    temperature=0.8)
+
   return model
 def configGeminiAISync(): 
   model = ChatGoogleGenerativeAI(
@@ -135,7 +141,7 @@ def configure_vector_store():
       persist_directory="../robotito_db",  # Where to save data locally, remove if not necessary
   )
   text_splitter = RecursiveCharacterTextSplitter(chunk_size=200, chunk_overlap=200)
-  ai={"model":model,"pipeline":pipeline,"embeddings":embeddings,"vector_store":vector_store,"text_splitter":text_splitter}  
+  ai={"model":clientText,"pipeline":pipeline,"embeddings":embeddings,"vector_store":vector_store,"text_splitter":text_splitter}  
 
 # Configure Whisper
 def configureWhisper():     
@@ -161,19 +167,60 @@ def configureWhisper():
   )
   return pipe_whisper
 
-def testWhisper(audio_file):
+def sttWhisper(audio_file):
   audio_file= open(audio_file, "rb")
-  transcription = client.audio.transcriptions.create(
+  transcription = clientSound.audio.transcriptions.create(
       model="whisper-1", 
       file=audio_file
   )
   return transcription.text
 def getTextFromAudio(filepath):
-   text = pipe_whisper(filepath,return_timestamps=True)['text']
-   return text
+  if clientSound==None:
+    text = pipe_whisper(filepath,return_timestamps=True)['text']
+  else:
+    text=sttWhisper(filepath)
+  return text
    #text = ai.testWhisper(filepath)
-  
-# client = OpenAI()
+def getTTSFromKokoro(text,audioData,uuid): 
+  generator = audioData.kpipeline(
+          text, 
+          voice= audioData.voice_name,
+          speed=1, split_pattern=r'\n+'
+      )    
+
+  for i, (gs, ps, audio) in enumerate(generator):       
+      if (i==0):
+          total = audio
+      else:
+          total=np.concatenate((total, audio), axis=0)
+  wav_file= f"audio/{uuid}-tts.wav"
+  webm_file=f"audio/{uuid}-tts.webm"
+  sf.write(wav_file, total, 24000)
+  command = [
+  'ffmpeg',"-y",
+  '-i', wav_file,       # Input WAV file
+  '-c:a', 'libopus',     # Audio codec (Opus)
+      webm_file            # Output WebM file
+  ]
+  subprocess.run(command)
+  return webm_file
+def getAudioFromText(text,audioData,uuid):
+  if clientSound==None:
+     fileOutput= getTTSFromKokoro(text,audioData,uuid)
+  else:
+    response = clientSound.audio.speech.create(
+      model="tts-1",
+      voice="fable",
+      response_format="opus",
+      input=text,
+    )
+    fileOutput="output.webm"
+    response.stream_to_file(fileOutput)
+  return fileOutput
+
+version="3.5"
+
+clientSound = None # OpenAI()
 pipe_whisper=configureWhisper()
-model=configGeminiAI()
-#model=configOpenAI()
+clientText=configGeminiAI()  
+#clientText=configOpenAI()

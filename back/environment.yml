@@ -62,25 +62,35 @@ dependencies:
       - deprecated==1.2.18
       - dill==0.3.8
       - distro==1.9.0
+      - dlib==19.24.6
       - dlinfo==2.0.0
       - docopt==0.6.2
       - durationpy==0.9
+      - en-core-web-sm==3.8.0
       - espeakng-loader==0.2.4
       - exceptiongroup==1.2.2
       - fastapi==0.115.8
       - filelock==3.17.0
+      - filetype==1.2.0
       - flask==3.1.0
       - flatbuffers==25.2.10
       - frozenlist==1.5.0
       - fsspec==2024.12.0
+      - google-ai-generativelanguage==0.6.15
+      - google-api-core==2.24.1
+      - google-api-python-client==2.161.0
       - google-auth==2.38.0
+      - google-auth-httplib2==0.2.0
+      - google-generativeai==0.8.4
       - googleapis-common-protos==1.68.0
       - greenlet==3.1.1
       - grpcio==1.70.0
+      - grpcio-status==1.70.0
       - h11==0.14.0
       - h2==4.2.0
       - hpack==4.1.0
       - httpcore==1.0.7
+      - httplib2==0.22.0
       - httptools==0.6.4
       - httpx==0.28.1
       - httpx-sse==0.4.0
@@ -106,6 +116,7 @@ dependencies:
       - langchain-chroma==0.2.2
       - langchain-community==0.3.18
       - langchain-core==0.3.37
+      - langchain-google-genai==2.0.10
       - langchain-openai==0.3.6
       - langchain-text-splitters==0.3.6
       - langcodes==3.5.0
@@ -172,6 +183,7 @@ dependencies:
       - preshed==3.0.9
       - priority==2.0.0
       - propcache==0.3.0
+      - proto-plus==1.26.0
       - protobuf==5.29.3
       - psutil==7.0.0
       - pyarrow==19.0.1
