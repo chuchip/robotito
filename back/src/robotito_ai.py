@@ -3,6 +3,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 import soundfile as sf
 import numpy as np
 import subprocess
+import os
 from langchain.prompts import ChatPromptTemplate
 from langchain_core.messages import  HumanMessage, AIMessage
 from langchain_core.documents import Document
@@ -43,7 +44,7 @@ async def call_llm(state) :
      
     #response = model.invoke(chat_prompt)    
     
-    async for chunk in clientText.astream(chat_prompt):        
+    async for chunk in client_text.astream(chat_prompt):        
         yield  chunk.content
     if swRemember:
       yield "*"
@@ -92,11 +93,7 @@ def save(state):
     return state
 
 
-# Define the configuration
-print("--------------------------------")
-print("Initializing Robotito ...")
-print("--------------------------------")
-config = {"configurable": {"thread_id": "1"}}
+
 
 def configOpenAI():
   if version=="3.5":
@@ -141,10 +138,10 @@ def configure_vector_store():
       persist_directory="../robotito_db",  # Where to save data locally, remove if not necessary
   )
   text_splitter = RecursiveCharacterTextSplitter(chunk_size=200, chunk_overlap=200)
-  ai={"model":clientText,"pipeline":pipeline,"embeddings":embeddings,"vector_store":vector_store,"text_splitter":text_splitter}  
+  ai={"model":client_text,"pipeline":pipeline,"embeddings":embeddings,"vector_store":vector_store,"text_splitter":text_splitter}  
 
 # Configure Whisper
-def configureWhisper():     
+def configure_whisper_local():     
   device = "cuda:0" if torch.cuda.is_available() else "cpu"
   torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
 
@@ -167,18 +164,18 @@ def configureWhisper():
   )
   return pipe_whisper
 
-def sttWhisper(audio_file):
+def stt_api_whisper(audio_file):
   audio_file= open(audio_file, "rb")
-  transcription = clientSound.audio.transcriptions.create(
+  transcription = client_sound.audio.transcriptions.create(
       model="whisper-1", 
       file=audio_file
   )
   return transcription.text
 def getTextFromAudio(filepath):
-  if clientSound==None:
-    text = pipe_whisper(filepath,return_timestamps=True)['text']
+  if stt=="local":
+    text = local_whisper(filepath,return_timestamps=True)['text']
   else:
-    text=sttWhisper(filepath)
+    text=stt_api_whisper(filepath)
   return text
    #text = ai.testWhisper(filepath)
 def getTTSFromKokoro(text,audioData,uuid): 
@@ -204,11 +201,13 @@ def getTTSFromKokoro(text,audioData,uuid):
   ]
   subprocess.run(command)
   return webm_file
+
+# Convert  text to audio en webm format
 def getAudioFromText(text,audioData,uuid):
-  if clientSound==None:
+  if tts=="kokoro":
      fileOutput= getTTSFromKokoro(text,audioData,uuid)
   else:
-    response = clientSound.audio.speech.create(
+    response = client_sound.audio.speech.create(
       model="tts-1",
       voice="fable",
       response_format="opus",
@@ -218,9 +217,35 @@ def getAudioFromText(text,audioData,uuid):
     response.stream_to_file(fileOutput)
   return fileOutput
 
+# Define the configuration
+print("--------------------------------")
+print("Initializing Robotito ...")
+
+config = {"configurable": {"thread_id": "1"}}
 version="3.5"
 
-clientSound = None # OpenAI()
-pipe_whisper=configureWhisper()
-clientText=configGeminiAI()  
-#clientText=configOpenAI()
+client_sound = None
+
+model_api = os.getenv("MODEL_API")
+if model_api and model_api!="gemini":
+  model_api="openai"
+  client_text=configOpenAI()  
+else:
+  model_api="gemini"
+  client_text=configGeminiAI()   
+tts = os.getenv("TTS")
+if tts and tts.lower()=="kokoro":
+  tts="kokoro"  
+else:
+  tts="openai"  
+stt = os.getenv("STT")
+if stt and stt.lower()=="openai":
+  stt="openai"
+else:
+  local_whisper=configure_whisper_local()
+  stt="local" # Use Whisper Local
+if stt=="openai" or tts=="openai":
+  client_sound=OpenAI() # Use OpenAI API
+
+print(f"Model API: {model_api}  STT: {stt} TTS: {tts}" )
+print("--------------------------------")

@@ -4,6 +4,8 @@ whisper-large-v3-turbo (https://huggingface.co/openai/whisper-large-v3-turbo)
 
 It has been tested in Ubuntu 24.04 with Python 3.9.21. 
 
+### Executing with docker
+ docker run -it -p5000:5000  --gpus all -e GOOGLE_API_KEY=$GOOGLE_API_KEY cuda-python39-image
 IMPORTANT: You will need a good Graphic Card ,16GB  memory  and 10 GB or more of hard disk to install this app.
 
 ## Back
@@ -59,3 +61,11 @@ Example of context:
 
 You are going to pretend that you are my English teacher. You can only speak English. It is very important that you correct me if I make any mistakes or if my answer does not make sense or it doesn't sound natural.  Don't be overly helpful, the idea is having a conversation so  you have to make the conversation flow.
 Remember, the most importance in our conversation is tell me if my sentence was correct.
+
+### Make DockerFiles
+
+```
+cd  # go to home directory
+docker build -t robotito_back .
+
+```

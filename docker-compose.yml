@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  backend:
+    image: robotito_back
+    container_name: backend
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production  # Adjust as needed
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]  # E
+    volumes:
+      - ./backend:/data  # Mount the backend directory
+    networks:
+      - app-network
+
+  frontend:
+    image: robotito_front
+    container_name: frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  backend-data:
+    driver: local  #
