@@ -43,44 +43,38 @@
     <div class="spacer"></div>
     <!-- Input and controls -->
     <div #input class='input' >
-      <button class="button-action" (click)="toggleSidebar()" matTooltip="Show Conversations list">
-        <span class="material-icons">{{ isSidebarOpen ? 'close' : 'menu' }}</span>
-      </button>
-      <button class="button-action" (click)="clicksWindow=0; showLanguageOptions=!showLanguageOptions"   matTooltip="Show Language Options">
-          <span class="material-icons">settings</span>
-      </button>    
+      <div class="vertical">
+        <button class="button-action" (click)="toggleSidebar()" matTooltip="Show Conversations list">
+          <span class="material-icons">{{ isSidebarOpen ? 'close' : 'menu' }}</span>
+        </button>
+        <button class="button-action" (click)="clicksWindow=0; showLanguageOptions=!showLanguageOptions"   matTooltip="Show Language Options">
+            <span class="material-icons">settings</span>
+        </button>    
+      </div>
+      <div class="vertical">
+        <button class="button-action" (click)="playRecorded()" matTooltip="Play recorded sound">
+           <span  class="material-icons">play_arrow</span></button>
+        <button class="button-action" (click)="speakAloud(human_input.value)" matTooltip="Speak Input text (F4)">
+          <span class="material-icons">volume_up</span>
+        </button>
+      </div>
 
       <span class="input_text">
-        <textarea #human_input class="expandable-input"[value]="inputText"  (input)="adjustHeight(human_input)"
+        <textarea #human_input class="expandable-input"  [(ngModel)]="inputText"  (input)="adjustHeight(human_input)"
           (keydown)="speakOnF4($event,human_input.value); human_input.focus(); "
           (keydown.enter)="this.inputText=human_input.value; sendData()" 
           placeholder="Type and press Enter">
         </textarea>
-      </span>
-      <button class="button-action" (click)="speakAloud(human_input.value)" matTooltip="Speak Input text (F4)">
-        <span class="material-icons">volume_up</span>
-      </button>
-     
-      <button class="button-action" (click)="toggleRecording()" matTooltip="Record voice (F2)">
-        <span class="material-icons">{{ this.sound.isRecording ? 'stop' : 'mic' }}</span>
-      </button>
+      </span>     
+      
+        <button class="button-action" (click)="toggleRecording()" matTooltip="Record voice (F2)">
+          <span class="material-icons">{{ this.sound.isRecording ? 'stop' : 'mic' }}</span>
+        </button>
+      
       <button class="button-action" (click)="stopAudio()" matTooltip="Stop Talk">
         <span class="material-icons">stop</span>
       </button>
 
-    </div>
-    <!-- Output of record -->
-    <div *ngIf="showRecord" class="output_record">
-      <span class="buttons_record">
-      <button class="stop-btn" (click)="copySttToInput(sttText,false)"> <span
-          class="material-icons">content_copy</span></button>
-      <button class="stop-btn" (click)="playRecorded()"> <span
-            class="material-icons">play_arrow</span></button>
-      </span>
-      <textarea #record_text  [(ngModel)]="sttText" style="width: 500px;"
-        (keydown.enter)="copySttToInput(sttText,true)" 
-        (keydown)="speakOnF4($event,sttText);record_text.focus();"
-        (keydown.esc)="stopRecordingEsc();sttText=''"></textarea>
     </div>
     
     

@@ -53,13 +53,12 @@ export class ConversationComponent {
   @ViewChild('human_input') inputElement!: ElementRef;
   @ViewChild('context') contextElement!: ElementRef;
   @ViewChild('conversation') conversationElement!: ElementRef;
-  @ViewChild('record_text') recordElement!: ElementRef;
   @ViewChild('configuration_window') configurationWinElement!: ElementRef;
   
   response_back: string=""
   chat_history:{line: number,type: string,msg: string,msgClean:string}[]=[]
   number_line:number=0
-  sttText:string=""
+
   responseMessage:string="Hello, I'm robotito. Do you want to talk?"
   inputText: string = '';
   showRecord=false
@@ -143,58 +142,43 @@ export class ConversationComponent {
   }
   async startRecording(shiftKey:boolean=false,automatic:boolean=false)
   {
-    if (shiftKey)
-      this.sttText=""
-    this.isLoading=true
+    this.xPos=60;
+    this.yPos=window.innerHeight-85;
+    this.isSoundLoading=true
     this.showRecord=true
     if (!automatic)
       this.stopAudio()
     this.sound.startRecording(this);
     
-    setTimeout(() => this.recordElement.nativeElement.focus() , 0)
+    setTimeout(() => this.inputElement.nativeElement.focus() , 0)
     
   }
   async stopAutomaticRecording()
   {
-    await this.stopRecording(this.swSendAudio,false,true)
+    await this.stopRecording(this.swSendAudio,true)
   }
-  async stopRecording(swSendAudio:boolean=this.swSendAudio,shiftKey:boolean=true,automatic:boolean=false)
+  async stopRecording(swSendAudio:boolean=this.swSendAudio,automatic:boolean=false)
   {
     const text= await this.sound.stopRecording();
-    this.sttText=(shiftKey?"":this.sttText)+" "+ text    
-    this.isLoading=false
+    this.inputText=this.inputText+" "+ text
+    this.isSoundLoading=false
     if (swSendAudio)
-    {
-      this.inputText=  this.sttText      
+    {    
       await this.sendData()
-      this.startRecording(shiftKey=false,automatic=automatic)
+      this.startRecording(automatic=automatic)
     }
     else{
-      this.recordElement.nativeElement.focus();   
+      setTimeout(() =>  this.inputElement.nativeElement.focus() ,100)  
     }
   }
   playRecorded()
   {
     this.sound.playAudio();
   }
-  async copySttToInput(text:string,pushEnter:boolean)
-  {    
-    if (this.sound.isRecording && pushEnter) 
-    {
-      await this.stopRecording(false,false)
-      text=this.sttText
-    }
-    this.inputText=text
-    this.stopRecordingEsc()
-    if (pushEnter) {
-      this.sound.isRecording=false
-      this.sendData() 
-      setTimeout(() =>  this.inputElement.nativeElement.focus(),0) 
-    }
-  }
+  
 
   async sendData() {
-    this.sttText = '';
+    
     this.showRecord=false
     this.inputText=this.inputText.trim()
     this.stopAudio()
@@ -459,12 +443,10 @@ export class ConversationComponent {
   stopRecordingEsc()
   {
     this.sound.isRecording=false
-    this.isLoading=false
+    this.isSoundLoading=false
     this.showRecord=false
     this.pressEscape=true
-    setTimeout(() => {
-      this.inputElement.nativeElement.focus();   
-    },100)
+    setTimeout(() =>  this.inputElement.nativeElement.focus() ,100)  
   }
 
   private async put_message( response:any )
@@ -616,8 +598,8 @@ export class ConversationComponent {
         this.textSpeakAloud=""
         event.preventDefault(); // Prevent default behavior if needed        
         this.speakAloud(text);
-        this.inputElement.nativeElement.focus();   
-      }      
+        setTimeout(() =>  this.inputElement.nativeElement.focus() ,100)  
+      }
   }
   async changeLanguage() {
     if (this.selectVoice=='')
@@ -660,6 +642,7 @@ export class ConversationComponent {
         this.speakAloud(this.selectedText);
     }    
     if (event.key === 'Escape') {
+      this.stopRecordingEsc()
       this.stopAudio()
     }
   }

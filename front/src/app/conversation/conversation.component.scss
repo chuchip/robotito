@@ -143,19 +143,7 @@ mat-checkbox {
 mat-checkbox .mat-checkbox-label {
   font-size: 0.8rem;  /* Smaller font for the label */
 }
-.output_record
-{
-  width:95%;
-  position: fixed;
-  display: flex;
-  align-items:  flex-start;
-  bottom: 60px;
-  left: 2%;
-  height: 60px;
-  border-top: 3px solid black; /* Adjust thickness and color */
-  background-color: rgb(174, 180, 173); /* Optional: Set background */    
-  padding: 3px;
-}
+
 .buttons_record
 {  
   display: flex;
@@ -291,7 +279,15 @@ mat-checkbox .mat-checkbox-label {
   max-width: 50%;
   margin-left: 10px;
 }
-
+.vertical
+{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  margin-right: 5px;
+}
 .configuration_horizontal button
 {
   flex:0;
