@@ -1,0 +1,11 @@
+robotito_google_cloud_key.json
+/backlight
+/src/__pycache__
+.vscode/
+**/__pycache__/
+/audio
+/uploads
+/robotito_db
+.env
+env.sh
+

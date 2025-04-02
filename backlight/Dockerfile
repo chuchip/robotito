@@ -1,0 +1,36 @@
+# Stage 1: Build stage
+FROM python:3.9-slim as builder
+
+# Set environment variables to optimize Python behavior
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies for building Python packages
+RUN apt-get update && apt-get install -y --no-install-recommends gcc
+
+# Create and activate the virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copy requirements file and install dependencies in the virtual environment
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Stage 2: Final image
+FROM python:3.9-slim
+
+# Set working directory
+WORKDIR /app
+
+# Copy the virtual environment from the builder stage
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copy application files into the container
+COPY . .
+
+# Command to run the application
+CMD ["python", "src/flask_server.py"]
