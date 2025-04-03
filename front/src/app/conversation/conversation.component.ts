@@ -47,7 +47,7 @@ export class ConversationComponent {
   isLoading=false;
   context:contextDTO={label:"",text:"",remember:""}
  
-  contexts:{"label":string,"context":string,"contextRemember":string,"last_timestamp":string}[]=[]
+  contexts:{"id":string, "label":string,"context":string,"contextRemember":string,"last_timestamp":string}[]=[]
   
   @ViewChild('input') divInputElement!: ElementRef;
   @ViewChild('human_input') inputElement!: ElementRef;
@@ -67,7 +67,7 @@ export class ConversationComponent {
   swSendAudio: boolean= false;
   swTalkResponse: Boolean= true;
   audio: HTMLAudioElement | null = null;
-  selectContext:string = 'NEW';
+  selectContext:string = 'default';
   selectLanguage: string = 'a';
   selectLanguageDesc:string="American English"
   selectVoice: string = 'af_heart';  
@@ -121,7 +121,9 @@ export class ConversationComponent {
         }
         else
         {
-          await this.back.contextSend(this.context)
+          await this.back.contextSetLabel("default")
+          this.context.label= "default"
+          this.setTextContext("default")
         }
         this.chat_history.push({line:this.number_line, type: "R",msg: this.responseMessage,msgClean:this.responseMessage});
         this.responseMessage=""
@@ -472,15 +474,18 @@ export class ConversationComponent {
     this.put_message(response)
   }
 
-  async onChangeContext(event:any) {
-    const textArea = event.target as HTMLTextAreaElement;
-    const label = textArea.value;
-    this.setTextContext(label)    
-    this.contextElement.nativeElement.focus();   
+  async onChangeContext(event:any,id :string) {    
+    const selectElement = event.target as HTMLSelectElement;
+
+    const selectedLabel = selectElement.options[selectElement.selectedIndex].text;
+    this.context.label=selectedLabel
+
+    this.setTextContext(selectedLabel)
+    this.back.contextSet(id)
+    setTimeout(() => this.contextElement.nativeElement.focus(),100)   
   }
 
-  setTextContext(label:string)  {   
-    this.context.label=label=='NEW'?"":label;     
+  setTextContext(label:string)  {       
     for (const c of  this.contexts)
     {
       if (c['label']==label)
@@ -492,16 +497,14 @@ export class ConversationComponent {
   }
   async list_context()
   {
+    debugger
     const response= await this.back.contextGet();    
     this.contexts=response.contexts
-    const value={"label":"NEW","context":"","contextRemember":"","last_timestamp":""}
-    this.contexts.splice(0,0,value)
   }
 
-  async contextDelete(label:string)
+  async contextDelete(id:string)
   {
-    this.isLoading=true
-    const response= await this.back.contextDelete(this.selectContext);    
+    const response= await this.back.contextDelete(id);
     this.list_context()
     this.isLoading=false
     this.put_message(response)
@@ -509,6 +512,7 @@ export class ConversationComponent {
     this.context.label=""
     this.context.remember=""
   }
+
   async contextSend(event:any)    {
     const textArea = event.target as HTMLTextAreaElement;
     if (!textArea)

@@ -96,7 +96,22 @@ async getLastUser(): Promise<any> {
       throw error;
     }
   }
-  
+  async contextSet(id:string):  Promise<any> {   
+    try {
+      return await firstValueFrom(this.http.put(`${this.backendUrl}/context/id/${id}`,{}));
+    } catch (error) {
+      console.error('get-contexts failed!:', error);
+      throw error;
+    }
+  }
+  async contextSetLabel(label:string):  Promise<any> {   
+    try {
+      return await firstValueFrom(this.http.put(`${this.backendUrl}/context/label/${label}`,{}));
+    } catch (error) {
+      console.error('get-contexts failed!:', error);
+      throw error;
+    }
+  }
   async contextGet():  Promise<any> {   
     try {
       return await firstValueFrom(this.http.get(`${this.backendUrl}/context/user/${this.persistence.getUser()}`));
@@ -105,15 +120,14 @@ async getLastUser(): Promise<any> {
       throw error;
     }
   }
-  async contextDelete(label: string): Promise<any> {
+  async contextDelete(id: string): Promise<any> {
     const url = `${this.backendUrl}/context`;
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
-    });
-    const body = { user: this.persistence.getUser(), label: label };
+    });    
   
     try {
-      return await firstValueFrom(this.http.request('delete', url, { headers, body }));
+      return await firstValueFrom(this.http.request('delete', `${this.backendUrl}/context/id/${id}`, { headers }));
     } catch (error) {
       console.error('context_delete failed!:', error);
       throw error;

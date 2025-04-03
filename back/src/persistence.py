@@ -3,8 +3,8 @@ import sqlite3
 import uuid
 import robotito_ai as ai
 import memory
-def init_db():
 
+def init_db():
     cursor=connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='user_session'" )
     # Create table to create User
     if cursor.fetchone() is  None:
@@ -30,6 +30,7 @@ def init_db():
         connection.execute("""INSERT INTO users ( user,name,password,language,voice) VALUES ('default','Guest','changeit','b','bm_fable')""")
         connection.commit()    
     # Create table to create context
+    
     cursor=connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='context'" )
     if cursor.fetchone() is  None:
         connection.execute("""CREATE TABLE context ( 
@@ -40,6 +41,8 @@ def init_db():
                            remember TEXT,
                            last_time DATETIME DEFAULT CURRENT_TIMESTAMP                           
                            ) """)
+        connection.execute("""INSERT INTO context ( user,label,context, remember) 
+                            VALUES ('default','default','You are my friend Robotito. Your answers should not have more than 60 words','')""")
         connection.commit()
     # Create tables to save conversations
     cursor=connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='conversation'" )
@@ -48,7 +51,7 @@ def init_db():
             CREATE TABLE conversation (
                  id text primary key,
                  user TEXT,
-                 label TEXT,
+                 idContext TEXT,
                  name text,
                  initial_time DATETIME DEFAULT CURRENT_TIMESTAMP,
                  final_date DATETIME)
@@ -73,31 +76,50 @@ def get_all_context(user):
     result = [{"label": row[0], "context": row[1], "contextRemember": row[2],"last_time": row[3],"id":row[4]} for row in data]
     return result
 
-def save_context(user,label,context,remember):
-    sql=f"select * from context where label=? and user=?"    
+def get_context_by_label(user,label):
+    sql=f"select label,context,remember,last_time,id from context where label=? and user=?"    
     cursor=connection.execute(sql,(label,user))
-    if cursor.fetchone() is  None:
+    row= cursor.fetchone()
+    if row is None:
+        return None
+    result = {"label": row[0], "context": row[1], "contextRemember": row[2],"last_time": row[3],"id":row[4]}
+    return result
+def save_context(user,label,context,remember):
+    data=get_context_by_label(user,label)
+    if data is  None:
         print(f"Insert context: {label}")
         sql=f"INSERT INTO context (label,user,context,remember) VALUES (?, ?, ?,?)"        
-        connection.execute(sql, (label,user,context,remember))
+        cursor = connection.execute(sql, (label,user,context,remember))
+        id = cursor.lastrowid
     else:
         print(f"Update context: {label}")
+        id=data['id']
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         sql=f"""UPDATE context SET context = ?,remember= ?, last_time='{now}'
-                           where label= ?  and user= ?
-                           """    
+                where label= ?  and user= ?"""
+        
         connection.execute(sql,(context,remember,label,user))
     connection.commit()
+    return id
 def delete_context(user,label):
     sql=f"""delete from context where label=? and user=? """ 
     connection.execute(sql,(label,user))
     connection.commit()
 def delete_context_by_id(id):
     sql=f"delete from context where id=? " 
-    connection.execute(sql,(id))
+    connection.execute(sql,(id,))
     connection.commit()
-def init_conversation(id ,user,msg,force=False):
-    label=msg
+def get_context_by_id(id):
+    sql=f"select label, context, remember, last_time,id from context where id=? " 
+    cursor=connection.execute(sql,(id,))
+    row=cursor.fetchone()
+    if row is None:
+        return None
+
+    result = {"label": row[0], "context": row[1], "contextRemember": row[2],"last_time": row[3],"id":row[4]}
+    return result
+
+def init_conversation(id ,user,msg,force=False):    
     if id is None or force:
         if len(msg.split())>15:
             # Do a sumary of the message
@@ -109,28 +131,34 @@ def init_conversation(id ,user,msg,force=False):
         id = str(random_uuid)
         print("Init conversation id",id) 
         sql="""
-                insert into conversation (id,user,label,name,final_date) values (?,?,?,?,?)
+                insert into conversation (id,user,name,final_date) values (?,?,?,?)
             """
-        connection.execute(sql,(id,user,label,msg,now))
+        connection.execute(sql,(id,user,msg,now))
         connection.commit()
     return id
 
 # Conversation
-def conversation_save(uuid,id ,user, label,type,msg):
+def conversation_save(uuid,id ,user, idContext,type,msg):
     if id=='X':
         id=init_conversation(None,user,msg,True)
     ai.save_msg(uuid,type,msg)
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    sql="update conversation set final_date = ?, label=? where id = ? "
-    connection.execute(sql,(now,label,id))
+    sql="update conversation set final_date = ?, idContext=? where id = ? "
+    connection.execute(sql,(now,idContext,id))
     sql="insert into conversation_lines  (id,type,msg) values (?,?,?)"
     connection.execute(sql,(id,type,msg))
     connection.commit()
     return id
-
+def updateConversationContext(idConversation,idContext):
+    if idConversation is None or idContext is None:
+        return
+    sql="update conversation set idContext=? where id = ? "
+    connection.execute(sql,(idContext,idConversation))
+    connection.commit()
+    return idConversation
 def conversation_get_by_id(id):
     sql = """
-        select c.user,c.label,c.name,c.initial_time,c.final_date, l.type,l.msg
+        select c.user,c.idContext,c.name,c.initial_time,c.final_date, l.type,l.msg
          from conversation as c, conversation_lines as l where c.id = ? and c.id=l.id order by l.time_msg
     """
 
@@ -141,7 +169,7 @@ def conversation_get_by_id(id):
     return result
 def conversation_get_list(user):
     sql = """
-        select c.id,c.user,c.label,c.name,c.initial_time,c.final_date
+        select c.id,c.user,c.idContext,c.name,c.initial_time,c.final_date
          from conversation as c where c.user = ?  order by c.final_date desc
     """
 

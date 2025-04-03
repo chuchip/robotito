@@ -9,38 +9,46 @@ conversation_bp = Blueprint('conversation', __name__)
 def conversation_getId(id):
   print("GET  conversation with id: ",id)
   uuid=request.headers.get("uuid")
+  mem=memory.getMemory(uuid)
   data = db.conversation_get_by_id(id)
   if len (data) == 0:
     return jsonify({'message': f'Conversation with id {id} NOT FOUND!', 'conversation': id})
   ai.restore_history(uuid,data)
+  mem.setConversationId(id)
   return jsonify({'message': f'This is the conversation with id {id}!', 'conversation': data})
 
 
 @conversation_bp.route('/id/<string:id>', methods=['DELETE'])
 def conversation_deleteId(id): 
   print("GET  conversation with id: ",id)
-  db.conversation_delete_by_id(id)
-  
+  db.conversation_delete_by_id(id)  
   return jsonify({'message': f'Conversation with id {id} DELETED!', 'conversation': id})
 
 
 @conversation_bp.route('/id/<string:id>', methods=['POST'])
 async def conversation_saveId(id):     
   data = await request.get_json()
-  uuid=request.headers.get("uuid")
-  context = memory.getMemory(uuid).getContext()
-  # print(f"Save  conversation with id: {id}{data} ")
+  uuid=request.headers.get("uuid")  
+  context = memory.getMemory(uuid).getContext()  
+  idContext=None
+  if not context is None:
+    idContext=context.getId()
   id_conversation=db.conversation_save(uuid,id,data['user'],
-                                       context.getLabel(),data['type'] ,data['msg'])
+                                       idContext,data['type'] ,data['msg'])
+  #print(f"Save  conversation with id: {id}{data} ")
   return jsonify({'message': f'Conversation saved on id {id_conversation} !', 'id': id_conversation})
 
 
 @conversation_bp.route('/init', methods=['POST'])
 async def conversation_init():     
   data = await request.get_json()
+  uuid=request.headers.get("uuid")
+  mem=memory.getMemory(uuid)
   # print(f"Save  conversation with id: {id}{data} ")
   id_conversation=db.init_conversation(None,data['user'],data['msg'])
-  
+  if mem.getContext() is None:
+    db.updateConversationContext(id_conversation, data['contextId'])
+  mem.setConversationId(id_conversation)
   return jsonify({'message': f'Conversation saved on id {id_conversation} !', 'id': id_conversation})
 
 

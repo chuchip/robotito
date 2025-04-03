@@ -97,7 +97,8 @@
               {{ option.label }}
             </option>
           </select>     
-          <span class="configuration_line_text">Speed:<input type="range" min="0.5" max="2" step="0.1" [(ngModel)]="playbackSpeed" (input)="changeSpeed($event)">
+          <span class="configuration_line_text">Speed:<input type="range" min="0.5" max="2" step="0.1"
+             [(ngModel)]="playbackSpeed" (input)="changeSpeed($event)">
             {{playbackSpeed | number:'1.1-1'}}
           </span>
         </div>
@@ -114,11 +115,11 @@
       </div>      
       <div class="context">
       <div class="configuration_horizontal">
-          <select #selectComponent [(ngModel)]="selectContext" (change)="onChangeContext($event)" val>
-            <option *ngFor="let context of contexts">
+            <select #selectComponent [(ngModel)]="selectContext" (change)="onChangeContext($event, selectComponent.value)">
+            <option *ngFor="let context of contexts" [value]="context['id']">
               {{ context['label'] }}
             </option>
-          </select>
+            </select>
           <button (click)="contextDelete(selectComponent.value)" matTooltip="Remove Context"> <span
               class="material-icons">remove_circle</span></button>
           <input #inputField type="text" [(ngModel)]="this.context.label" placeholder="Choose a new Label">

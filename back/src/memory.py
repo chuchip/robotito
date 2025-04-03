@@ -1,11 +1,16 @@
 from kokoro import KPipeline
 class Context:  
-
-  remember_text=""
-  remember_number=0
-  remember_each=5
-  text="You are a robot designed to interact with non-technical people and we are having a friendly conversation."
-  label="NEW"
+  def __init__(self):
+    self.id=None
+    self.text=None
+    self.label=None
+    self.remember_text=None
+    self.remember_number=0
+    self.remember_each=2
+  def setId(self,id):
+    self.id=id
+  def getId(self):
+    return self.id
   def setRememberText(self,text):
     self.remember_text=text
     self.remember_number=0
@@ -35,9 +40,14 @@ class memoryDTO:
         self.user=None
         self.session=None
         self.uuid=uuid
+        self.conversationId=None
         self.chat_history =[]
-        self.context=Context()
+        self.context=None
         self.audioData=AudioData()
+    def getConversationId(self):
+        return self.conversationId
+    def setConversationId(self,conversationId):
+        self.conversationId=conversationId    
     def getSession(self):
        return self.session
     def setSession(self,session):
@@ -51,7 +61,7 @@ class memoryDTO:
         self.user=None
         self.session=None
         self.chat_history.clear()
-        self.context=Context()
+        self.context=None
         self.audioData=AudioData()       
     def getUser(self):
         return self.user
@@ -61,18 +71,18 @@ class memoryDTO:
        return self.audioData
     def getChatHistory(self):
         return self.chat_history
-    def getContext(self):
+    def getContext(self) -> Context:
         return self.context
     def setchatHistory(self,chat_history):
         self.chat_history=chat_history
-    def setContext(self,context):    
+    def setContext(self,context:Context):    
         self.context=context 
     def addChatHistory(self,msg):    
         self.chat_history.append(msg)
     def clearChatHistory(self):
         self.chat_history.clear()
     def clearContext(self):
-        self.context=Context()   
+        self.context=None()   
     def getUuid(self):    
         return self.uuid
 
@@ -86,7 +96,7 @@ class Session:
       return self.authorization
   
 # Return a object type memoryDto or None
-def getMemory(uuid):
+def getMemory(uuid) -> memoryDTO:
     for mem in memoryData:
         if mem.getUuid()==uuid:
             return mem

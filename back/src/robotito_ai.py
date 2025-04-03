@@ -21,6 +21,9 @@ async def call_llm(state) :
     #print(f"call_llm: {state['messages']}")
     memoryData=memory.getMemory(state['uuid'])
     context = memoryData.getContext()
+    rememberText=""
+    if not context is None:
+      rememberText=context.getRememberText()
     chat_history=memoryData.getChatHistory()
     prompt = ChatPromptTemplate.from_messages( [
           ("system", "{system_msg}"),
@@ -30,7 +33,7 @@ async def call_llm(state) :
     ])
     msg=state["message"]
     swRemember=False
-    if context.getRememberText()!="":      
+    if rememberText!="":      
       if context.hasToRemember():
         msg+=f". {context.getRememberText()}"
         swRemember=True        
