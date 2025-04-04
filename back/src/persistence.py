@@ -73,7 +73,7 @@ def get_all_context(user):
     query=connection.execute(f"""select label,context,remember,last_time,id
                              from context where user = ? order by last_time desc""",(user,))
     data=query.fetchall()
-    result = [{"label": row[0], "context": row[1], "contextRemember": row[2],"last_time": row[3],"id":row[4]} for row in data]
+    result = [ get_DTO_context(row) for row in data]
     return result
 
 def get_context_by_label(user,label):
@@ -82,8 +82,8 @@ def get_context_by_label(user,label):
     row= cursor.fetchone()
     if row is None:
         return None
-    result = {"label": row[0], "context": row[1], "contextRemember": row[2],"last_time": row[3],"id":row[4]}
-    return result
+    
+    return get_DTO_context(row)
 def save_context(user,label,context,remember):
     data=get_context_by_label(user,label)
     if data is  None:
@@ -102,10 +102,19 @@ def save_context(user,label,context,remember):
     connection.commit()
     return id
 def delete_context(user,label):
+    if label==None or label == '' or label=='default':
+        return
     sql=f"""delete from context where label=? and user=? """ 
     connection.execute(sql,(label,user))
     connection.commit()
 def delete_context_by_id(id):
+    data=get_context_by_id(id)
+    if data is  None:
+        print(f"Context with id {id} not found")
+        return
+    if (data['label'] =='default'):
+        print(f"Label 'default' cannot be deleted")
+        return
     sql=f"delete from context where id=? " 
     connection.execute(sql,(id,))
     connection.commit()
@@ -115,10 +124,10 @@ def get_context_by_id(id):
     row=cursor.fetchone()
     if row is None:
         return None
-
-    result = {"label": row[0], "context": row[1], "contextRemember": row[2],"last_time": row[3],"id":row[4]}
-    return result
-
+    
+    return get_DTO_context(row)
+def get_DTO_context(row):
+    return {"label": row[0], "text": row[1], "remember": row[2],"last_time": row[3],"id":row[4]}
 def init_conversation(id ,user,msg,force=False):    
     if id is None or force:
         if len(msg.split())>15:
@@ -163,7 +172,7 @@ def conversation_get_by_id(id):
     """
 
     data=connection.execute(sql,(id,))
-    result = [{"user": row[0], "labelContext": row[1], "name": row[2],
+    result = [{"user": row[0], "idContext   ": row[1], "name": row[2],
             "initial_time": row[3],"final_date":row[4],"type": row[5],"msg": row[6]} for row in data]
     
     return result
@@ -174,7 +183,7 @@ def conversation_get_list(user):
     """
 
     data=connection.execute(sql,(user,))
-    result = [{"id":row[0] , "user": row[1], "labelContext": row[2], "name": row[3],
+    result = [{"id":row[0] , "user": row[1], "idContext": row[2], "name": row[3],
             "initial_time": row[4],"final_date":row[5]} for row in data]
     
     return result

@@ -5,7 +5,6 @@ import { securityDTO } from '../model/security.dto';
 export class PersistenceService {
   private security: securityDTO={'user':'','authorization':''}
   public uuid:string="";
-  labelContext=""  
   public clearLogin=false
 
   constructor() {

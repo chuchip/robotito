@@ -1,10 +1,11 @@
 <div class="overlay" *ngIf="isLoading">
   <mat-spinner></mat-spinner>
 </div>
-<div class="overlay_sound" *ngIf="isSoundLoading"  [style.position]="'absolute'" [style.left.px]="xPos" [style.top.px]="yPos" >
-  <mat-spinner></mat-spinner>
-</div>
-
+<app-sound-indicator [isRecording]="isSoundLoading" 
+  [style.zIndex]="999" [style.opacity]="50" 
+ [style.position]="'absolute'" [style.left.px]="xPos" [style.top.px]="yPos" >
+</app-sound-indicator>
+  
 <div class="system" *ngIf="response_back!=''">{{response_back}}</div>
 <div class="page">  
   <div *ngIf="isSidebarOpen" class="sidebar">
@@ -14,7 +15,7 @@
     <div *ngFor="let line of conversationHistory; let i = index">
       <span class="sidebar_line" [matTooltipClass]="'custom-tooltip'"
         matTooltip="{{getFormattedDate(line.final_date) | date: 'dd/MMM HH:mm'}}"
-        (click)="historyChoose(line.id,line.labelContext)">
+        (click)="historyChoose(line.id,line.idContext)">
         <button (click)="hystoryDelete(line.id)" matTooltip="Remove Conversation"> <span
             class="material-icons">remove_circle</span></button>
         {{ line.name}}

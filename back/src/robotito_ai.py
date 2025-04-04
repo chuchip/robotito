@@ -32,25 +32,26 @@ async def call_llm(state) :
           ("user","{question}")
     ])
     msg=state["message"]
-    swRemember=False
-    if rememberText!="":      
-      if context.hasToRemember():
-        msg+=f". {context.getRememberText()}"
-        swRemember=True        
-      context.incrementRememberNumber()
-    chat_prompt =  prompt.format_messages(
-      system_msg=context.getText(),
-      context=[], 
-      msgs=chat_history,
-      question=msg
-    )  
-     
-    #response = model.invoke(chat_prompt)    
-    
-    async for chunk in client_text.astream(chat_prompt):        
-        yield  chunk.content
-    if swRemember:
-      yield "*"
+    if msg.strip() != "":      
+      swRemember=False
+      if rememberText!="":      
+        if context.hasToRemember():
+          msg+=f". {context.getRememberText()}"
+          swRemember=True        
+        context.incrementRememberNumber()
+      chat_prompt =  prompt.format_messages(
+        system_msg=context.getText(),
+        context=[], 
+        msgs=chat_history,
+        question=msg
+      )        
+      #response = model.invoke(chat_prompt)          
+      async for chunk in client_text.astream(chat_prompt):        
+          yield  chunk.content
+      if swRemember:
+        yield "*"
+    else:
+      yield " "
 def save_msg(uuid,type,msg):
     chat_history = memory.getMemory(uuid).getChatHistory()
     if type=='R':

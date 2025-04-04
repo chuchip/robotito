@@ -5,7 +5,7 @@ import { PersistenceService } from './persistence.service';
 import { contextDTO } from '../model/context.dto';
 @Injectable()
 export class ApiBackService {
-  labelContext=""
+
   
   private readonly backendUrl = 'http://localhost:5000'; // Change this to your backend
 
@@ -112,7 +112,7 @@ async getLastUser(): Promise<any> {
       throw error;
     }
   }
-  async contextGet():  Promise<any> {   
+  async contextsUserList():  Promise<any> {   
     try {
       return await firstValueFrom(this.http.get(`${this.backendUrl}/context/user/${this.persistence.getUser()}`));
     } catch (error) {
@@ -120,14 +120,11 @@ async getLastUser(): Promise<any> {
       throw error;
     }
   }
-  async contextDelete(id: string): Promise<any> {
-    const url = `${this.backendUrl}/context`;
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-    });    
-  
+  async contextDelete(id: string): Promise<any> {         
     try {
-      return await firstValueFrom(this.http.request('delete', `${this.backendUrl}/context/id/${id}`, { headers }));
+      if (id=="")
+        return null      
+      return await firstValueFrom(this.http.delete(`${this.backendUrl}/context/id/${id}`));
     } catch (error) {
       console.error('context_delete failed!:', error);
       throw error;

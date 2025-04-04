@@ -1,4 +1,5 @@
 import { Component, ViewChild,HostListener, ElementRef } from '@angular/core';
+import { SoundIndicatorComponent } from '../sound-indicator/sound-indicator.component';
 import { ApiBackService } from '../services/api-back.service';
 import { SoundService } from '../services/sound.service';
 import { FormsModule } from '@angular/forms';
@@ -17,7 +18,7 @@ import { Router } from '@angular/router';
 @Component({  
   selector: 'app-conversation',   
   imports: [CommonModule, MatTooltipModule, MatCheckboxModule,FormsModule,
-     MatButtonModule, MatIconModule, 
+     MatButtonModule, MatIconModule, SoundIndicatorComponent,
     MatProgressSpinnerModule,MatSliderModule], // 
   templateUrl: './conversation.component.html',
   styleUrls: ['./conversation.component.scss']
@@ -45,9 +46,8 @@ export class ConversationComponent {
   conversationHistory:conversationHistoryDTO[]=[];
   conversationId=""
   isLoading=false;
-  context:contextDTO={label:"",text:"",remember:""}
- 
-  contexts:{"id":string, "label":string,"context":string,"contextRemember":string,"last_timestamp":string}[]=[]
+  context:contextDTO={id:"",label:"",text:"",remember:""}
+  contexts:contextDTO[]=[]
   
   @ViewChild('input') divInputElement!: ElementRef;
   @ViewChild('human_input') inputElement!: ElementRef;
@@ -97,6 +97,7 @@ export class ConversationComponent {
   ]
 
   constructor(private router: Router,public back: ApiBackService,public sound: SoundService,public persistence: PersistenceService) {
+    this.isLoading=true
     if (persistence.getAuthorization()=='')
     {
        this.router.navigate(['/login']); 
@@ -115,22 +116,33 @@ export class ConversationComponent {
         await this.getConversationsHistory()        
         if  (this.conversationHistory.length>0)
         {
-          this.context.label= this.conversationHistory[0].labelContext
-          this.setTextContext(this.context.label)
-          await this.back.contextSend(this.context)
+          this.context.id= this.conversationHistory[0].idContext
+          if (this.context.id==null)
+          {
+            this.setDefaultContext()            
+          }
+          else
+          {
+            this.setTextContext(this.context.label)
+            await this.back.contextSet(this.context.id)
+          }
         }
         else
         {
-          await this.back.contextSetLabel("default")
-          this.context.label= "default"
-          this.setTextContext("default")
+          this.setDefaultContext()
         }
         this.chat_history.push({line:this.number_line, type: "R",msg: this.responseMessage,msgClean:this.responseMessage});
         this.responseMessage=""
         this.number_line++
+        this.isLoading=false
         })
   }
-
+  async setDefaultContext()
+  {
+    await this.back.contextSetLabel("default")
+    this.context.label= "default"
+    this.setTextContext("default")
+  }
   async toggleRecording(shiftKey:boolean=true) {    
     if (this.sound.isRecording) {     
       this.stopRecording(this.conversation,shiftKey)
@@ -485,25 +497,45 @@ export class ConversationComponent {
     this.back.contextSet(id)
     setTimeout(() => this.contextElement.nativeElement.focus(),100)   
   }
-
+  setTextContextById(id:string)  {
+    for (const c of  this.contexts)
+    {
+      if (c.id==id)
+      {
+        this.setContext(c)
+        return
+      }
+    }
+    this.setTextContext("default")
+  }
   setTextContext(label:string)  {       
     for (const c of  this.contexts)
     {
-      if (c['label']==label)
+      if (c.label==label)
       {
-        this.context.text=c['context']
-        this.context.remember=c['contextRemember']
+        this.setContext(c)
+        return
       }
     }
+    this.setTextContext("default")
+  }
+  setContext(c:contextDTO)
+  {
+    this.context.id=c.id
+    this.context.label=c.label
+    this.context.text=c.text
+    this.context.remember=c.remember
   }
   async list_context()
   {
-    const response= await this.back.contextGet();    
+    const response= await this.back.contextsUserList();    
     this.contexts=response.contexts
   }
 
   async contextDelete(id:string)
   {
+    if (this.context.label=='default')
+      return
     const response= await this.back.contextDelete(id);
     this.list_context()
     this.isLoading=false
@@ -561,16 +593,13 @@ export class ConversationComponent {
     this.conversationHistory=response.conversations;    
   }
 
-  async historyChoose(id:string,context:string)
+  async historyChoose(id:string,idContext:string)
   {    
     this.isLoading=true
     this.conversationId=id
     const response=await this.back.conversation_by_id(id);
-    this.context.label=context;   
-    this.selectContext=context
-    this.setTextContext(context)
-    this.contextSend(this.context.label)
-    await this.back.contextSend(this.context);
+    this.setTextContextById(idContext)
+    await this.back.contextSet(this.context.id)
     this.chat_history.length=0
     var i=0;  
     for (const c of response.conversation)

@@ -15,13 +15,16 @@ async def context_setByLabel(label):
 
   context_db = db.get_context_by_label(mem.getUser(), label)
   db.updateConversationContext(mem.getConversationId(),context_db['id'])
+  context.setId(context_db['id'])
   context.setLabel(context_db['label'])
-  context.setText(context_db['context'])
-  context.setRememberText(context_db['contextRemember'])
+  context.setText(context_db['text'])
+  context.setRememberText(context_db['remember'])
   return jsonify({'message': f"Context set  Set Context to: '{id}'", 'data': context_db})
 
 @context_bp.route('/id/<string:id>', methods=['put'])
-async def context_setById(id):   
+async def context_setById(id):
+  if id is None or id == '' or id=='null':
+    return jsonify({'message': 'Context ID is required!','data': None}) 
   print("Set Context: ",id)
   mem=memory.getMemory(request.headers.get("uuid"))
   context = mem.getContext()
@@ -30,10 +33,13 @@ async def context_setById(id):
     mem.setContext(context)
 
   context_db = db.get_context_by_id(id)
+  if context_db is None:
+    return jsonify({'message': f"Context with id {id} NOT FOUND!",'data': None})
   db.updateConversationContext(mem.getConversationId(),context_db['id'])
+  context.setId(context_db['id'])
   context.setLabel(context_db['label'])
-  context.setText(context_db['context'])
-  context.setRememberText(context_db['contextRemember'])
+  context.setText(context_db['text'])
+  context.setRememberText(context_db['remember'])
   return jsonify({'message': f"Context set  Set Context to: '{id}'", 'data': context_db})
 
 ## Work with context
@@ -46,19 +52,14 @@ async def context_update():
     context=memory.Context()
     mem.setContext(context)
   context.setLabel(data['label'])
-  if data['label'] !='':
+  if  data['label'] is not None and data['label'] !='':
     contextId=db.save_context(user=data['user'],label=data['label'],context=data['context'],remember=data['contextRemember'])
     db.updateConversationContext(mem.getConversationId(),contextId)
+  context.setId(contextId)
+  context.setLabel(data['label'])
   context.setText(data['context'])
   context.setRememberText(data['contextRemember'])
   return jsonify({'message': f"Context updated successfully!. Update Context of: '{data['label']}'", 'text': data['context']})
-
-@context_bp.route('', methods=['DELETE'])
-async def context_delete():  
-  data = await request.get_json()  # Get JSON data from the request body    
-  print("Deleted  Context: ",data['label'])
-  db.delete_context(user=data['user'],label=data['label'])  
-  return jsonify({'message': 'Context deleted successfully!', 'text': data['label']})
 
 @context_bp.route('/id/<string:id>', methods=['DELETE'])
 async def context_delete_by_id(id):   
