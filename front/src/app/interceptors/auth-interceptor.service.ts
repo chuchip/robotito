@@ -10,6 +10,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   const modifiedReq = req.clone({
     setHeaders: {
+   
       'Authorization': persistenceService.getAuthorization(), // Replace with dynamic token if needed
       'uuid': uuid // Dynamically set UUID
     }

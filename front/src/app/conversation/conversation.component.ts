@@ -64,38 +64,16 @@ export class ConversationComponent {
   showRecord=false
   showLanguageOptions=false
   error: any;
-  conversation: boolean= false;
+  modeConversation: boolean= false;
   swTalkResponse: Boolean= true;
   audio: HTMLAudioElement | null = null;
   selectContext:string = 'default';
   selectLanguage: string = 'a';
   selectLanguageDesc:string="American English"
   selectVoice: string = 'af_heart';  
-  languageOptions:{label:string, value:string}[] = [
-    { label: 'American English', value: 'a' },
-    { label: 'British English', value: 'b' },
-    { label: 'Spanish', value: 'e' },    
-  ];
-  voiceOptions = [
-    { 'language':'a', label: '' }, 
-    { 'language':'a', label: 'af_heart' }, 
-    { 'language':'a', label: 'af_aoede' },    
-    { 'language':'a', label: 'af_bella' },    
-    { 'language':'a', label: 'af_sky' },    
-    { 'language':'a', label: 'am_michael' },
-    { 'language':'a', label: 'am_fenrir' },        
-    { 'language':'a', label: 'af_kore' },    
-    { 'language':'a', label: 'am_puck' },    
-    { 'language':'b', label: '' }, 
-    { 'language':'b', label: 'bf_emma' },    
-    { 'language':'b', label: 'bm_george' },    
-    { 'language':'b', label: 'bm_fable' },    
-    { 'language':'e', label: '' }, 
-    { 'language':'e', label: 'ef_dora' },    
-    { 'language':'e', label: 'em_alex' },    
-    { 'language':'e', label: 'em_santa' },    
-  ]
-
+  languageOptions:{label:string, value:string}[] = []
+  voiceOptions:{language:string, label:string}[] = []
+   
   constructor(private router: Router,public back: ApiBackService,public sound: SoundService,public persistence: PersistenceService) {
     this.isLoading=true
     if (persistence.getAuthorization()=='')
@@ -104,7 +82,9 @@ export class ConversationComponent {
        return
     }
     this.back.getLastUser()
-      .then(async (data:any) => {     
+      .then(async (data:any) => {   
+        this.languageOptions=await this.back.getLanguages()
+        this.voiceOptions=await this.back.getVoices()
         this.selectVoice=data.voice
         this.selectLanguage=data.language
         this.selectLanguageDesc=this.getDescriptionLanguage(this.selectLanguage)
@@ -145,7 +125,7 @@ export class ConversationComponent {
   }
   async toggleRecording(shiftKey:boolean=true) {    
     if (this.sound.isRecording) {     
-      this.stopRecording(this.conversation,shiftKey)
+      this.stopRecording(this.modeConversation,shiftKey)
     } else {
       this.startRecording(shiftKey)
     }
@@ -169,9 +149,9 @@ export class ConversationComponent {
 
   async stopAutomaticRecording()
   {
-    await this.stopRecording(this.conversation,true)
+    await this.stopRecording(this.modeConversation,true)
   }
-  async stopRecording(sendAudio:boolean=this.conversation,automatic:boolean=false)
+  async stopRecording(sendAudio:boolean=this.modeConversation,automatic:boolean=false)
   {
     const text= await this.sound.stopRecording();
     this.inputText=this.inputText+" "+ text

@@ -1,16 +1,45 @@
 from quart import current_app,Blueprint,  request, jsonify,Response
 import os
-import persistence as db
 import robotito_ai as ai
-import soundfile as sf
-from kokoro import KPipeline
 import persistence
-import subprocess
-import numpy as np
 import memory
 
 audio_bp = Blueprint('audio', __name__)
 
+
+language_options = [
+  { "label": "American English", "value": "a" },
+  { "label": "British English", "value": "b" },
+  { "label": "Spanish", "value": "e" },
+]
+
+voice_options = [
+  { "language": "a", "label": "af_heart" },
+  { "language": "a", "label": "af_aoede" },
+  { "language": "a", "label": "af_bella" },
+  { "language": "a", "label": "af_sky" },
+  { "language": "a", "label": "am_michael" },
+  { "language": "a", "label": "am_fenrir" },
+  { "language": "a", "label": "af_kore" },
+  { "language": "a", "label": "am_puck" },
+  { "language": "b", "label": "bf_emma" },
+  { "language": "b", "label": "bm_george" },
+  { "language": "b", "label": "bm_fable" },
+  { "language": "e", "label": "ef_dora" },
+  { "language": "e", "label": "em_alex" },
+  { "language": "e", "label": "em_santa" },
+]
+
+@audio_bp.route('/languages', methods=['GET'])
+async def get_languages():
+    return jsonify(language_options)
+@audio_bp.route('/voices', methods=['GET'])
+async def get_all_voices():
+   return jsonify(voice_options)
+@audio_bp.route('/voices/<string:language>', methods=['GET'])
+async def get_voices(language):
+    voices = [voice for voice in voice_options if voice['language'] == language]
+    return jsonify(voices)
 
 @audio_bp.route('/stt', methods=['POST'])
 async def upload_audio():
@@ -23,9 +52,10 @@ async def upload_audio():
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
     uuid=request.headers.get("uuid")
+    audioData=memory.getMemory(uuid).getAudioData()
     filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], uuid+"_"+file.filename)
     await  file.save(filepath) 
-    text = ai.getTextFromAudio(filepath)
+    text = ai.getTextFromAudio(audioData,filepath)
     
     return jsonify({'message': 'Audio uploaded successfully!', 'text': text})
 
@@ -55,9 +85,7 @@ async def set_language():
   user=memory.getMemory(uuid).getUser()
   languageInput = data.get('language') 
   audioData.voice_name = data.get('voice') 
-  
-  if languageInput != audioData.language:
-    audioData.language=languageInput
-    audioData.kpipeline = KPipeline(lang_code=languageInput)
+  ai.set_language( audioData, languageInput)
+ 
   persistence.update_language(user,languageInput,audioData.voice_name)
   return jsonify({'message': f'Voice changed to {audioData.voice_name} and language to {audioData.language}!'})

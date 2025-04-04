@@ -1,4 +1,4 @@
-from kokoro import KPipeline
+
 class Context:  
   def __init__(self):
     self.id=None
@@ -32,8 +32,9 @@ class Context:
     return self.remember_number%self.remember_each==0 or self.remember_number==0
 class AudioData:
     language='a'
-    kpipeline = KPipeline(lang_code=language) 
+    kpipeline = None
     voice_name="af_heart"
+    configGoogle=None
 
 class memoryDTO:
     def __init__(self, uuid):

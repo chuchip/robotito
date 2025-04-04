@@ -1,20 +1,31 @@
 from langchain_openai import ChatOpenAI,OpenAIEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI
-import soundfile as sf
-import numpy as np
-import subprocess
-import os
 from langchain.prompts import ChatPromptTemplate
 from langchain_core.messages import  HumanMessage, AIMessage
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_chroma import Chroma
+
 
 from openai import OpenAI
-import torch
-from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
-import persistence as db
+import sound_google
+from quart import Quart
+from quart_cors import cors
+import os
+from api.audio  import audio_bp
+from api.principal import principal_bp
+from api.context  import context_bp
+from api.conversation import conversation_bp
+from api.security import security_bp
+from langchain_core.messages import  AIMessage,HumanMessage
 import memory
+
+
+app = Quart(__name__)
+app=cors(app,allow_origin="*")  # Enable Cross-Origin Resource Sharing
+
+UPLOAD_FOLDER = 'uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Create folder if not exists
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
 async def call_llm(state) :       
@@ -96,9 +107,6 @@ def save(state):
     _ = vector_store.add_documents(documents=all_splits)
     return state
 
-
-
-
 def configOpenAI():
   if version=="3.5":
     model = ChatOpenAI(model_name="o3-mini",                
@@ -134,8 +142,10 @@ def configGeminiAI():
 
 vector_store=None
 def configure_vector_store():
+  from transformers import pipeline
+  from langchain_chroma import Chroma
   embeddings = OpenAIEmbeddings( model="text-embedding-3-large")
-  global vector_store
+  
   vector_store = Chroma(
       collection_name="user1",
       embedding_function=embeddings,
@@ -145,7 +155,10 @@ def configure_vector_store():
   ai={"model":client_text,"pipeline":pipeline,"embeddings":embeddings,"vector_store":vector_store,"text_splitter":text_splitter}  
 
 # Configure Whisper
-def configure_whisper_local():     
+def configure_whisper_local():
+  import torch
+  from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
+
   device = "cuda:0" if torch.cuda.is_available() else "cpu"
   torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
 
@@ -170,19 +183,28 @@ def configure_whisper_local():
 
 def stt_api_whisper(audio_file):
   audio_file= open(audio_file, "rb")
-  transcription = client_sound.audio.transcriptions.create(
+  transcription = speechToText.audio.transcriptions.create(
       model="whisper-1", 
       file=audio_file
   )
   return transcription.text
-def getTextFromAudio(filepath):
+
+def getTextFromAudio(audioData,filepath):
   if stt=="local":
     text = local_whisper(filepath,return_timestamps=True)['text']
+  elif stt=="gemini":
+     sound_google.getTextFromAudio(audioData,filepath)
   else:
     text=stt_api_whisper(filepath)
   return text
    #text = ai.testWhisper(filepath)
 def getTTSFromKokoro(text,audioData,uuid): 
+  import soundfile as sf
+  import numpy as np
+  import subprocess
+  if audioData.kpipeline is None:
+      from kokoro import KPipeline
+      audioData.kpipeline = KPipeline(lang_code=audioData.language)
   generator = audioData.kpipeline(
           text, 
           voice= audioData.voice_name,
@@ -210,8 +232,10 @@ def getTTSFromKokoro(text,audioData,uuid):
 def getAudioFromText(text,audioData,uuid):
   if tts=="kokoro":
      fileOutput= getTTSFromKokoro(text,audioData,uuid)
+  elif tts=="gemini":   
+     fileOutput= sound_google.getAudioFromText(audioData,text,uuid)
   else:
-    response = client_sound.audio.speech.create(
+    response = textToSpeech.audio.speech.create(
       model="tts-1",
       voice="fable",
       response_format="opus",
@@ -220,7 +244,12 @@ def getAudioFromText(text,audioData,uuid):
     fileOutput="output.webm"
     response.stream_to_file(fileOutput)
   return fileOutput
-
+def set_language(audioData,languageInput):
+   if languageInput != audioData.language:
+      audioData.language=languageInput
+   if tts=='kokoro':
+      from kokoro import KPipeline
+      audioData.kpipeline = KPipeline(lang_code=languageInput)
 # Define the configuration
 print("--------------------------------")
 print("Initializing Robotito ...")
@@ -237,19 +266,42 @@ if model_api and model_api!="gemini":
 else:
   model_api="gemini"
   client_text=configGeminiAI()   
+
+speechToText=None
+textToSpeech=None
+# Configure Text to Sound
 tts = os.getenv("TTS")
 if tts and tts.lower()=="kokoro":
   tts="kokoro"  
+elif tts and tts.lower()=="gemini":
+  stt="gemini"
+  textToSpeech = texttospeech.TextToSpeechClient()
 else:
-  tts="openai"  
+  tts="openai"
+  textToSpeech=OpenAI()
+
+# Configure Speech to Text
 stt = os.getenv("STT")
 if stt and stt.lower()=="openai":
   stt="openai"
+  speechToText=OpenAI()
+elif stt and stt.lower()=="gemini":
+  stt="gemini"
+  speechToText= speech.SpeechClient()
 else:
   local_whisper=configure_whisper_local()
   stt="local" # Use Whisper Local
-if stt=="openai" or tts=="openai":
-  client_sound=OpenAI() # Use OpenAI API
+
+  
 
 print(f"Model API: {model_api}  STT: {stt} TTS: {tts}" )
 print("--------------------------------")
+
+app.register_blueprint(principal_bp, url_prefix='/api')
+app.register_blueprint(audio_bp, url_prefix='/api/audio')
+app.register_blueprint(context_bp, url_prefix='/api/context')
+app.register_blueprint(conversation_bp, url_prefix='/api/conversation')
+app.register_blueprint(security_bp, url_prefix='/api/security')
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)

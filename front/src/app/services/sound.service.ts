@@ -30,7 +30,7 @@ export class SoundService {
       };
 
       this.mediaRecorder.start();
-      if (conversation.conversation)
+      if (conversation.modeConversation)
       {
         this.audioContext = new AudioContext();
         this.analyser = this.audioContext.createAnalyser();

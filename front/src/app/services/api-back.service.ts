@@ -7,7 +7,7 @@ import { contextDTO } from '../model/context.dto';
 export class ApiBackService {
 
   
-  private readonly backendUrl = 'http://localhost:5000'; // Change this to your backend
+  private readonly backendUrl = 'http://localhost:5000/api'; // Change this to your backend
 
   constructor(private http: HttpClient,private persistence:PersistenceService ) {}
 
@@ -47,18 +47,25 @@ export class ApiBackService {
 
      
     });
-  }
-  async changeLanguage(language: string, voice: string): Promise<any> {
+}
+
+async getLanguages(): Promise<any> {
+  const url = `${this.backendUrl}/audio/languages`;  
+  return  await firstValueFrom(this.http.get(url));
+}
+async getVoices(): Promise<any> {
+  const url = `${this.backendUrl}/audio/voices`;  
+  return  await firstValueFrom(this.http.get(url));
+}
+async getVoicesLanguage(language:string): Promise<any> {
+  const url = `${this.backendUrl}/audio/voices/${language}`;  
+  return  await firstValueFrom(this.http.get(url));
+}
+async changeLanguage(language: string, voice: string): Promise<any> {
     const url = `${this.backendUrl}/audio/language`;
-
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-    });
-
     const body = { language, voice };
-
-    return  await firstValueFrom(this.http.post(url, body, { headers }));
-  }
+    return  await firstValueFrom(this.http.post(url, body));
+}
 
 async clearConversation(): Promise<any> {
   try {

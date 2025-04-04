@@ -14,7 +14,7 @@ async def context_setByLabel(label):
     mem.setContext(context)
 
   context_db = db.get_context_by_label(mem.getUser(), label)
-  db.updateConversationContext(mem.getConversationId(),context_db['id'])
+  
   context.setId(context_db['id'])
   context.setLabel(context_db['label'])
   context.setText(context_db['text'])
@@ -35,7 +35,7 @@ async def context_setById(id):
   context_db = db.get_context_by_id(id)
   if context_db is None:
     return jsonify({'message': f"Context with id {id} NOT FOUND!",'data': None})
-  db.updateConversationContext(mem.getConversationId(),context_db['id'])
+
   context.setId(context_db['id'])
   context.setLabel(context_db['label'])
   context.setText(context_db['text'])
@@ -54,7 +54,7 @@ async def context_update():
   context.setLabel(data['label'])
   if  data['label'] is not None and data['label'] !='':
     contextId=db.save_context(user=data['user'],label=data['label'],context=data['context'],remember=data['contextRemember'])
-    db.updateConversationContext(mem.getConversationId(),contextId)
+
   context.setId(contextId)
   context.setLabel(data['label'])
   context.setText(data['context'])
