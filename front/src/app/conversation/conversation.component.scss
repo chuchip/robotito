@@ -222,13 +222,13 @@ mat-checkbox .mat-checkbox-label {
   padding: 3px;
 }
 
-
 .overlay_sound {
   position: fixed;   
   display: flex;
+  stroke: #1f722a;
   justify-content: center;
   align-items: center;
-  z-index: 9999;
+  z-index: 9999;  
 }
 
 .overlay {

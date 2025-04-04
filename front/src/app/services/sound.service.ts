@@ -30,7 +30,7 @@ export class SoundService {
       };
 
       this.mediaRecorder.start();
-      if (conversation.swSendAudio)
+      if (conversation.conversation)
       {
         this.audioContext = new AudioContext();
         this.analyser = this.audioContext.createAnalyser();
@@ -120,6 +120,7 @@ export class SoundService {
       }
     });
   }
+
   playAudio() {
     if (this.audioUrl) {
       if (this.audio) {

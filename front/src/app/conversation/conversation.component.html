@@ -62,7 +62,7 @@
       <span class="input_text">
         <textarea #human_input class="expandable-input"  [(ngModel)]="inputText"  (input)="adjustHeight(human_input)"
           (keydown)="speakOnF4($event,human_input.value); human_input.focus(); "
-          (keydown.enter)="this.inputText=human_input.value; sendData()" 
+          (keydown.enter)="sendData()"
           placeholder="Type and press Enter">
         </textarea>
       </span>     
@@ -82,10 +82,9 @@
       <div class="configuration_line">
         <div class="configuration_horizontal">
           <span class="check-option"><input type="checkbox" [(ngModel)]="swTalkResponse" 
-              matTooltip="Reproduce Sound Automatically"> Talk</span>
-          <span class="check-option"><input type="checkbox" [(ngModel)]="swSendAudio"
-              matTooltip="Send Audio as Text inmediately">
-            STT</span>
+              matTooltip="Reproduce Sound Automatically"> Speak aloud</span>
+          <span class="check-option"><input type="checkbox" [(ngModel)]="conversation"
+              matTooltip="Mode Conversation">Conversation</span>
 
           <select [(ngModel)]="selectLanguage">
             <option *ngFor="let option of languageOptions" [value]="option.value">
@@ -104,7 +103,7 @@
         </div>
       </div>
       <div class="configuration_line">
-        <div> Actual Language: <span class="configuration_line_text"><input type="text"
+        <div>Actual Language: <span class="configuration_line_text"><input type="text"
               value="{{selectLanguageDesc}}" readonly> </span>
           Actual Voice: <span class="configuration_line_text"><input type="text" value="{{selectVoice}}" readonly>
           </span>

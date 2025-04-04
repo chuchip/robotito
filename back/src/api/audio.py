@@ -22,13 +22,11 @@ async def upload_audio():
     file = f['audio']
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
-    # print(file)
-    # print("Upload folder ",current_app.config['UPLOAD_FOLDER'])
-    filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], file.filename)
+    uuid=request.headers.get("uuid")
+    filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], uuid+"_"+file.filename)
     await  file.save(filepath) 
     text = ai.getTextFromAudio(filepath)
     
-    # print(result)
     return jsonify({'message': 'Audio uploaded successfully!', 'text': text})
 
 @audio_bp.route('/tts', methods=['POST'])

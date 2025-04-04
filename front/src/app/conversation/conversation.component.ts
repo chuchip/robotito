@@ -64,7 +64,7 @@ export class ConversationComponent {
   showRecord=false
   showLanguageOptions=false
   error: any;
-  swSendAudio: boolean= false;
+  conversation: boolean= false;
   swTalkResponse: Boolean= true;
   audio: HTMLAudioElement | null = null;
   selectContext:string = 'default';
@@ -133,7 +133,7 @@ export class ConversationComponent {
 
   async toggleRecording(shiftKey:boolean=true) {    
     if (this.sound.isRecording) {     
-      this.stopRecording(this.swSendAudio,shiftKey)
+      this.stopRecording(this.conversation,shiftKey)
     } else {
       this.startRecording(shiftKey)
     }
@@ -152,22 +152,23 @@ export class ConversationComponent {
       this.stopAudio()
     this.sound.startRecording(this);
     
-    setTimeout(() => this.inputElement.nativeElement.focus() , 0)
-    
+    setTimeout(() => this.inputElement.nativeElement.focus() , 200)    
   }
+
   async stopAutomaticRecording()
   {
-    await this.stopRecording(this.swSendAudio,true)
+    await this.stopRecording(this.conversation,true)
   }
-  async stopRecording(swSendAudio:boolean=this.swSendAudio,automatic:boolean=false)
+  async stopRecording(sendAudio:boolean=this.conversation,automatic:boolean=false)
   {
     const text= await this.sound.stopRecording();
     this.inputText=this.inputText+" "+ text
     this.isSoundLoading=false
-    if (swSendAudio)
+    if (sendAudio)
     {    
       await this.sendData()
-      this.startRecording(automatic=automatic)
+      if (automatic)
+        this.startRecording(automatic=automatic)
     }
     else{
       setTimeout(() =>  this.inputElement.nativeElement.focus() ,100)  
@@ -497,7 +498,6 @@ export class ConversationComponent {
   }
   async list_context()
   {
-    debugger
     const response= await this.back.contextGet();    
     this.contexts=response.contexts
   }
@@ -634,7 +634,11 @@ export class ConversationComponent {
   @HostListener('document:keydown', ['$event'])
   handleKeydown(event: KeyboardEvent) {
     const activeElement = document.activeElement as HTMLElement;
- 
+    if (event.key === 'Enter' && this.sound.isRecording) {         
+      event.preventDefault(); 
+      this.stopRecording(true,false)
+      return
+    }
     if (event.key === 'F2') {           
       event.preventDefault(); 
       this.toggleRecording(event.shiftKey)
