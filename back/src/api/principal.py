@@ -1,5 +1,4 @@
 from quart import  Blueprint,Response,request,abort,jsonify
-import robotito_ai as ai
 import persistence as db
 import memory
 
@@ -29,7 +28,8 @@ def security_check():
     print("Security check OK")
 
 async def generate(msg_graph):
-  async for msg  in  ai.call_llm(msg_graph):
+  import robotito_ai as ai
+  async for msg  in ai.call_llm(msg_graph):
       yield msg
 
 @principal_bp.route('/send-question', methods=['POST'])

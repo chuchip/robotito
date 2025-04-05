@@ -1,0 +1,255 @@
+Name: en-US-Casual-K
+Supported language: en-US
+SSML Voice Gender: MALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Chirp-HD-D
+Supported language: en-US
+SSML Voice Gender: MALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Chirp-HD-F
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Chirp-HD-O
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Chirp3-HD-Achernar
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Chirp3-HD-Aoede
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Chirp3-HD-Charon
+Supported language: en-US
+SSML Voice Gender: MALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Chirp3-HD-Erinome
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Chirp3-HD-Fenrir
+Supported language: en-US
+SSML Voice Gender: MALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Chirp3-HD-Gacrux
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Chirp3-HD-Kore
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Chirp3-HD-Leda
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Chirp3-HD-Orus
+Supported language: en-US
+SSML Voice Gender: MALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Chirp3-HD-Puck
+Supported language: en-US
+SSML Voice Gender: MALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Chirp3-HD-Sulafat
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Chirp3-HD-Zephyr
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Neural2-A
+Supported language: en-US
+SSML Voice Gender: MALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Neural2-C
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Neural2-D
+Supported language: en-US
+SSML Voice Gender: MALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Neural2-E
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Neural2-F
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Neural2-G
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Neural2-H
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Neural2-I
+Supported language: en-US
+SSML Voice Gender: MALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Neural2-J
+Supported language: en-US
+SSML Voice Gender: MALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-News-K
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-News-L
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-News-N
+Supported language: en-US
+SSML Voice Gender: MALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Polyglot-1
+Supported language: en-US
+SSML Voice Gender: MALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Standard-A
+Supported language: en-US
+SSML Voice Gender: MALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Standard-B
+Supported language: en-US
+SSML Voice Gender: MALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Standard-C
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Standard-D
+Supported language: en-US
+SSML Voice Gender: MALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Standard-E
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Standard-F
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Standard-G
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Standard-H
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Standard-I
+Supported language: en-US
+SSML Voice Gender: MALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Standard-J
+Supported language: en-US
+SSML Voice Gender: MALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Studio-O
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Studio-Q
+Supported language: en-US
+SSML Voice Gender: MALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Wavenet-A
+Supported language: en-US
+SSML Voice Gender: MALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Wavenet-B
+Supported language: en-US
+SSML Voice Gender: MALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Wavenet-C
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Wavenet-D
+Supported language: en-US
+SSML Voice Gender: MALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Wavenet-E
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Wavenet-F
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Wavenet-G
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Wavenet-H
+Supported language: en-US
+SSML Voice Gender: FEMALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Wavenet-I
+Supported language: en-US
+SSML Voice Gender: MALE
+Natural Sample Rate Hertz: 24000
+
+Name: en-US-Wavenet-J
+Supported language: en-US
+SSML Voice Gender: MALE
+Natural Sample Rate Hertz: 24000
+

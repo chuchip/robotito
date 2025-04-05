@@ -1,6 +1,5 @@
 from quart import Blueprint,  request, jsonify
 import persistence as db
-import  robotito_ai as ai
 import memory
 context_bp = Blueprint('context', __name__)
 

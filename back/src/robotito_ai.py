@@ -8,7 +8,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from google.cloud import speech
 from google.cloud import texttospeech
 from openai import OpenAI
-import sound_google
+
 from quart import Quart
 from quart_cors import cors
 import os
@@ -19,7 +19,6 @@ from api.conversation import conversation_bp
 from api.security import security_bp
 from langchain_core.messages import  AIMessage,HumanMessage
 import memory
-
 
 app = Quart(__name__)
 app=cors(app,allow_origin="*")  # Enable Cross-Origin Resource Sharing
@@ -54,10 +53,9 @@ async def call_llm(state) :
       chat_prompt =  prompt.format_messages(
         system_msg=context.getText(),
         context=[], 
-        msgs=chat_history,
+        msgs=chat_history[-12:],  # Get the last 12 messages
         question=msg
-      )        
-      #response = model.invoke(chat_prompt)          
+      )              
       async for chunk in client_text.astream(chat_prompt):        
           yield  chunk.content
       if swRemember:
@@ -141,8 +139,9 @@ def configGeminiAI():
   )
   return model
 
-vector_store=None
+
 def configure_vector_store():
+  vector_store=None
   from transformers import pipeline
   from langchain_chroma import Chroma
   embeddings = OpenAIEmbeddings( model="text-embedding-3-large")
@@ -182,21 +181,15 @@ def configure_whisper_local():
   )
   return pipe_whisper
 
-def stt_api_whisper(audio_file):
-  audio_file= open(audio_file, "rb")
-  transcription = speechToText.audio.transcriptions.create(
-      model="whisper-1", 
-      file=audio_file
-  )
-  return transcription.text
-
 def getTextFromAudio(audioData,filepath):
   if stt=="local":
     text = local_whisper(filepath,return_timestamps=True)['text']
   elif stt=="gemini":
+     import sound_google
      text=sound_google.getTextFromAudio(audioData,filepath)
   else:
-    text=stt_api_whisper(filepath)
+    import sound_openai
+    text=sound_openai.stt_api_whisper(filepath)
   return text
    #text = ai.testWhisper(filepath)
 def getTTSFromKokoro(text,audioData,uuid): 
@@ -233,17 +226,13 @@ def getTTSFromKokoro(text,audioData,uuid):
 def getAudioFromText(text,audioData,uuid):
   if tts=="kokoro":
      fileOutput= getTTSFromKokoro(text,audioData,uuid)
-  elif tts=="gemini":   
+  elif tts=="gemini":
+     import sound_google
      fileOutput= sound_google.getAudioFromText(audioData,text,uuid)
   else:
-    response = textToSpeech.audio.speech.create(
-      model="tts-1",
-      voice="fable",
-      response_format="opus",
-      input=text,
-    )
-    fileOutput="output.webm"
-    response.stream_to_file(fileOutput)
+    import sound_openai
+    fileOutput= sound_openai.getAudioFromText(audioData,text,uuid)
+   
   return fileOutput
 def set_language(audioData,languageInput):
    if languageInput != audioData.language:

@@ -1,10 +1,8 @@
 import html 
 
-from robotito_ai import speechToText
-from robotito_ai import textToSpeech
+from robotito_ai import speechToText,textToSpeech
 from google.cloud import texttospeech
 from google.cloud import speech
-from google.cloud import texttospeech
 import memory
   
 

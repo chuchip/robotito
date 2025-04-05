@@ -1,12 +1,13 @@
 from quart import Blueprint,  request, jsonify,Response
 import persistence as db
-import robotito_ai as ai
+
 import memory
 
 conversation_bp = Blueprint('conversation', __name__)
 
 @conversation_bp.route('/id/<string:id>', methods=['GET'])
 def conversation_getId(id):
+  import robotito_ai as ai
   print("GET  conversation with id: ",id)
   uuid=request.headers.get("uuid")
   mem=memory.getMemory(uuid)

@@ -1,7 +1,6 @@
 from datetime  import datetime
 import sqlite3
 import uuid
-import robotito_ai as ai
 import memory
 
 def init_db():
@@ -128,7 +127,8 @@ def get_context_by_id(id):
     return get_DTO_context(row)
 def get_DTO_context(row):
     return {"label": row[0], "text": row[1], "remember": row[2],"last_time": row[3],"id":row[4]}
-def init_conversation(id ,user,msg,force=False):    
+def init_conversation(id ,user,msg,force=False):
+    import robotito_ai as ai 
     if id is None or force:
         if len(msg.split())>15:
             # Do a sumary of the message
@@ -148,6 +148,7 @@ def init_conversation(id ,user,msg,force=False):
 
 # Conversation
 def conversation_save(uuid,id ,user, idContext,type,msg):
+    import robotito_ai as ai
     if id=='X':
         id=init_conversation(None,user,msg,True)
     ai.save_msg(uuid,type,msg)

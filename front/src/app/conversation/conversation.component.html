@@ -66,6 +66,9 @@
           (keydown.enter)="sendData()"
           placeholder="Type and press Enter">
         </textarea>
+        <button class="button-action" (click)="sendData()" matTooltip="Send Text">
+          <span class="material-icons">send</span>
+        </button>
       </span>     
       
         <button class="button-action" (click)="toggleRecording()" matTooltip="Record voice (F2)">
@@ -77,8 +80,7 @@
       </button>
 
     </div>
-    
-    
+        
     <div #configuration_window class="configuration " *ngIf="showLanguageOptions">
       <div class="configuration_line">
         <div class="configuration_horizontal">

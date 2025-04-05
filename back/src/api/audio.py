@@ -1,9 +1,7 @@
 from quart import current_app,Blueprint,  request, jsonify,Response
 import os
-import robotito_ai as ai
 import persistence
 import memory
-
 
 audio_bp = Blueprint('audio', __name__)
 tts = os.getenv("STT")
@@ -71,6 +69,7 @@ async def get_voices(language):
 
 @audio_bp.route('/stt', methods=['POST'])
 async def upload_audio():
+    import robotito_ai as ai
     print("In upload audio")
     f=await request.files
     if 'audio' not in f:
@@ -88,7 +87,8 @@ async def upload_audio():
     return jsonify({'message': 'Audio uploaded successfully!', 'text': text})
 
 @audio_bp.route('/tts', methods=['POST'])
-async def tts():     
+async def tts():
+    import robotito_ai as ai
     data = await request.get_json()  # Get JSON data from the request body
     text = data.get('text')
     uuid=request.headers.get("uuid")
@@ -107,6 +107,7 @@ async def tts():
 
 @audio_bp.route('/language', methods=['POST'])
 async def set_language(): 
+  import robotito_ai as ai
   data = await request.get_json()  # Get JSON data from the request body
   uuid=request.headers.get("uuid")
   audioData=memory.getMemory(uuid).getAudioData()

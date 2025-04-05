@@ -7,7 +7,7 @@ import { contextDTO } from '../model/context.dto';
 export class ApiBackService {
 
   
-  private readonly backendUrl = 'http://localhost:5000/api'; // Change this to your backend
+  private readonly backendUrl = '/api'; // Change this to your backend
 
   constructor(private http: HttpClient,private persistence:PersistenceService ) {}
 
