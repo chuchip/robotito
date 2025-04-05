@@ -4,31 +4,59 @@ import robotito_ai as ai
 import persistence
 import memory
 
+
 audio_bp = Blueprint('audio', __name__)
+tts = os.getenv("STT")
+if tts is not None and tts=='gemini':
+    language_options = [
+        { "label": "American English", "value": "en-US" },
+        { "label": "British English", "value": "en-GB" },
+        { "label": "Spanish - Spain", "value": "es-ES" },
+    ]
+    voice_options = [
+        { "language": "en-US", "label": "en-US-Standard-A","gender":"Male" },
+        { "language": "en-US", "label": "en-US-Standard-B","gender":"Male" },
+        { "language": "en-US", "label": "en-US-Standard-C" ,"gender":"Female"},
+        { "language": "en-US", "label": "en-US-Neural2-A" ,"gender":"male"},
+        { "language": "en-US", "label": "en-US-Neural2-C" ,"gender":"female"},
 
+        { "language": "en-GB", "label": "en-GB-Standard-A","gender":"Male" },
+        { "language": "en-GB", "label": "en-GB-Standard-B","gender":"Male" },
+        { "language": "en-GB", "label": "en-GB-Standard-C","gender":"Female" },
+        { "language": "en-GB", "label": "en-GB-Neural2-A" ,"gender":"female"},
+        { "language": "en-GB", "label": "en-GB-Neural2-B" ,"gender":"male"},
+        
 
-language_options = [
-  { "label": "American English", "value": "a" },
-  { "label": "British English", "value": "b" },
-  { "label": "Spanish", "value": "e" },
-]
+        { "language": "es-ES", "label": "es-ES-Standard-A","gender":"Male" },
+        { "language": "es-ES", "label": "es-ES-Standard-B","gender":"Male" },
+        { "language": "es-ES", "label": "es-ES-Standard-C","gender":"Female" },
+        { "language": "es-ES", "label": "es-ES-Neural2-A" ,"gender":"Female"},
+        { "language": "es-ES", "label": "es-ES-Neural2-F" ,"gender":"Male"},
 
-voice_options = [
-  { "language": "a", "label": "af_heart" },
-  { "language": "a", "label": "af_aoede" },
-  { "language": "a", "label": "af_bella" },
-  { "language": "a", "label": "af_sky" },
-  { "language": "a", "label": "am_michael" },
-  { "language": "a", "label": "am_fenrir" },
-  { "language": "a", "label": "af_kore" },
-  { "language": "a", "label": "am_puck" },
-  { "language": "b", "label": "bf_emma" },
-  { "language": "b", "label": "bm_george" },
-  { "language": "b", "label": "bm_fable" },
-  { "language": "e", "label": "ef_dora" },
-  { "language": "e", "label": "em_alex" },
-  { "language": "e", "label": "em_santa" },
-]
+    ]
+else:
+    language_options = [
+        { "label": "American English", "value": "a"},
+        { "label": "British English", "value": "b", },
+        { "label": "Spanish", "value": "e"},
+    ]
+
+    voice_options = [
+        { "language": "a", "label": "af_heart","gender":"" },
+        { "language": "a", "label": "af_aoede" ,"gender":""},
+        { "language": "a", "label": "af_bella" ,"gender":""},
+        { "language": "a", "label": "af_sky" ,"gender":""},
+        { "language": "a", "label": "am_michael","gender":"" },
+        { "language": "a", "label": "am_fenrir","gender":"" },
+        { "language": "a", "label": "af_kore" ,"gender":""},
+        { "language": "a", "label": "am_puck","gender":"" },
+        { "language": "b", "label": "bf_emma","gender":"" },
+        { "language": "b", "label": "bm_george","gender":"" },
+        { "language": "b", "label": "bm_fable","gender":"" },
+        { "language": "e", "label": "ef_dora","gender":"" },
+        { "language": "e", "label": "em_alex","gender":"" },
+        { "language": "e", "label": "em_santa","gender":"" },
+    ]
 
 @audio_bp.route('/languages', methods=['GET'])
 async def get_languages():

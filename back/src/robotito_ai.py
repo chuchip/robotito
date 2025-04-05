@@ -5,7 +5,8 @@ from langchain_core.messages import  HumanMessage, AIMessage
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-
+from google.cloud import speech
+from google.cloud import texttospeech
 from openai import OpenAI
 import sound_google
 from quart import Quart
@@ -193,7 +194,7 @@ def getTextFromAudio(audioData,filepath):
   if stt=="local":
     text = local_whisper(filepath,return_timestamps=True)['text']
   elif stt=="gemini":
-     sound_google.getTextFromAudio(audioData,filepath)
+     text=sound_google.getTextFromAudio(audioData,filepath)
   else:
     text=stt_api_whisper(filepath)
   return text
@@ -293,7 +294,6 @@ else:
   stt="local" # Use Whisper Local
 
   
-
 print(f"Model API: {model_api}  STT: {stt} TTS: {tts}" )
 print("--------------------------------")
 
@@ -302,6 +302,8 @@ app.register_blueprint(audio_bp, url_prefix='/api/audio')
 app.register_blueprint(context_bp, url_prefix='/api/context')
 app.register_blueprint(conversation_bp, url_prefix='/api/conversation')
 app.register_blueprint(security_bp, url_prefix='/api/security')
+
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

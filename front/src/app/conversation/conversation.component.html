@@ -94,7 +94,7 @@
           </select>
           <select [(ngModel)]="selectVoice" (change)="changeLanguage()">
             <option *ngFor="let option of filteredVoiceOptions" [value]="option.label">
-              {{ option.label }}
+              {{ option.label }} - {{ option.gender }}
             </option>
           </select>     
           <span class="configuration_line_text">Speed:<input type="range" min="0.5" max="2" step="0.1"

@@ -72,7 +72,7 @@ export class ConversationComponent {
   selectLanguageDesc:string="American English"
   selectVoice: string = 'af_heart';  
   languageOptions:{label:string, value:string}[] = []
-  voiceOptions:{language:string, label:string}[] = []
+  voiceOptions:{language:string, label:string,gender:string}[] = []
    
   constructor(private router: Router,public back: ApiBackService,public sound: SoundService,public persistence: PersistenceService) {
     this.isLoading=true
