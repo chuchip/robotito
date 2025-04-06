@@ -125,7 +125,7 @@
 }
 .input_text  textarea
 {
-  height: 40px;
+  height: 55px;
   font-size: 1rem;
   font-family: 'Google Sans,Helvetica Neue,sans-serif';
 }
@@ -181,11 +181,12 @@ mat-checkbox .mat-checkbox-label {
 .button-action {
   border: 1px solid rgb(130, 221, 135); /* Red border */
   border-radius: 4px; /* Rounded edges */
-  padding: 2px 4px; /* Spacing inside button */
+  padding: 4px 4px; /* Spacing inside button */
   background-color: white; /* White background */
   color: rgb(0, 195, 255); /* Red text/icon */
   font-weight: bold;
   display: flex;
+  margin-top: 5px;
   align-items: center;
   gap: 1px; /* Space between icon and text */
 }
@@ -259,8 +260,8 @@ mat-checkbox .mat-checkbox-label {
   display: flex;  
   align-items: center;
   margin-top: 2px;
-  height: 20px;
   flex-direction: row;
+  flex-wrap: wrap;
 }
 .configuration_horizontal label
 {
@@ -287,6 +288,7 @@ mat-checkbox .mat-checkbox-label {
   align-items: center;
   justify-content: center;
   height: 100%;
+  margin-bottom: 12px;
   margin-right: 5px;
 }
 .configuration_horizontal button
@@ -360,7 +362,7 @@ mat-checkbox .mat-checkbox-label {
   transform: translate(-50%, -50%);
 //  height: 250px;
   background: white;
-  width: 1000px;
+  width: 90%;
   border: 1px solid #ccc;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   z-index: 1000; /* Ensure it's above other content */  

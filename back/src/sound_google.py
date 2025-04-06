@@ -21,7 +21,7 @@ def getTextFromAudio(audioData:memory.AudioData,file_path):
  
   config = speech.RecognitionConfig(
       encoding=speech.RecognitionConfig.AudioEncoding.WEBM_OPUS,
-      sample_rate_hertz=24000,
+      sample_rate_hertz=48000,
       language_code=audioData.language,
       enable_automatic_punctuation=True,
   )

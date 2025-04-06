@@ -15,8 +15,10 @@ export class SoundService {
   private readonly silenceThreshold = 0.01;
   private readonly silenceDuration = 2000; // 2 seconds of silence to stop
   conversation:ConversationComponent | null = null;
-
+  chating: boolean = false;
   constructor(private back: ApiBackService) { }
+
+
   async startRecording(conversation:ConversationComponent) {
     this.conversation = conversation;
     try {
@@ -30,7 +32,8 @@ export class SoundService {
       };
 
       this.mediaRecorder.start();
-      if (conversation.modeConversation)
+      console.log('Recording started',this.chating);
+      if (this.chating)
       {
         this.audioContext = new AudioContext();
         this.analyser = this.audioContext.createAnalyser();
@@ -53,10 +56,9 @@ export class SoundService {
       const rms = Math.sqrt(dataArray.reduce((acc, val) => acc + val * val, 0) / bufferLength);
       
       if (this.conversation!=null)
-      {
-        if (this.conversation.pressEscape)
+      {        
+        if (!this.chating)
         {
-          this.conversation.pressEscape = false;
           if (this.silenceTimer)
           {
             clearTimeout(this.silenceTimer);
@@ -64,8 +66,9 @@ export class SoundService {
           }
           return;
         }
-        if (this.conversation.audio)
-        {
+     
+        if (this.conversation.isPlayingSound)
+        {                 
           if ( rms > this.silenceThreshold)
           {
             console.log("Stopping audio")

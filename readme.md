@@ -68,11 +68,13 @@ Remember, the most importance in our conversation is tell me if my sentence was 
 cd front
 ng build . 
 docker build -t robotito_front .
-
+docker tag robotito_front chuchip/robotito_front:latest
+docker push chuchip/robotito_front:latest
 ###  BACK LIGHT
 cd back
 docker build -t robotito_back -f Dockerfile-light .
-
+docker tag robotito_back chuchip/robotito_back:latest
+docker push chuchip/robotito_back:latest
 #### BACK FULL
 ```
 cd  # go to home directory

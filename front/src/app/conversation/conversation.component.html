@@ -1,11 +1,14 @@
-<div class="overlay" *ngIf="isLoading">
+<div class="overlay" *ngIf="isLoading ">
   <mat-spinner></mat-spinner>
 </div>
-<app-sound-indicator [isRecording]="isSoundLoading" 
+<app-sound-playing [isPlaying]=" this.isPlayingSound" 
   [style.zIndex]="999" [style.opacity]="50" 
  [style.position]="'absolute'" [style.left.px]="xPos" [style.top.px]="yPos" >
-</app-sound-indicator>
-  
+</app-sound-playing>
+<app-sound-recording [isRecording]=" this.sound.isRecording" 
+  [style.zIndex]="999" [style.opacity]="50" 
+ [style.position]="'absolute'" [style.left.px]="xPos" [style.top.px]="yPos" >
+</app-sound-recording>
 <div class="system" *ngIf="response_back!=''">{{response_back}}</div>
 <div class="page">  
   <div *ngIf="isSidebarOpen" class="sidebar">
@@ -28,7 +31,7 @@
     <div #conversation class="conversation" (mouseup)="getSelectedText()" (keyup)="getSelectedText()">
       <div [ngClass]="line_chat.type=='H'? 'line-human':'line-robot'" class="line" *ngFor="let line_chat of chat_history; let i = index">
         <div class="buttons-conversation">
-          <button (click)="speak_aloud_response(i)"> <span class="material-icons">volume_up</span></button>
+          <button (click)="speak_aloud_response($event,i)"> <span class="material-icons">volume_up</span></button>
           <span class="material-icons" style="color: blue">{{line_chat.type=='H'?"face":"smart_toy" }}</span>
         </div>
         <span [ngClass]="line_chat.type=='H'? 'line-text-human':'line-text-robot'">
@@ -61,24 +64,23 @@
       </div>
 
       <span class="input_text">
-        <textarea #human_input class="expandable-input"  [(ngModel)]="inputText"  (input)="adjustHeight(human_input)"
-          (keydown)="speakOnF4($event,human_input.value); human_input.focus(); "
-          (keydown.enter)="sendData()"
+        <textarea id="human_input" #human_input class="expandable-input"  [(ngModel)]="inputText"  (input)="adjustHeight(human_input)"
+          (keydown)="speakOnF4($event,human_input.value); human_input.focus(); "         
           placeholder="Type and press Enter">
         </textarea>
         <button class="button-action" (click)="sendData()" matTooltip="Send Text">
           <span class="material-icons">send</span>
         </button>
       </span>     
-      
+      <div class="vertical">
         <button class="button-action" (click)="toggleRecording()" matTooltip="Record voice (F2)">
           <span class="material-icons">{{ this.sound.isRecording ? 'stop' : 'mic' }}</span>
         </button>
       
-      <button class="button-action" (click)="stopAudio()" matTooltip="Stop Talk">
-        <span class="material-icons">stop</span>
+      <button class="button-action" (click)="stopAudio()" matTooltip="Stop Talk (Esc)">
+        <span class="material-icons">cancel</span>
       </button>
-
+      </div>
     </div>
         
     <div #configuration_window class="configuration " *ngIf="showLanguageOptions">
@@ -105,18 +107,10 @@
           </span>
         </div>
       </div>
-      <div class="configuration_line">
-        <div>Actual Language: <span class="configuration_line_text"><input type="text"
-              value="{{selectLanguageDesc}}" readonly> </span>
-          Actual Voice: <span class="configuration_line_text"><input type="text" value="{{selectVoice}}" readonly>
-          </span>
-          <br/>
-          <span  class="name_user">User: {{persistence.getUser()}}  <button (click)="login()" matTooltip="Login"> <span
-            class="material-icons">login</span></button>  UUID: {{this.persistence.uuid}}</span>
-        </div>
-      </div>      
+         
       <div class="context">
       <div class="configuration_horizontal">
+          Context:&nbsp;
             <select #selectComponent [(ngModel)]="selectContext" (change)="onChangeContext($event, selectComponent.value)">
             <option *ngFor="let context of contexts" [value]="context['id']">
               {{ context['label'] }}

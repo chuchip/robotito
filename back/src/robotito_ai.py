@@ -42,19 +42,22 @@ async def call_llm(state) :
           ("placeholder","{msgs}"),
           ("user","{question}")
     ])
-    msg=state["message"]
-    if msg.strip() != "":      
+    
+    question=state["message"]
+    if question.strip() != "":
       swRemember=False
       if rememberText!="":      
         if context.hasToRemember():
-          msg+=f". {context.getRememberText()}"
+          question+=f". {context.getRememberText()}"
           swRemember=True        
         context.incrementRememberNumber()
+      if max_length_answers != 0:
+        context.setText=f"{context.getText()}. Your answer should be less than {max_length_answers} words."
       chat_prompt =  prompt.format_messages(
         system_msg=context.getText(),
         context=[], 
-        msgs=chat_history[-12:],  # Get the last 12 messages
-        question=msg
+        msgs=chat_history[max_history*-1:],  # Get the last MAX_HISTORY messages
+        question=question
       )              
       async for chunk in client_text.astream(chat_prompt):        
           yield  chunk.content
@@ -154,7 +157,7 @@ def configure_vector_store():
   text_splitter = RecursiveCharacterTextSplitter(chunk_size=200, chunk_overlap=200)
   ai={"model":client_text,"pipeline":pipeline,"embeddings":embeddings,"vector_store":vector_store,"text_splitter":text_splitter}  
 
-# Configure Whisper
+# Configure Whisper in local
 def configure_whisper_local():
   import torch
   from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
@@ -192,7 +195,7 @@ def getTextFromAudio(audioData,filepath):
     text=sound_openai.stt_api_whisper(filepath)
   return text
    #text = ai.testWhisper(filepath)
-def getTTSFromKokoro(text,audioData,uuid): 
+def getAudioFromKokoro(text,audioData,uuid): 
   import soundfile as sf
   import numpy as np
   import subprocess
@@ -225,7 +228,7 @@ def getTTSFromKokoro(text,audioData,uuid):
 # Convert  text to audio en webm format
 def getAudioFromText(text,audioData,uuid):
   if tts=="kokoro":
-     fileOutput= getTTSFromKokoro(text,audioData,uuid)
+     fileOutput= getAudioFromKokoro(text,audioData,uuid)
   elif tts=="gemini":
      import sound_google
      fileOutput= sound_google.getAudioFromText(audioData,text,uuid)
@@ -247,8 +250,13 @@ print("Initializing Robotito ...")
 config = {"configurable": {"thread_id": "1"}}
 version="3.5"
 
-client_sound = None
-
+max_history = os.getenv("MAX_HISTORY")
+if max_history is None:
+   max_history=12
+max_length_answers = os.getenv("MAX_LENGHT_ANSWERS")
+if max_length_answers is None:
+   max_length_answers=70
+# Configure LLM
 model_api = os.getenv("MODEL_API")
 if model_api and model_api!="gemini":
   model_api="openai"

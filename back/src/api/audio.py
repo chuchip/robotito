@@ -18,7 +18,7 @@ if tts is not None and tts=='gemini':
         { "language": "en-US", "label": "en-US-Neural2-A" ,"gender":"male"},
         { "language": "en-US", "label": "en-US-Neural2-C" ,"gender":"female"},
 
-        { "language": "en-GB", "label": "en-GB-Standard-A","gender":"Male" },
+        { "language": "en-GB", "label": "en-GB-Standard-A","gender":"Female" },
         { "language": "en-GB", "label": "en-GB-Standard-B","gender":"Male" },
         { "language": "en-GB", "label": "en-GB-Standard-C","gender":"Female" },
         { "language": "en-GB", "label": "en-GB-Neural2-A" ,"gender":"female"},

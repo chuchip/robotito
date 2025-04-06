@@ -1,5 +1,6 @@
 import { Component, ViewChild,HostListener, ElementRef } from '@angular/core';
-import { SoundIndicatorComponent } from '../sound-indicator/sound-indicator.component';
+import { SoundPlayingComponent } from '../sound-playing/sound-playing.component';
+import { SoundRecordingComponent } from '../sound-recording/sound-recording.component';
 import { ApiBackService } from '../services/api-back.service';
 import { SoundService } from '../services/sound.service';
 import { FormsModule } from '@angular/forms';
@@ -18,7 +19,7 @@ import { Router } from '@angular/router';
 @Component({  
   selector: 'app-conversation',   
   imports: [CommonModule, MatTooltipModule, MatCheckboxModule,FormsModule,
-     MatButtonModule, MatIconModule, SoundIndicatorComponent,
+     MatButtonModule, MatIconModule, SoundPlayingComponent,SoundRecordingComponent,
     MatProgressSpinnerModule,MatSliderModule], // 
   templateUrl: './conversation.component.html',
   styleUrls: ['./conversation.component.scss']
@@ -36,12 +37,13 @@ export class ConversationComponent {
   responseTextToSound: Response | null = null;
   audioUrl = '';
   playbackSpeed=1
+  isPlayingSound=false
   semaphoreStopAudio:number=0
   private readonly backendUrl = 'http://localhost:5000'; 
   ttsArray:Response[]=[]
   ttsStart=false
   isSidebarOpen = false;
-  isSoundLoading=false
+  
   clicksWindow=0;
   conversationHistory:conversationHistoryDTO[]=[];
   conversationId=""
@@ -123,47 +125,67 @@ export class ConversationComponent {
     this.context.label= "default"
     this.setTextContext("default")
   }
-  async toggleRecording(shiftKey:boolean=true) {    
+  async toggleRecording() {    
     if (this.sound.isRecording) {     
-      this.stopRecording(this.modeConversation,shiftKey)
+      this.stopRecording(this.modeConversation)
     } else {
-      this.startRecording(shiftKey)
+      this.startRecording()
     }
    
   }
   changeSpeed(event: any) {
     this.playbackSpeed =event.target.value;   
   }
-  async startRecording(shiftKey:boolean=false,automatic:boolean=false)
+  async startRecording()
   {
     this.xPos=60;
     this.yPos=window.innerHeight-85;
-    this.isSoundLoading=true
     this.showRecord=true
-    if (!automatic)
-      this.stopAudio()
+/*    if (!automatic)
+      this.stopAudio()*/
+    if (this.modeConversation)
+    {
+      console.log("Chating ....")
+      this.sound.chating=true
+    }
     this.sound.startRecording(this);
-    
-    setTimeout(() => this.inputElement.nativeElement.focus() , 200)    
+    this.focusInputElement();  
   }
 
+  focusInputElement() {
+    const userAgent = navigator.userAgent.toLowerCase();
+    if (! /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent)) {
+      setTimeout(() => this.inputElement.nativeElement.focus() , 200)    
+    }
+    else {
+     console.log("Android or IOS")
+    }
+  }   
   async stopAutomaticRecording()
   {
-    await this.stopRecording(this.modeConversation,true)
+    await this.stopRecording(true)
   }
-  async stopRecording(sendAudio:boolean=this.modeConversation,automatic:boolean=false)
+  /**
+   * 
+   * @param sendLLM: Send the recorded text to the LLM
+   * 
+   */
+  async stopRecording(sendLLM:boolean=false)
   {
+    console.log("Stop recording: ",sendLLM)
+    this.isLoading=true
     const text= await this.sound.stopRecording();
+    this.isLoading=false
     this.inputText=this.inputText+" "+ text
-    this.isSoundLoading=false
-    if (sendAudio)
-    {    
+    
+    if (sendLLM) {    
       await this.sendData()
-      if (automatic)
-        this.startRecording(automatic=automatic)
+      if (this.sound.chating) {
+        this.startRecording()
+      }
     }
-    else{
-      setTimeout(() =>  this.inputElement.nativeElement.focus() ,100)  
+    else {
+      this.focusInputElement( )
     }
   }
   playRecorded()
@@ -259,13 +281,15 @@ export class ConversationComponent {
       setTimeout(() => this.scrollToBottom(), 0)
     }
   }
-  async speak_aloud_response(i:number){      
+  async speak_aloud_response(event:MouseEvent,i:number){      
     const cleanText=this.back.cleanText( this.chat_history[i].msgClean)
-    let pIni=0
+    this.xPos=event.clientX
+    this.yPos=event.clientY
+    let pIni=0;
     let pFin=0
     let txt=""
     let swStart=true
- 
+    this.isPlayingSound=true
     this.ttsArray.length=0
     
     while (pFin!=-1 && pFin<cleanText.length) {
@@ -301,6 +325,7 @@ export class ConversationComponent {
       }
     }
     this.ttsStart=false
+  
   }
   async sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -315,7 +340,7 @@ export class ConversationComponent {
     let i=0;
    // console.log("in ttsWait---------------------------")    
     while (this.semaphoreStopAudio==1){
-
+      this.isPlayingSound=true
       const response=this.ttsArray[i];
       while (this.audio!=null && i>0 && !this.audio.paused && this.semaphoreStopAudio==1)
       {                         
@@ -324,7 +349,7 @@ export class ConversationComponent {
       console.log(`prepare Audio ${i}:`)
       if (this.semaphoreStopAudio!=1)
       {
-        console.log("Stopped Audio")        
+        console.log("Stopped Audio")    
         break;
       }
       await this.prepareAudio(response)
@@ -340,8 +365,8 @@ export class ConversationComponent {
     this.semaphoreStopAudio--
     if (this.semaphoreStopAudio<0) {
       this.semaphoreStopAudio=0
-    }
-    console.log("out ttsWait---------------------------")
+    }        
+    console.log("out ttsWait. ")
   }
   findNextPunctuation(text: string, startIndex: number): number {
     const p=text.indexOf('\n',startIndex)
@@ -368,12 +393,13 @@ export class ConversationComponent {
   }
   async speakAloud(inputText:string){    
     this.stopAudio()
-    this.showSoundLoading()
+    this.showSoundLoading() 
     if (inputText.trim()!='') {      
       if (this.textSpeakAloud!=inputText ) {
         this.textSpeakAloud=inputText
         this.responseTextToSound= await this.back.text_to_sound(this.back.cleanText(inputText));
-        this.isSoundLoading=false
+        console.log("1 speakAloud . playing sound false")
+        this.isPlayingSound=false
       }  
       else{
         if (this.audio) {
@@ -382,7 +408,8 @@ export class ConversationComponent {
           this.audio.currentTime = 0; 
           this.audio.playbackRate = this.playbackSpeed;       
           this.audio.play(); 
-          this.isSoundLoading=false
+          console.log("2 speakAloud . playing sound false")
+          this.isPlayingSound=false
           return
         }
       }
@@ -403,11 +430,13 @@ export class ConversationComponent {
     if (this.audio) {
       this.audio.pause();
       this.audio.currentTime = 0; // Reset to the beginning
+      console.log("Prepare audio. playing sound false")
+      this.isPlayingSound=false
     }
 
     this.audio = new Audio(this.audioUrl);
     this.audio.playbackRate = this.playbackSpeed; 
-    this.isSoundLoading=false    
+    this.isPlayingSound=true;
     this.audio.play();     
   }
 
@@ -421,27 +450,40 @@ export class ConversationComponent {
         this.xPos = rect.left;
         this.yPos = rect.top;
     }
-    this.isSoundLoading=true  
+    this.isPlayingSound=true  
   }
   stopAudio(): void {
-    if (this.semaphoreStopAudio>0)
-      this.semaphoreStopAudio=-1
-    if (this.audio  ) {
-      this.audio.pause();
-      this.audio.currentTime = 0;      
+    if (this.sound.isRecording && ! this.sound.chating) {           
+      this.sound.stopRecording()
     }
-    if (this.sound.audio) {
-      this.sound.audio.pause();
-    }    
+    else
+    {
+      if (this.semaphoreStopAudio>0)
+        this.semaphoreStopAudio=-1
+      if (this.audio  ) {
+        console.log("stopAudio. Playing sound false ")
+        this.isPlayingSound=false  
+  
+        this.audio.pause();
+        this.audio.currentTime = 0;      
+      }
+      if (this.sound.audio) {
+        console.log("stopAudio. Playing sound false ")
+        this.isPlayingSound=false    
+        this.sound.audio.pause();
+      }  
+    }
   }
 
   stopRecordingEsc()
   {
+    console.log("Stop recording Esc")
+    this.sound.chating=false
     this.sound.isRecording=false
-    this.isSoundLoading=false
+    this.isPlayingSound=false
     this.showRecord=false
     this.pressEscape=true
-    setTimeout(() =>  this.inputElement.nativeElement.focus() ,100)  
+    this.focusInputElement
   }
 
   private async put_message( response:any )
@@ -611,7 +653,7 @@ export class ConversationComponent {
         this.textSpeakAloud=""
         event.preventDefault(); // Prevent default behavior if needed        
         this.speakAloud(text);
-        setTimeout(() =>  this.inputElement.nativeElement.focus() ,100)  
+        this.focusInputElement();
       }
   }
   async changeLanguage() {
@@ -643,14 +685,25 @@ export class ConversationComponent {
   @HostListener('document:keydown', ['$event'])
   handleKeydown(event: KeyboardEvent) {
     const activeElement = document.activeElement as HTMLElement;
-    if (event.key === 'Enter' && this.sound.isRecording) {         
-      event.preventDefault(); 
-      this.stopRecording(true,false)
-      return
+    if (event.key === 'Enter' ) {         
+      console.log("Enter pressed",activeElement.id)
+      if ( this.sound.isRecording) 
+      {
+        console.log("Cancel sound")
+        event.preventDefault()
+        this.stopRecording(true)
+        return
+      }
+      if (activeElement.tagName === 'TEXTAREA' && activeElement.id === 'human_input') {
+        this.sendData();
+      }
     }
-    if (event.key === 'F2') {           
-      event.preventDefault(); 
-      this.toggleRecording(event.shiftKey)
+    if (event.key === 'F2') {
+      if (this.modeConversation && this.sound.isRecording) {
+        this.sound.chating=false
+      }
+      event.preventDefault();
+      this.toggleRecording()
     }    
     if (event.key === 'F4'  && activeElement.tagName !== 'TEXTAREA') {      
       event.preventDefault(); 
@@ -665,7 +718,7 @@ export class ConversationComponent {
   }
   adjustHeight(textArea: HTMLTextAreaElement) {
     textArea.style.height = 'auto'; // Reset height
-    textArea.style.height = textArea.scrollHeight + 'px'; // Set new height
+    textArea.style.height = (textArea.scrollHeight+20) + 'px'; // Set new height
     this.divInputElement.nativeElement.style.height = (textArea.scrollHeight + 20) + 'px'; // Set new height
   }
   

@@ -23,6 +23,9 @@ services:
   frontend:
     image: robotito_front
     container_name: front
+    volumes:      
+      - ./fullchain.pem:/etc/nginx/certs/fullchain.pem:ro
+      - ./privkey.pem:/etc/nginx/certs/privkey.pem:ro
     ports:
       - "80:80"
     depends_on:
