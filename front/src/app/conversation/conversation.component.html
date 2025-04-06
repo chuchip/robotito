@@ -68,7 +68,7 @@
           (keydown)="speakOnF4($event,human_input.value); human_input.focus(); "         
           placeholder="Type and press Enter">
         </textarea>
-        <button class="button-action" (click)="sendData()" matTooltip="Send Text">
+        <button class="button-action" (click)="pressEnter(true)" matTooltip="Send Text">
           <span class="material-icons">send</span>
         </button>
       </span>     
@@ -125,4 +125,14 @@
         <textarea #context_remember class="context_textarea" (keydown.enter)="contextRememberSend($event)"
           (keydown.esc)="showLanguageOptions=false" [(ngModel)]="this.context.remember" placeholder="Type something the AI has to remember ..."></textarea>
       </div>
+      <div class="configuration_line">
+        <div>Actual Language: <span class="configuration_line_text"><input type="text"
+              value="{{selectLanguageDesc}}" readonly> </span>
+          Actual Voice: <span class="configuration_line_text"><input type="text" value="{{selectVoice}}" readonly>
+          </span>
+          <br/>
+          <span  class="name_user">User: {{persistence.getUser()}}  <button (click)="login()" matTooltip="Login"> <span
+            class="material-icons">login</span></button>  UUID: {{this.persistence.uuid}}</span>
+        </div>
+      </div>      
     </div>

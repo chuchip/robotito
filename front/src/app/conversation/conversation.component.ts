@@ -122,8 +122,8 @@ export class ConversationComponent {
   async setDefaultContext()
   {
     await this.back.contextSetLabel("default")
-    this.context.label= "default"
-    this.setTextContext("default")
+    
+    this.setContextDefault()
   }
   async toggleRecording() {    
     if (this.sound.isRecording) {     
@@ -528,7 +528,18 @@ export class ConversationComponent {
         return
       }
     }
-    this.setTextContext("default")
+    this.setContextDefault()
+  }
+  setContextDefault() {
+    this.context.label= "default"
+    for (const c of  this.contexts)
+    {
+      if (c.id=='default')
+      {
+        this.setContext(c)
+        return
+      }
+    }
   }
   setTextContext(label:string)  {       
     for (const c of  this.contexts)
@@ -539,7 +550,7 @@ export class ConversationComponent {
         return
       }
     }
-    this.setTextContext("default")
+    this.setContextDefault()
   }
   setContext(c:contextDTO)
   {
@@ -682,21 +693,25 @@ export class ConversationComponent {
       this.showLanguageOptions = false;
     }
   }
+  async pressEnter(swSendData:boolean) {
+    if ( this.sound.isRecording) 
+      {
+        await this.stopRecording(swSendData)
+        return
+      }
+      else {
+       if (swSendData)
+          this.sendData()
+      }
+     
+  }
   @HostListener('document:keydown', ['$event'])
   handleKeydown(event: KeyboardEvent) {
     const activeElement = document.activeElement as HTMLElement;
     if (event.key === 'Enter' ) {         
       console.log("Enter pressed",activeElement.id)
-      if ( this.sound.isRecording) 
-      {
-        console.log("Cancel sound")
-        event.preventDefault()
-        this.stopRecording(true)
-        return
-      }
-      if (activeElement.tagName === 'TEXTAREA' && activeElement.id === 'human_input') {
-        this.sendData();
-      }
+      event.preventDefault()
+      this.pressEnter(activeElement.tagName === 'TEXTAREA' && activeElement.id === 'human_input')
     }
     if (event.key === 'F2') {
       if (this.modeConversation && this.sound.isRecording) {

@@ -1,0 +1,39 @@
+.recording-indicator-container {
+    display: inline-flex; /* Adjust as needed (block, flex, etc.) */
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 5px;
+    background-color: rgba(220, 53, 69, 0.1); /* Optional light red background */
+    border: 1px solid rgba(220, 53, 69, 0.2); /* Optional light red border */
+    gap: 8px; /* Space between icon and text */
+  }
+  
+  .recording-icon {
+    color: #dc3545; /* Red color for the icon */
+    font-size: 1.2em; /* Slightly larger icon */
+    /* Add pulsing animation */
+    animation: pulseAnimation 1.5s infinite ease-in-out;
+  }
+  
+  .recording-text {
+    color: #dc3545; /* Red color for text */
+    font-weight: bold;
+    font-size: 0.9em;
+  }
+  
+  /* Define the pulsing animation */
+  @keyframes pulseAnimation {
+    0% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.15);
+      opacity: 0.7;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
