@@ -34,26 +34,26 @@ if tts is not None and tts=='gemini':
     ]
 else:
     language_options = [
-        { "label": "American English", "value": "a"},
-        { "label": "British English", "value": "b", },
-        { "label": "Spanish", "value": "e"},
+        { "label": "American English", "value": "en-EU"},
+        { "label": "British English", "value": "en-GB", },
+        { "label": "Spanish", "value": "es-ES"},
     ]
 
     voice_options = [
-        { "language": "a", "label": "af_heart","gender":"" },
-        { "language": "a", "label": "af_aoede" ,"gender":""},
-        { "language": "a", "label": "af_bella" ,"gender":""},
-        { "language": "a", "label": "af_sky" ,"gender":""},
-        { "language": "a", "label": "am_michael","gender":"" },
-        { "language": "a", "label": "am_fenrir","gender":"" },
-        { "language": "a", "label": "af_kore" ,"gender":""},
-        { "language": "a", "label": "am_puck","gender":"" },
-        { "language": "b", "label": "bf_emma","gender":"" },
-        { "language": "b", "label": "bm_george","gender":"" },
-        { "language": "b", "label": "bm_fable","gender":"" },
-        { "language": "e", "label": "ef_dora","gender":"" },
-        { "language": "e", "label": "em_alex","gender":"" },
-        { "language": "e", "label": "em_santa","gender":"" },
+        { "language": "en-EU", "label": "af_heart","gender":"Female" },
+        { "language": "en-EU", "label": "af_aoede" ,"gender":""},
+        { "language": "en-EU", "label": "af_bella" ,"gender":"Female"},
+        { "language": "en-EU", "label": "af_sky" ,"gender":""},
+        { "language": "en-EU", "label": "am_michael","gender":"Male" },
+        { "language": "en-EU", "label": "am_fenrir","gender":"" },
+        { "language": "en-EU", "label": "af_kore" ,"gender":""},
+        { "language": "en-EU", "label": "am_puck","gender":"Male" },
+        { "language": "en-GB", "label": "bf_emma","gender":"Female" },
+        { "language": "en-GB", "label": "bm_george","gender":"Male" },
+        { "language": "en-GB", "label": "bm_fable","gender":"Male" },
+        { "language": "es-ES", "label": "ef_dora","gender":"Female" },
+        { "language": "es-ES", "label": "em_alex","gender":"Male" },
+        { "language": "es-ES", "label": "em_santa","gender":"Male" },
     ]
 
 @audio_bp.route('/languages', methods=['GET'])

@@ -51,12 +51,19 @@ async def call_llm(state) :
           question+=f". {context.getRememberText()}"
           swRemember=True        
         context.incrementRememberNumber()
+      msgs=chat_history[max_history*-1:]
       if max_length_answers != 0:
         context.setText=f"{context.getText()}. Your answer should be less than {max_length_answers} words."
+        insert_pos = len(msgs) - 2
+        if insert_pos>0:
+          msgs.insert(insert_pos, HumanMessage(f'Remember: Your answer should be less than {max_length_answers} words.'))  
+        else:
+          msgs.append(HumanMessage(f'Remember: Your answer should be less than {max_length_answers} words.'))  
+      
       chat_prompt =  prompt.format_messages(
         system_msg=context.getText(),
         context=[], 
-        msgs=chat_history[max_history*-1:],  # Get the last MAX_HISTORY messages
+        msgs=msgs,  # Get the last MAX_HISTORY messages
         question=question
       )              
       async for chunk in client_text.astream(chat_prompt):        
@@ -177,6 +184,8 @@ def configure_whisper_local():
   pipe_whisper = pipeline(
       "automatic-speech-recognition",
       model=model_audio,
+      chunk_length_s=30,
+      batch_size=16,
       tokenizer=processor.tokenizer,
       feature_extractor=processor.feature_extractor,
       torch_dtype=torch_dtype,
@@ -184,9 +193,15 @@ def configure_whisper_local():
   )
   return pipe_whisper
 
-def getTextFromAudio(audioData,filepath):
+def getTextFromAudio(audioData:memory.AudioData,filepath):
   if stt=="local":
-    text = local_whisper(filepath,return_timestamps=True)['text']
+    language_whisper = {
+            'english':'en-EU', 
+            'english':'en-GB', 
+            'spanish':'es-ES',
+        }.get(audioData.language, None)    
+    text = local_whisper(filepath,return_timestamps=True,
+                         generate_kwargs={"language": language_whisper})['text']
   elif stt=="gemini":
      import sound_google
      text=sound_google.getTextFromAudio(audioData,filepath)
@@ -242,7 +257,17 @@ def set_language(audioData,languageInput):
       audioData.language=languageInput
    if tts=='kokoro':
       from kokoro import KPipeline
-      audioData.kpipeline = KPipeline(lang_code=languageInput)
+      try:     
+        language_kokoro = {
+            'en-EU': 'a',
+            'en-GB': 'b',
+            'es-ES': 'e'
+        }.get(languageInput, None)
+        if  language_kokoro is None:
+           language_kokoro=languageInput
+        audioData.kpipeline = KPipeline(lang_code=language_kokoro)
+      except AssertionError: 
+         print("Oppss.. pipeline bad configuration")
 # Define the configuration
 print("--------------------------------")
 print("Initializing Robotito ...")

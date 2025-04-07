@@ -365,7 +365,8 @@ export class ConversationComponent {
     this.semaphoreStopAudio--
     if (this.semaphoreStopAudio<0) {
       this.semaphoreStopAudio=0
-    }        
+    }       
+    this.isPlayingSound=false
     console.log("out ttsWait. ")
   }
   findNextPunctuation(text: string, startIndex: number): number {
@@ -437,7 +438,11 @@ export class ConversationComponent {
     this.audio = new Audio(this.audioUrl);
     this.audio.playbackRate = this.playbackSpeed; 
     this.isPlayingSound=true;
-    this.audio.play();     
+    this.audio.play();
+    this.audio.onended = () => {
+      // Add your custom logic here
+      this.isPlayingSound = false; // Example: Reset the playing state
+    };
   }
 
   showSoundLoading()
@@ -708,10 +713,10 @@ export class ConversationComponent {
   @HostListener('document:keydown', ['$event'])
   handleKeydown(event: KeyboardEvent) {
     const activeElement = document.activeElement as HTMLElement;
-    if (event.key === 'Enter' ) {         
-      console.log("Enter pressed",activeElement.id)
-      event.preventDefault()
-      this.pressEnter(activeElement.tagName === 'TEXTAREA' && activeElement.id === 'human_input')
+    if (event.key === 'Enter' && ! event.altKey  && ! event.shiftKey) {         
+      console.log("Enter pressed", activeElement.id, "Alt:", event.altKey, "Shift:", event.shiftKey);
+      event.preventDefault();
+      this.pressEnter(activeElement.tagName === 'TEXTAREA' && activeElement.id === 'human_input');
     }
     if (event.key === 'F2') {
       if (this.modeConversation && this.sound.isRecording) {
@@ -727,9 +732,12 @@ export class ConversationComponent {
         this.speakAloud(this.selectedText);
     }    
     if (event.key === 'Escape') {
-      this.stopRecordingEsc()
-      this.stopAudio()
+      this.pressEsc()
     }
+  }
+  pressEsc() {
+    this.stopRecordingEsc()
+    this.stopAudio()
   }
   adjustHeight(textArea: HTMLTextAreaElement) {
     textArea.style.height = 'auto'; // Reset height

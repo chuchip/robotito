@@ -18,7 +18,7 @@ services:
             - capabilities: [gpu]  # E
     volumes:
       - ./back/robotito_google_cloud_key.json:/robotito_google_cloud_key.json:ro
-      - ./backend:/data  # Mount the backend directory
+      - ./backend-data:/app/robotito_db  # Mount the backend directory
     networks:
       - app-network
 

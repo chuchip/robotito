@@ -31,7 +31,7 @@ class Context:
   def hasToRemember(self):
     return self.remember_number%self.remember_each==0 or self.remember_number==0
 class AudioData:
-    language='a'
+    language='en-EU'
     kpipeline = None
     voice_name="af_heart"
     configGoogle=None

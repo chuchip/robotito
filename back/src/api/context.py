@@ -34,7 +34,8 @@ async def context_setById(id):
   context_db = db.get_context_by_id(id)
   if context_db is None:
     return jsonify({'message': f"Context with id {id} NOT FOUND!",'data': None})
-
+  if 'text' not in context_db:
+    return jsonify({'message': f"Context Text NOT FOUND!",'data': None})
   context.setId(context_db['id'])
   context.setLabel(context_db['label'])
   context.setText(context_db['text'])
@@ -50,15 +51,22 @@ async def context_update():
   if context is None:
     context=memory.Context()
     mem.setContext(context)
+  if "label" not in data or data['label'] is None:
+    return jsonify({'message': f"Context hasn't label", "status:": 'KO','text': data['context']})
+  if data['label'].strip() == '':
+    return jsonify({'message': f"Context hasn't a valid label", "status:": 'KO','text': data['context']})
+
   context.setLabel(data['label'])
-  if  data['label'] is not None and data['label'] !='':
-    contextId=db.save_context(user=data['user'],label=data['label'],context=data['context'],remember=data['contextRemember'])
+
+  contextId=db.save_context(user=data['user'],label=data['label'],context=data['context'],remember=data['contextRemember'])
+  if 'text' not in data or 'context'  not in data:
+     return jsonify({'message': f"Context hasn't a valid latext or label", "status:": 'KO','text': data['context']})
 
   context.setId(contextId)
   context.setLabel(data['label'])
   context.setText(data['context'])
   context.setRememberText(data['contextRemember'])
-  return jsonify({'message': f"Context updated successfully!. Update Context of: '{data['label']}'", 'text': data['context']})
+  return jsonify({'message': f"Context updated successfully!. Update Context of: '{data['label']}'", "status:": 'OK','text': data['context']})
 
 @context_bp.route('/id/<string:id>', methods=['DELETE'])
 async def context_delete_by_id(id):   

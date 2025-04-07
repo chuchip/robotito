@@ -66,7 +66,7 @@ Remember, the most importance in our conversation is tell me if my sentence was 
 ### FRONT
 
 cd front
-ng build . 
+ng build 
 docker build -t robotito_front .
 docker tag robotito_front chuchip/robotito_front:latest
 docker push chuchip/robotito_front:latest
