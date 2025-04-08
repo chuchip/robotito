@@ -3,7 +3,7 @@ import { ConversationComponent } from './conversation/conversation.component'
 import { LoginComponent } from './security/login/login.component'
 
 export const routes: Routes = [          
-    { path: '', component: ConversationComponent },
-    { path: 'login', component: LoginComponent },
+    { path: '', component: ConversationComponent },    
     { path: 'conversation', component: ConversationComponent },
+    { path: '**', component: LoginComponent },
 ];

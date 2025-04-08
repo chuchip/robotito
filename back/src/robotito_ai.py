@@ -65,13 +65,24 @@ async def call_llm(state) :
         context=[], 
         msgs=msgs,  # Get the last MAX_HISTORY messages
         question=question
-      )              
-      async for chunk in client_text.astream(chat_prompt):        
-          yield  chunk.content
+      )
+      if model_api=='ollama':
+        yield client_text.invoke(chat_prompt)
+      else:
+        async for chunk in client_text.astream(chat_prompt):        
+            yield  chunk.content
       if swRemember:
-        yield "*"
+          yield "*"    
     else:
       yield " "
+
+def call_llm_internal(chat_prompt):
+  response=client_text.invoke(chat_prompt)
+  if model_api=='ollama':
+      return response
+  else:
+      return response.content
+      
 def save_msg(uuid,type,msg):
     chat_history = memory.getMemory(uuid).getChatHistory()
     if type=='R':
@@ -115,7 +126,10 @@ def save(state):
     all_splits = text_splitter.split_documents(chat_documents)
     _ = vector_store.add_documents(documents=all_splits)
     return state
-
+def configOllamaAI(model:str,base_url:str):
+   from langchain_ollama.llms import OllamaLLM
+   model = OllamaLLM(model=model,base_url=base_url)
+   return model
 def configOpenAI():
   if version=="3.5":
     model = ChatOpenAI(model_name="o3-mini",                
@@ -283,9 +297,14 @@ if max_length_answers is None:
    max_length_answers=70
 # Configure LLM
 model_api = os.getenv("MODEL_API")
-if model_api and model_api!="gemini":
+if model_api is None:
+  model_api="gemini"
+if model_api=="gemini":
   model_api="openai"
   client_text=configOpenAI()  
+elif model_api=='ollama':
+  model_api="ollama"
+  client_text=configOllamaAI("llama3.2:3b","http://172.24.144.1:11434")   
 else:
   model_api="gemini"
   client_text=configGeminiAI()   

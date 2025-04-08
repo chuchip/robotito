@@ -2,7 +2,7 @@ from datetime  import datetime
 import sqlite3
 import uuid
 import memory
-
+import asyncio
 def init_db():
     cursor=connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='user_session'" )
     # Create table to create User
@@ -132,8 +132,8 @@ def init_conversation(id ,user,msg,force=False):
     if id is None or force:
         if len(msg.split())>15:
             # Do a sumary of the message
-            resp=ai.client_text.invoke(f"Create a summary of less than 12 words from this sentence: '{msg}'")
-            msg=resp.content
+            resp = asyncio.run(ai.call_llm_internal(False, f"Create a summary of less than 12 words from this sentence: '{msg}'"))
+            msg=resp
             print("Summary: ",msg)
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         random_uuid = uuid.uuid4()  # Generate a random UUID

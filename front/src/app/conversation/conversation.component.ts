@@ -105,7 +105,7 @@ export class ConversationComponent {
           }
           else
           {
-            this.setTextContext(this.context.label)
+            this.setTextContextById(this.context.id)            
             await this.back.contextSet(this.context.id)
           }
         }
@@ -121,8 +121,7 @@ export class ConversationComponent {
   }
   async setDefaultContext()
   {
-    await this.back.contextSetLabel("default")
-    
+    await this.back.contextSetLabel("default")    
     this.setContextDefault()
   }
   async toggleRecording() {    

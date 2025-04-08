@@ -34,8 +34,8 @@ async def context_setById(id):
   context_db = db.get_context_by_id(id)
   if context_db is None:
     return jsonify({'message': f"Context with id {id} NOT FOUND!",'data': None})
-  if 'text' not in context_db:
-    return jsonify({'message': f"Context Text NOT FOUND!",'data': None})
+  if 'text' not in context_db or not isinstance(context_db['text'], str):
+    return jsonify({'message': f"Context Text NOT FOUND, is None, or is not a valid string!", 'data': None})
   context.setId(context_db['id'])
   context.setLabel(context_db['label'])
   context.setText(context_db['text'])
