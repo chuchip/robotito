@@ -41,8 +41,7 @@ async def call_llm(state) :
           ("system", "Here is some background information to help answer user queries:\n{context}"),
           ("placeholder","{msgs}"),
           ("user","{question}")
-    ])
-    
+    ])    
     question=state["message"]
     if question.strip() != "":
       swRemember=False
@@ -51,10 +50,13 @@ async def call_llm(state) :
           question+=f". {context.getRememberText()}"
           swRemember=True        
         context.incrementRememberNumber()
-      msgs=chat_history[max_history*-1:]
+      if max_history>0:
+        msgs=chat_history[max_history*-1:]
+      else:
+        msgs=chat_history
       if max_length_answers != 0:
         context.setText=f"{context.getText()}. Your answer should be less than {max_length_answers} words."
-        insert_pos = len(msgs) - 2
+        insert_pos = len(msgs) - 4
         if insert_pos>0:
           msgs.insert(insert_pos, HumanMessage(f'Remember: Your answer should be less than {max_length_answers} words.'))  
         else:
@@ -82,7 +84,14 @@ def call_llm_internal(chat_prompt):
       return response
   else:
       return response.content
-      
+def sumary_history(uuid,msg):
+  memoryData=memory.getMemory(uuid)
+  chat_history=memoryData.getChatHistory()
+  
+  for line in chat_history:
+    if isinstance(line, HumanMessage):
+       msg += "\n- " + line.content
+  return call_llm_internal(msg)
 def save_msg(uuid,type,msg):
     chat_history = memory.getMemory(uuid).getChatHistory()
     if type=='R':
@@ -292,14 +301,18 @@ version="3.5"
 max_history = os.getenv("MAX_HISTORY")
 if max_history is None:
    max_history=12
+else:
+   max_history=int(max_history)
 max_length_answers = os.getenv("MAX_LENGHT_ANSWERS")
 if max_length_answers is None:
    max_length_answers=70
+else:
+   max_length_answers=int(max_length_answers)
 # Configure LLM
 model_api = os.getenv("MODEL_API")
 if model_api is None:
   model_api="gemini"
-if model_api=="gemini":
+if model_api=="openai":
   model_api="openai"
   client_text=configOpenAI()  
 elif model_api=='ollama':
@@ -335,7 +348,7 @@ else:
   stt="local" # Use Whisper Local
 
   
-print(f"Model API: {model_api}  STT: {stt} TTS: {tts}" )
+print(f"Model API: {model_api}  STT: {stt} TTS: {tts} . Max Lenght Answers: {max_length_answers} Max History: {max_history}" )
 print("--------------------------------")
 
 app.register_blueprint(principal_bp, url_prefix='/api')

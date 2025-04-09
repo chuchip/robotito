@@ -67,6 +67,7 @@ export class ConversationComponent {
   showLanguageOptions=false
   error: any;
   modeConversation: boolean= false;
+  swSaveConversation:boolean=true
   swTalkResponse: Boolean= true;
   audio: HTMLAudioElement | null = null;
   selectContext:string = 'default';
@@ -270,9 +271,11 @@ export class ConversationComponent {
         var conversation=await this.back.initConversation( this.inputText);        
         this.conversationId=conversation.id
       }
-      this.back.saveConversation(this.conversationId, "H",this.inputText);      
-      this.back.saveConversation(this.conversationId, "R",this.responseMessage);
-      
+      if (this.swSaveConversation) 
+      {
+        this.back.saveConversation(this.conversationId, "H",this.inputText);      
+        this.back.saveConversation(this.conversationId, "R",this.responseMessage);
+      }  
       this.chat_history.push({line:this.number_line,type: "R",msg: msg,msgClean:this.responseMessage})
       this.responseMessage="";
       this.number_line++
@@ -752,5 +755,14 @@ export class ConversationComponent {
   {
     this.persistence.clearLogin=true;
     this.router.navigate(['/login']); 
+  }
+  async sumary_conversation()
+  {
+    this.isLoading=true
+    let response=await this.back.summary_conversation("Pretend to be my English teacher and check all these sentences searching for grammatical errors. Never mind about punctuation or meaning.  Show me only the sentences with errors, telling me  what was the error and what would be the correct sentence.  As a summary, give me a score on the number of errors there were in all the sentences, with 10 being the maximum score.")
+    this.chat_history.push({line:this.number_line, type: "R",msg: response.summary,msgClean:this.responseMessage});
+    this.number_line++
+    this.isLoading=false
+    setTimeout(() => this.scrollToBottom(), 0)
   }
 }

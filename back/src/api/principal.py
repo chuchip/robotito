@@ -32,6 +32,15 @@ async def generate(msg_graph):
   async for msg  in ai.call_llm(msg_graph):
       yield msg
 
+@principal_bp.route('/summary', methods=['POST'])
+async def summary_conversation():    
+    uuid=request.headers.get("uuid")
+    data = await request.get_json()  
+    msg =  data.get('msg')
+    import robotito_ai as ai
+    summary=ai.sumary_history(uuid,msg)
+    return jsonify({'message': f'Summary of UUID: {uuid} got',"status":"OK", "summary":summary})
+
 @principal_bp.route('/send-question', methods=['POST'])
 async def send_question():    
     uuid=request.headers.get("uuid")
@@ -44,7 +53,6 @@ async def send_question():
                 "uuid": uuid}     
     
     return Response(generate(msg_graph), mimetype='text/plain')
-
 
 @principal_bp.route('/clear', methods=['GET'])
 def clear():   

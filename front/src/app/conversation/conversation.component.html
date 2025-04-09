@@ -75,11 +75,15 @@
       <div class="vertical">
         <button class="button-action" (click)="toggleRecording()" matTooltip="Record voice (F2)">
           <span class="material-icons">{{ this.sound.isRecording ? 'stop' : 'mic' }}</span>
+        </button>      
+        <button class="button-action" (click)=" pressEsc()" matTooltip="Stop Talk (Esc)">
+          <span class="material-icons">cancel</span>
         </button>
-      
-      <button class="button-action" (click)=" pressEsc()" matTooltip="Stop Talk (Esc)">
-        <span class="material-icons">cancel</span>
-      </button>
+      </div>
+      <div class="vertical">
+        <button class="button-action" (click)=" sumary_conversation()" matTooltip="Summary">
+          <span class="material-icons">summarize</span>
+        </button>
       </div>
     </div>
         
@@ -90,7 +94,8 @@
               matTooltip="Reproduce Sound Automatically"> Speak aloud</span>
           <span class="check-option"><input type="checkbox" [(ngModel)]="modeConversation"
               matTooltip="Mode Conversation">Conversation</span>
-
+          <span class="check-option"><input type="checkbox" [(ngModel)]="swSaveConversation" 
+                matTooltip="Save Conversation">Save</span>
           <select [(ngModel)]="selectLanguage">
             <option *ngFor="let option of languageOptions" [value]="option.value">
               {{ option.label }}
