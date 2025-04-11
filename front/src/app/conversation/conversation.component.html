@@ -1,6 +1,6 @@
-<div class="overlay" *ngIf="isLoading ">
-  <mat-spinner></mat-spinner>
-</div>
+
+<app-loading [isLoading]="this.isLoading "></app-loading>
+
 <app-sound-playing [isPlaying]=" this.isPlayingSound" 
   [style.zIndex]="999" [style.opacity]="50" 
  [style.position]="'absolute'" [style.left.px]="xPos" [style.top.px]="yPos" >
@@ -141,3 +141,4 @@
         </div>
       </div>  
     </div>
+    <app-summary *ngIf=persistence.showSummary [selectLanguage]="this.selectLanguage"></app-summary>

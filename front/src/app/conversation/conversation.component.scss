@@ -233,18 +233,6 @@ mat-checkbox .mat-checkbox-label {
   z-index: 9999;  
 }
 
-.overlay {
-  position: fixed;
-  bottom: 5px;
-  left: 0;
-  height:60px;
-  width: 100%;  
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
 .name_user
 {
   border-top: 1px solid rgb(177, 186, 194); /* Adjust thickness and color */
@@ -379,7 +367,6 @@ mat-checkbox .mat-checkbox-label {
   justify-content:space-evenly;
   flex-direction: row;  
   border-top: 1px solid rgb(80, 120, 143); /* Adjust thickness and color */
-  background-color: rgb(174, 180, 173); /* Optional: Set background */    
   padding: 3px;
 }
 .configuration_line_text

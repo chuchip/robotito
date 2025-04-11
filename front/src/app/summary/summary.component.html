@@ -1,0 +1,21 @@
+<app-loading [isLoading]="this.isLoading "></app-loading>
+<div #configuration_window class="configuration ">
+    <div class="configuration_line">
+        <span class="rating-text">Rating</span>
+        <span class="rating-label">{{rating}}</span>        
+        <button class="close-trigger" (click)="closeWindow()">Close</button>        
+    </div>
+    <div class="configuration_line">
+        <span class="rating-text">Resume</span>
+        <span class="rating-description">{{explication_rating}}</span>
+    </div>
+    <div class="configuration_summary">
+    
+        <div class="summary_line" *ngFor="let line of summarySentences; let i = index">
+            Sentence: {{line.sentence}} ->   {{line.status}} <br>
+            Explication: {{line.explication}}<br>
+            Correction:  {{line.correction}}
+        </div>
+      
+    </div>
+</div>

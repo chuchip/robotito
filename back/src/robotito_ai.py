@@ -37,8 +37,7 @@ async def call_llm(state) :
       rememberText=context.getRememberText()
     chat_history=memoryData.getChatHistory()
     prompt = ChatPromptTemplate.from_messages( [
-          ("system", "{system_msg}"),
-          ("system", "Here is some background information to help answer user queries:\n{context}"),
+          ("system", "{system_msg}"),         
           ("placeholder","{msgs}"),
           ("user","{question}")
     ])    
@@ -67,9 +66,11 @@ async def call_llm(state) :
         context=[], 
         msgs=msgs,  # Get the last MAX_HISTORY messages
         question=question
-      )
+      )    
       if model_api=='ollama':
-        yield client_text.invoke(chat_prompt)
+#        yield client_text.invoke(chat_prompt)
+        async for chunk in client_text.astream(chat_prompt):
+            yield  chunk
       else:
         async for chunk in client_text.astream(chat_prompt):        
             yield  chunk.content
@@ -317,7 +318,7 @@ if model_api=="openai":
   client_text=configOpenAI()  
 elif model_api=='ollama':
   model_api="ollama"
-  client_text=configOllamaAI("llama3.2:3b","http://172.24.144.1:11434")   
+  client_text=configOllamaAI("gemma3:1b","http://172.24.144.1:11434")   
 else:
   model_api="gemini"
   client_text=configGeminiAI()   

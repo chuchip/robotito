@@ -1,0 +1,73 @@
+.configuration
+{
+    position: fixed;
+    display: flex;
+    flex-direction: column;  
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    width: 90%;
+    max-height: 80vh; /* Set a maximum height */     
+    border: 1px solid #ccc;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    z-index: 1000; /* Ensure it's above other content */  
+    border-top: 3px solid black; /* Adjust thickness and color */
+    background-color: rgb(174, 180, 173); /* Optional: Set background */    
+    padding: 3px;
+}
+.configuration_line
+{
+  width:100%;
+  display: flex;
+  justify-content:space-evenly;
+  flex-direction: row;  
+  border-top: 1px solid rgb(80, 120, 143); /* Adjust thickness and color */  
+  padding: 3px;
+}
+.rating-text {
+    margin-right: 10px; /* Add some space between the text and the label */
+}
+.rating-label {
+    font-weight: bold; /* Make the rating value stand out */
+    color: rgb(8, 1, 24); /* Example color for the rating value */
+    padding: 5px 10px; /* Add some padding around the label */
+    border: 1px solid #ccc; /* Optional border */
+    border-radius: 5px; /* Optional rounded corners */
+}
+.rating-description {
+    padding: 5px 10px; /* Add some padding around the label */
+    border: 1px solid #ccc; /* Optional border */
+    border-radius: 5px; /* Optional rounded corners */
+}
+.close-trigger {
+    padding: 6px 12px;
+    font-size: 14px;
+    background-color: #f44336;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .close-trigger:hover {
+    background-color: #d32f2f;
+  }
+  .configuration_summary
+  {
+    display: flex;
+    flex-direction: column;  
+    max-height: 95%; /* Set a maximum height */     
+    overflow-y: auto; /* Enable vertical scrolling if necessary */
+    border: 1px solid #ccc;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  }
+  .summary_line
+  {
+    display: flex;
+    word-wrap: break-word;
+    flex-direction: row;  
+    border-top: 1px solid rgb(80, 143, 83); /* Adjust thickness and color */  
+    padding: 3px;
+  }

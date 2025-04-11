@@ -5,7 +5,8 @@ import { securityDTO } from '../model/security.dto';
 export class PersistenceService {
   private security: securityDTO={'user':'','authorization':''}
   public uuid:string="";
-  public clearLogin=false
+  public clearLogin=false  
+  public showSummary=false;
 
   constructor() {
     this.uuid = this.generateUuid();

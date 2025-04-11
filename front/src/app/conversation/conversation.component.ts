@@ -1,6 +1,8 @@
 import { Component, ViewChild,HostListener, ElementRef } from '@angular/core';
 import { SoundPlayingComponent } from '../sound-playing/sound-playing.component';
 import { SoundRecordingComponent } from '../sound-recording/sound-recording.component';
+import {LoadingComponent} from "../loading/loading.component"
+import { SummaryComponent } from '../summary/summary.component';
 import { ApiBackService } from '../services/api-back.service';
 import { SoundService } from '../services/sound.service';
 import { FormsModule } from '@angular/forms';
@@ -9,7 +11,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatButtonModule } from '@angular/material/button';
 import { marked } from 'marked';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSliderModule } from '@angular/material/slider';
 import { PersistenceService } from '../services/persistence.service';
@@ -18,9 +19,9 @@ import { conversationHistoryDTO } from '../model/conversationHistory.dto';
 import { Router } from '@angular/router';
 @Component({  
   selector: 'app-conversation',   
-  imports: [CommonModule, MatTooltipModule, MatCheckboxModule,FormsModule,
-     MatButtonModule, MatIconModule, SoundPlayingComponent,SoundRecordingComponent,
-    MatProgressSpinnerModule,MatSliderModule], // 
+  imports: [CommonModule, MatTooltipModule, MatCheckboxModule, FormsModule,
+    MatButtonModule, MatIconModule, SoundPlayingComponent, SoundRecordingComponent,
+    MatSliderModule, LoadingComponent,SummaryComponent], // 
   templateUrl: './conversation.component.html',
   styleUrls: ['./conversation.component.scss']
 })
@@ -30,6 +31,7 @@ import { Router } from '@angular/router';
  */
 export class ConversationComponent {
   selectedText: string = '';
+  isLoading=false;
   pressEscape=false
   xPos = 0
   yPos =0
@@ -47,7 +49,6 @@ export class ConversationComponent {
   clicksWindow=0;
   conversationHistory:conversationHistoryDTO[]=[];
   conversationId=""
-  isLoading=false;
   context:contextDTO={id:"",label:"",text:"",remember:""}
   contexts:contextDTO[]=[]
   
@@ -77,7 +78,7 @@ export class ConversationComponent {
   languageOptions:{label:string, value:string}[] = []
   voiceOptions:{language:string, label:string,gender:string}[] = []
    
-  constructor(private router: Router,public back: ApiBackService,public sound: SoundService,public persistence: PersistenceService) {
+  constructor(private router: Router,public sound: SoundService,public back: ApiBackService,public persistence: PersistenceService) {
     this.isLoading=true
     if (persistence.getAuthorization()=='')
     {
@@ -758,11 +759,6 @@ export class ConversationComponent {
   }
   async sumary_conversation()
   {
-    this.isLoading=true
-    let response=await this.back.summary_conversation("Pretend to be my English teacher and check all these sentences searching for grammatical errors. Never mind about punctuation or meaning.  Show me only the sentences with errors, telling me  what was the error and what would be the correct sentence.  As a summary, give me a score on the number of errors there were in all the sentences, with 10 being the maximum score.")
-    this.chat_history.push({line:this.number_line, type: "R",msg: response.summary,msgClean:this.responseMessage});
-    this.number_line++
-    this.isLoading=false
-    setTimeout(() => this.scrollToBottom(), 0)
+    this.persistence.showSummary=true     
   }
 }
