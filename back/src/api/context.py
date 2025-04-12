@@ -64,13 +64,20 @@ async def context_update():
   context.setLabel(data['label'])
 
   contextId=db.save_context(user=data['user'],label=data['label'],context=data['context'],remember=data['contextRemember'])
-  if 'context' not in data or 'contextRemember'  not in data:
+  if 'context' not in data  or 'contextRemember'  not in data:
      return jsonify({'message': f"Context hasn't a valid latext or label", "status:": 'KO','text': data['context']})
-
-  context.setId(contextId)
-  context.setLabel(data['label'])
-  context.setText(data['context'])
-  context.setRememberText(data['contextRemember'])
+  try:
+    context.setId(contextId)
+    context.setLabel(data['label'])
+    context.setText(data['context'])
+    context.setRememberText(data['contextRemember'])
+  except Exception as e:
+    print(f"An exception occurred: {e}")
+    print(f"Error setting context. Data values: { data }")
+    if data is not None:
+      for key, value in data.items():
+        print(f"{key}: {value}")
+    return jsonify({'message': f"Context updated successfully!. Update Context of: '{data['label']}'", "status:": 'KO','text': e})  
   return jsonify({'message': f"Context updated successfully!. Update Context of: '{data['label']}'", "status:": 'OK','text': data['context']})
 
 @context_bp.route('/id/<string:id>', methods=['DELETE'])
