@@ -32,14 +32,19 @@ async def context_setById(id):
     mem.setContext(context)
 
   context_db = db.get_context_by_id(id)
-  if context_db is None:
-    return jsonify({'message': f"Context with id {id} NOT FOUND!",'data': None})
-  if 'text' not in context_db or not isinstance(context_db['text'], str):
+  if context_db is None or 'text' not in context_db or not isinstance(context_db['text'], str):
     return jsonify({'message': f"Context Text NOT FOUND, is None, or is not a valid string!", 'data': None})
-  context.setId(context_db['id'])
-  context.setLabel(context_db['label'])
-  context.setText(context_db['text'])
-  context.setRememberText(context_db['remember'])
+  try:
+    context.setId(context_db['id'])
+    context.setLabel(context_db['label'])
+    context.setText(context_db['text'])
+    context.setRememberText(context_db['remember'])
+  except Exception as e:
+    print(f"An exception occurred: {e}")
+    print(f"Error setting context. Context DB values: {context_db}")
+    if context_db is not None:
+      for key, value in context_db.items():
+        print(f"{key}: {value}")
   return jsonify({'message': f"Context set  Set Context to: '{id}'", 'data': context_db})
 
 ## Work with context
@@ -59,7 +64,7 @@ async def context_update():
   context.setLabel(data['label'])
 
   contextId=db.save_context(user=data['user'],label=data['label'],context=data['context'],remember=data['contextRemember'])
-  if 'text' not in data or 'context'  not in data:
+  if 'context' not in data or 'contextRemember'  not in data:
      return jsonify({'message': f"Context hasn't a valid latext or label", "status:": 'KO','text': data['context']})
 
   context.setId(contextId)

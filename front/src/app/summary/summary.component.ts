@@ -90,12 +90,9 @@ export class SummaryComponent implements OnInit {
     let response1 = JSON.parse(cleaned);
     this.rating = response1.message.rating;
     this.explication_rating=response1.message.explication
-    console.log(response1.message)
     let response2=await this.back.summary_conversation(this.question_summaary2)
     const cleaned2 = response2.summary.replace(/```json|```/g, '').trim();
-    console.log(cleaned2)
     let response2_json = JSON.parse(cleaned2);
-    console.log(response2_json)
     this.summarySentences = response2_json.feedback.filter((item: { status: string }) => item.status.toLowerCase() !== 'good');
     this.isLoading=false    
   }

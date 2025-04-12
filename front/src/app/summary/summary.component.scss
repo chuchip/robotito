@@ -66,8 +66,25 @@
   .summary_line
   {
     display: flex;
-    word-wrap: break-word;
-    flex-direction: row;  
+    flex-direction: column;  
     border-top: 1px solid rgb(80, 143, 83); /* Adjust thickness and color */  
     padding: 3px;
+  }
+  .text_line
+  {   
+    display: flex;
+  }
+  .label 
+  {    
+    font-weight: bold;    
+    display: inline-block;
+    width:95px;
+  }
+  
+  
+  .text
+  {
+    padding-left: 10px;
+    word-wrap: break-word;
+    flex: 1;
   }

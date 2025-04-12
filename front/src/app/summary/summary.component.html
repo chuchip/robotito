@@ -12,9 +12,18 @@
     <div class="configuration_summary">
     
         <div class="summary_line" *ngFor="let line of summarySentences; let i = index">
-            Sentence: {{line.sentence}} ->   {{line.status}} <br>
-            Explication: {{line.explication}}<br>
-            Correction:  {{line.correction}}
+            <div class="text_line">
+                <span class="label">Original:</span>
+                <span class="text">{{line.sentence}}</span>
+            </div>
+            <div class="text_line">
+                <span class="label">Explication:</span>
+                <span class="text">{{line.explication}}</span>
+            </div>
+            <div class="text_line">
+                <span class="label">Correction</span>
+                <span class="text"> {{line.correction}}</span>
+            </div>
         </div>
       
     </div>
