@@ -1,6 +1,6 @@
 from quart import Blueprint,  request, jsonify,Response
 import persistence as db
-
+import logging
 import memory
 
 conversation_bp = Blueprint('conversation', __name__)
@@ -8,7 +8,7 @@ conversation_bp = Blueprint('conversation', __name__)
 @conversation_bp.route('/id/<string:id>', methods=['GET'])
 def conversation_getId(id):
   import robotito_ai as ai
-  print("GET  conversation with id: ",id)
+  logging.info("GET  conversation with id: ",id)
   uuid=request.headers.get("uuid")
   mem=memory.getMemory(uuid)
   data = db.conversation_get_by_id(id)
@@ -21,7 +21,7 @@ def conversation_getId(id):
 
 @conversation_bp.route('/id/<string:id>', methods=['DELETE'])
 def conversation_deleteId(id): 
-  print("GET  conversation with id: ",id)
+  logging.info("GET  conversation with id: ",id)
   db.conversation_delete_by_id(id)  
   return jsonify({'message': f'Conversation with id {id} DELETED!', 'conversation': id})
 
@@ -36,7 +36,7 @@ async def conversation_saveId(id):
     idContext=context.getId()
   id_conversation=db.conversation_save(uuid,id,data['user'],
                                        idContext,data['type'] ,data['msg'])
-  #print(f"Save  conversation with id: {id}{data} ")
+  #logging.info(f"Save  conversation with id: {id}{data} ")
   return jsonify({'message': f'Conversation saved on id {id_conversation} !', 'id': id_conversation})
 
 
@@ -45,7 +45,7 @@ async def conversation_init():
   data = await request.get_json()
   uuid=request.headers.get("uuid")
   mem=memory.getMemory(uuid)
-  # print(f"Save  conversation with id: {id}{data} ")
+  # logging.info(f"Save  conversation with id: {id}{data} ")
   id_conversation=db.init_conversation(None,data['user'],data['msg'])
   if mem.getContext() is None:
     db.updateConversationContext(id_conversation, data['contextId'])
@@ -55,7 +55,7 @@ async def conversation_init():
 
 @conversation_bp.route('/user/<string:user>', methods=['GET'])
 def conversation_getUser(user): 
-  print("GET All conversations of the user: ",user)
+  logging.info("GET All conversations of the user: ",user)
 
   data = db.conversation_get_list(user)
   

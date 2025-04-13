@@ -7,4 +7,4 @@ with open(input_file, "r") as infile, open(output_file, "w") as outfile:
         if len(parts) == 2 and parts[0] != "Package":  # Skip headers
             outfile.write(f"{parts[0]}=={parts[1]}\n")
 
-print("Converted to requirements.txt")
+logging.info("Converted to requirements.txt")

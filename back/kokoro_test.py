@@ -25,9 +25,9 @@ generator = pipeline(
 )
 
 for i, (gs, ps, audio) in enumerate(generator):
-    print(i)  # i => index
-    print(gs) # gs => graphemes/text
-    print(ps) # ps => phonemes 
+    logging.info(i)  # i => index
+    logging.info(gs) # gs => graphemes/text
+    logging.info(ps) # ps => phonemes 
     if (i==0):
         total = audio
     else:

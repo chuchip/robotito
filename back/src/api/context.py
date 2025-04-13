@@ -2,10 +2,11 @@ from quart import Blueprint,  request, jsonify
 import persistence as db
 import memory
 context_bp = Blueprint('context', __name__)
+import logging
 
 @context_bp.route('/label/<string:label>', methods=['put'])
 async def context_setByLabel(label):   
-  print("Set Context by Label: ",label)
+  logging.info("Set Context by Label: ",label)
   mem=memory.getMemory(request.headers.get("uuid"))
   context = mem.getContext()
   if context is None:
@@ -24,7 +25,7 @@ async def context_setByLabel(label):
 async def context_setById(id):
   if id is None or id == '' or id=='null':
     return jsonify({'message': 'Context ID is required!','data': None}) 
-  print("Set Context: ",id)
+  logging.info("Set Context: ",id)
   mem=memory.getMemory(request.headers.get("uuid"))
   context = mem.getContext()
   if context is None:
@@ -40,11 +41,11 @@ async def context_setById(id):
     context.setText(context_db['text'])
     context.setRememberText(context_db['remember'])
   except Exception as e:
-    print(f"An exception occurred: {e}")
-    print(f"Error setting context. Context DB values: {context_db}")
+    logging.error(f"An exception occurred: {e}")
+    logging.error(f"Error setting context. Context DB values: {context_db}")
     if context_db is not None:
       for key, value in context_db.items():
-        print(f"{key}: {value}")
+        logging.info(f"{key}: {value}")
   return jsonify({'message': f"Context set  Set Context to: '{id}'", 'data': context_db})
 
 ## Work with context
@@ -72,29 +73,29 @@ async def context_update():
     context.setText(data['context'])
     context.setRememberText(data['contextRemember'])
   except Exception as e:
-    print(f"An exception occurred: {e}")
-    print(f"Error setting context. Data values: { data }")
+    logging.error(f"An exception occurred: {e}")
+    logging.error(f"Error setting context. {context} (type: {type(context)}) Data values: {data}")
     if data is not None:
       for key, value in data.items():
-        print(f"{key}: {value}")
-    return jsonify({'message': f"Context updated successfully!. Update Context of: '{data['label']}'", "status:": 'KO','text': e})  
+        logging.error(f"{key}: {value}")
+    return jsonify({'message': f"Context updated successfully!. Update Context of: '{data['label']}'", "status:": 'KO','text': 'error'})  
   return jsonify({'message': f"Context updated successfully!. Update Context of: '{data['label']}'", "status:": 'OK','text': data['context']})
 
 @context_bp.route('/id/<string:id>', methods=['DELETE'])
 async def context_delete_by_id(id):   
-  print("Deleted  context by id: ",id)
+  logging.info("Deleted  context by id: ",id)
   db.delete_context_by_id(id)  
   return jsonify({'message': f'Context with id {id} successfully!', 'text': id})
 
 # Url  /context/user/${user}
 @context_bp.route('/user/<string:user>', methods=['GET'])
 def context_get(user): 
-  print("GET All Context of user: ",user)
+  logging.info("GET All Context of user: ",user)
   data = db.get_all_context(user)  
   return jsonify({'message': 'Context updated successfully!', 'contexts': data})
 
 @context_bp.route('/current', methods=['GET'])
 def context_current_get(): 
-  print("GET Current Context ")  
+  logging.info("GET Current Context ")  
   context = memory.getMemory(request.headers.get("uuid")).getContext()
   return jsonify(context.__dict__)

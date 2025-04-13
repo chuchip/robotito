@@ -16,7 +16,7 @@ def add_name(ss,name_input):
 def init_db(connection):
     cursor=connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users'" )
     if cursor.fetchone() is  None:
-        print("Initialzing the database")    
+        logging.info("Initialzing the database")    
         connection.execute("CREATE TABLE users (user TEXT PRIMARY KEY, name TEXT, email TEXT, password TEXT)")        
         connection.execute("INSERT INTO users (user,name) VALUES ('','No Name')")
         connection.commit()
@@ -32,7 +32,7 @@ def human_msg(content):
     return st.markdown('<span class="msg_human">> HUMAN: </span><span class="msg_human_typing">'+content+"</span>", unsafe_allow_html=True)
     
 if "graph" not in st.session_state:
-  print("Rebuilding the graph")  
+  logging.info("Rebuilding the graph")  
   ss.connection=sqlite3.connect("robotito_db/sqllite.db", check_same_thread=False)
   init_db(ss.connection)
   ss.context_value=""
@@ -104,7 +104,7 @@ else:
             human_msg(history.content)  
     
     if record_audio is not None and len(record_audio)>1000:
-        print("Recording audio")
+        logging.info("Recording audio")
         txt=ai.pipe(record_audio)        
         question=txt['text']
 
@@ -114,7 +114,7 @@ else:
         msg_graph={"messages": question,"chat_history": chat_history,"retrieved_context": []
                 ,"vd": vd,
                 "system_msg": context }
-        #print("Question_Graph: ",msg_graph) 
+        #logging.info("Question_Graph: ",msg_graph) 
         response= graph.invoke(msg_graph, config) 
         answer=response["messages"][-1].content
         chat_history.append(HumanMessage(content=question))

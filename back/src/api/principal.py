@@ -1,7 +1,7 @@
 from quart import  Blueprint,Response,request,abort,jsonify
 import persistence as db
 import memory
-
+import logging
 principal_bp = Blueprint('principal', __name__)
 
 
@@ -10,7 +10,7 @@ def security_check():
     if request.method == 'OPTIONS':
         return
     current_endpoint = request.endpoint
-    print("Current endpoint: ",current_endpoint)
+    logging.info("Current endpoint: ",current_endpoint)
     if 'uuid' not in request.headers:
         abort(401)   
     if current_endpoint == 'principal.clear' or current_endpoint == 'security.get_uuid' or current_endpoint == 'security.login': 
@@ -25,7 +25,7 @@ def security_check():
     else:
         if session.getAuthorization()!=authorization:
           abort(401)
-    print("Security check OK")
+    logging.info("Security check OK")
 
 async def generate(msg_graph):
   import robotito_ai as ai
@@ -56,7 +56,7 @@ async def send_question():
 
 @principal_bp.route('/clear', methods=['GET'])
 def clear():   
-  print("Clear conversation")
+  logging.info("Clear conversation")
   uuid=request.headers.get("uuid")
   if len(memory.memoryData) != 0:
     mem=memory.getMemory(uuid)
@@ -71,5 +71,5 @@ def clear():
 def get_last_user():
   mem = memory.getMemory(request.headers.get("uuid"))
   data=db.get_last_user(mem)
-  print("Last user: ",data)
+  logging.info("Last user: ",data)
   return jsonify(data)

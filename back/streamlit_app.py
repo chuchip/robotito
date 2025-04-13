@@ -70,7 +70,7 @@ col2.button('Stop', on_click=stop_listening)
 async def send_receive():
 	URL = f"wss://api.assemblyai.com/v2/realtime/ws?sample_rate={RATE}"
 
-	print(f'Connecting websocket to url ${URL}')
+	logging.info(f'Connecting websocket to url ${URL}')
 
 	async with websockets.connect(
 		URL,
@@ -80,11 +80,11 @@ async def send_receive():
 	) as _ws:
 
 		r = await asyncio.sleep(0.1)
-		print("Receiving messages ...")
+		logging.info("Receiving messages ...")
 
 		session_begins = await _ws.recv()
-		print(session_begins)
-		print("Sending messages ...")
+		logging.info(session_begins)
+		logging.info("Sending messages ...")
 
 
 		async def send():
@@ -96,12 +96,12 @@ async def send_receive():
 					r = await _ws.send(json_data)
 
 				except websockets.exceptions.ConnectionClosedError as e:
-					print(e)
+					logging.info(e)
 					assert e.code == 4008
 					break
 
 				except Exception as e:
-					print(e)
+					logging.info(e)
 					assert False, "Not a websocket 4008 error"
 
 				r = await asyncio.sleep(0.01)
@@ -114,7 +114,7 @@ async def send_receive():
 					result = json.loads(result_str)['text']
 
 					if json.loads(result_str)['message_type']=='FinalTranscript':
-						print(result)
+						logging.info(result)
 						st.session_state['text'] = result
 						st.write(st.session_state['text'])
 
@@ -125,12 +125,12 @@ async def send_receive():
 
 
 				except websockets.exceptions.ConnectionClosedError as e:
-					print(e)
+					logging.info(e)
 					assert e.code == 4008
 					break
 
 				except Exception as e:
-					print(e)
+					logging.info(e)
 					assert False, "Not a websocket 4008 error"
 			
 		send_result, receive_result = await asyncio.gather(send(), receive())

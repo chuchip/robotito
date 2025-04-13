@@ -1,5 +1,6 @@
 from datetime  import datetime
 import sqlite3
+import logging
 import uuid
 import memory
 import asyncio
@@ -16,7 +17,7 @@ def init_db():
     cursor=connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users'" )
     # Create table to create User
     if cursor.fetchone() is  None:
-        print("Initialzing the database")    
+        logging.info("Initialzing the database")    
         connection.execute("""CREATE TABLE users (
                            user TEXT PRIMARY KEY,
                            name TEXT,
@@ -86,12 +87,12 @@ def get_context_by_label(user,label):
 def save_context(user,label,context,remember):
     data=get_context_by_label(user,label)
     if data is  None:
-        print(f"Insert context: {label}")
+        logging.info(f"Insert context: {label}")
         sql=f"INSERT INTO context (label,user,context,remember) VALUES (?, ?, ?,?)"        
         cursor = connection.execute(sql, (label,user,context,remember))
         id = cursor.lastrowid
     else:
-        print(f"Update context: {label}")
+        logging.info(f"Update context: {label}")
         id=data['id']
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         sql=f"""UPDATE context SET context = ?,remember= ?, last_time='{now}'
@@ -109,10 +110,10 @@ def delete_context(user,label):
 def delete_context_by_id(id):
     data=get_context_by_id(id)
     if data is  None:
-        print(f"Context with id {id} not found")
+        logging.info(f"Context with id {id} not found")
         return
     if (data['label'] =='default'):
-        print(f"Label 'default' cannot be deleted")
+        logging.info(f"Label 'default' cannot be deleted")
         return
     sql=f"delete from context where id=? " 
     connection.execute(sql,(id,))
@@ -132,13 +133,13 @@ def init_conversation(id ,user,msg,force=False):
     if id is None or force:
         if len(msg.split())>15:
             # Do a sumary of the message
-            resp = asyncio.run(ai.call_llm_internal(False, f"Create a summary of less than 12 words from this sentence: '{msg}'"))
+            resp = ai.call_llm_internal(f"Create a summary of less than 12 words from this sentence: '{msg}'")
             msg=resp
-            print("Summary: ",msg)
+            logging.info("Summary: ",msg)
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         random_uuid = uuid.uuid4()  # Generate a random UUID
         id = str(random_uuid)
-        print("Init conversation id",id) 
+        logging.info("Init conversation id",id) 
         sql="""
                 insert into conversation (id,user,name,final_date) values (?,?,?,?)
             """
@@ -197,7 +198,7 @@ def conversation_delete_by_id(id):
 def update_language(user,language,voice):    
     sql="update users set language = ?, voice=? where user = ? "
     connection.execute(sql,(language,voice,user))    
-    print("Save language preferences")
+    logging.info("Save language preferences")
     connection.commit()
     return 
 # Save in db and cache an uuid if it not exists

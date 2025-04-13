@@ -4,7 +4,6 @@ from robotito_ai import speechToText,textToSpeech
 from google.cloud import texttospeech
 from google.cloud import speech
 import memory
-  
 
 def text_to_ssml(text):
     # Escape special characters to avoid conflicts with SSML commands
@@ -56,6 +55,5 @@ def getAudioFromText(audioData:memory.AudioData,text,uuid):
     )
   output_filename = f"audio/output_{uuid}.webm"
   with open(output_filename, "wb") as out:
-        out.write(response.audio_content)
-        print(f"Audio content written to file: {output_filename}")
+        out.write(response.audio_content)        
   return output_filename

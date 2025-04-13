@@ -1,15 +1,18 @@
+import logging
+
+logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
 from langchain_openai import ChatOpenAI,OpenAIEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import ChatPromptTemplate
 from langchain_core.messages import  HumanMessage, AIMessage
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-
 from google.cloud import speech
 from google.cloud import texttospeech
 from openai import OpenAI
 
 from quart import Quart
+from quart.logging import default_handler
 from quart_cors import cors
 import os
 from api.audio  import audio_bp
@@ -20,16 +23,26 @@ from api.security import security_bp
 from langchain_core.messages import  AIMessage,HumanMessage
 import memory
 
+os.environ["GRPC_VERBOSITY"] = "ERROR"
+os.environ["GLOG_minloglevel"] = "2"
+log_level = os.getenv("LOG_LEVEL")
+if log_level is None:
+   log_level=logging.INFO
+else:
+   log_level=int(log_level)
 app = Quart(__name__)
+logging.getLogger("asyncio").setLevel(logging.ERROR)
+logging.getLogger("hypercorn.access").setLevel(logging.WARNING)
 app=cors(app,allow_origin="*")  # Enable Cross-Origin Resource Sharing
-
+logger_ = logging.getLogger(__name__)
+logger_.setLevel(log_level)
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Create folder if not exists
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
 async def call_llm(state) :       
-    #print(f"call_llm: {state['messages']}")
+    #logging.info(f"call_llm: {state['messages']}")
     memoryData=memory.getMemory(state['uuid'])
     context = memoryData.getContext()
     rememberText=""
@@ -65,8 +78,9 @@ async def call_llm(state) :
         system_msg=context.getText(),
         context=[], 
         msgs=msgs,  # Get the last MAX_HISTORY messages
-        question=question
-      )    
+        question=HumanMessage(question)
+      ) 
+      logger_.debug(f"LLM: Context{context.getText()} Question: {question}")
       if model_api=='ollama':
 #        yield client_text.invoke(chat_prompt)
         async for chunk in client_text.astream(chat_prompt):
@@ -108,7 +122,7 @@ def restore_history(uuid,jsonHistory):
     else:
        chat_history.append(HumanMessage(content=line['msg']))
 def initial(state):    
-    #print(f"--- Searching in Vector Database --- {state['messages'][-1].content}")
+    #logging.info(f"--- Searching in Vector Database --- {state['messages'][-1].content}")
     if state["vd"]: 
       results_with_scores = vector_store.similarity_search_with_score(
         state["messages"][-1].content,
@@ -116,10 +130,10 @@ def initial(state):
       )
       similarity_threshold = 1.0
 #      for res, score in results_with_scores:       
-#            print(f"* {res.page_content} [{res.metadata}] {score}")
+#            logging.info(f"* {res.page_content} [{res.metadata}] {score}")
       filtered_results = [res for res, score in results_with_scores if score <= similarity_threshold]        
       retrieved_context = "\n".join([res.page_content for res in filtered_results])
-      # print(f"Retrieved Context in initial: {retrieved_context}")
+      # logging.info(f"Retrieved Context in initial: {retrieved_context}")
 #      state['retrieved_context']=retrieved_context
 # return state
 
@@ -130,7 +144,7 @@ def save(state):
       source = "Human"
     else:
       source = "AI"
-    #print(f"Content: {message.content} source: {source}")
+    #logging.info(f"Content: {message.content} source: {source}")
     chat_documents.append(Document(page_content=message.content, metadata={"source": source},))
   
     all_splits = text_splitter.split_documents(chat_documents)
@@ -150,16 +164,6 @@ def configOpenAI():
                    streaming=True,
                    temperature=0.8)
 
-  return model
-def configGeminiAISync(): 
-  model = ChatGoogleGenerativeAI(
-    model="gemini-2.0-flash",
-    temperature=0.1,
-    streaming=False,
-    max_tokens=None,
-    timeout=None,
-    max_retries=2,  
-  )
   return model
 
 def configGeminiAI(): 
@@ -261,7 +265,7 @@ def getAudioFromKokoro(text,audioData,uuid):
   '-c:a', 'libopus',     # Audio codec (Opus)
       webm_file            # Output WebM file
   ]
-  subprocess.run(command)
+  subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
   return webm_file
 
 # Convert  text to audio en webm format
@@ -291,10 +295,10 @@ def set_language(audioData,languageInput):
            language_kokoro=languageInput
         audioData.kpipeline = KPipeline(lang_code=language_kokoro)
       except AssertionError: 
-         print("Oppss.. pipeline bad configuration")
+         logging.info("Oppss.. pipeline bad configuration")
 # Define the configuration
-print("--------------------------------")
-print("Initializing Robotito ...")
+logger_.info("--------------------------------")
+logger_.info("Initializing Robotito ...")
 
 config = {"configurable": {"thread_id": "1"}}
 version="3.5"
@@ -349,8 +353,8 @@ else:
   stt="local" # Use Whisper Local
 
   
-print(f"Model API: {model_api}  STT: {stt} TTS: {tts} . Max Lenght Answers: {max_length_answers} Max History: {max_history}" )
-print("--------------------------------")
+logger_.info(f"Model API: {model_api}  STT: {stt} TTS: {tts} . Max Lenght Answers: {max_length_answers} Max History: {max_history}" )
+logger_.info("--------------------------------")
 
 app.register_blueprint(principal_bp, url_prefix='/api')
 app.register_blueprint(audio_bp, url_prefix='/api/audio')

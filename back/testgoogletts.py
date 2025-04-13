@@ -49,7 +49,7 @@ def text_to_speech(text, output_filename):
     # Save the audio file
     with open(output_filename, "wb") as out:
         out.write(response.audio_content)
-        print(f"Audio content written to file: {output_filename}")
+        logging.info(f"Audio content written to file: {output_filename}")
 
 # Example usage
 if __name__ == "__main__":

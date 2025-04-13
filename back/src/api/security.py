@@ -1,5 +1,6 @@
 from quart import Blueprint,  request,abort, jsonify
 import uuid
+import logging
 import persistence
 import memory
 from functools import wraps

@@ -1,4 +1,5 @@
 from quart import current_app,Blueprint,  request, jsonify,Response
+import logging
 import os
 import persistence
 import memory
@@ -70,7 +71,7 @@ async def get_voices(language):
 @audio_bp.route('/stt', methods=['POST'])
 async def upload_audio():
     import robotito_ai as ai
-    print("In upload audio")
+    logging.info("In upload audio")
     f=await request.files
     if 'audio' not in f:
         return jsonify({'error': 'No file part'}), 400
@@ -95,7 +96,7 @@ async def tts():
     audioData=memory.getMemory(uuid).getAudioData()
     if text=='':
         return Response(None, mimetype='audio/webm')  
-    #print(f"In tts {text}")
+    #logging.info(f"In tts {text}")
     webm_file = ai.getAudioFromText(text,audioData,uuid)
 
     def generate():

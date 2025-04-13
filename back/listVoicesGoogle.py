@@ -13,19 +13,19 @@ def list_voices(language=None):
         # Display the voice's name. Example: tpc-vocoded
         if language is not None and language not in voice.language_codes:
             continue
-        print(f"Name: {voice.name}")
+        logging.info(f"Name: {voice.name}")
 
         # Display the supported language codes for this voice. Example: "en-US"
         for language_code in voice.language_codes:
-            print(f"Supported language: {language_code}")
+            logging.info(f"Supported language: {language_code}")
 
         ssml_gender = texttospeech.SsmlVoiceGender(voice.ssml_gender)
 
         # Display the SSML Voice Gender
-        print(f"SSML Voice Gender: {ssml_gender.name}")
+        logging.info(f"SSML Voice Gender: {ssml_gender.name}")
 
         # Display the natural sample rate hertz for this voice. Example: 24000
-        print(f"Natural Sample Rate Hertz: {voice.natural_sample_rate_hertz}\n")
+        logging.info(f"Natural Sample Rate Hertz: {voice.natural_sample_rate_hertz}\n")
 
 # Example usage
 if __name__ == "__main__":

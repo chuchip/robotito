@@ -27,7 +27,7 @@ def transcribe_audio(file_path):
 
     # Print the transcription results
     for result in response.results:
-        print("Transcript:", result.alternatives[0].transcript)
+        logging.info("Transcript:", result.alternatives[0].transcript)
 
 # Replace 'your_audio_file.wav' with the path to your local audio file
 transcribe_audio("uploads/73e44bf9-ccc2-49af-a969-6053d471cc99_recording.webm")
