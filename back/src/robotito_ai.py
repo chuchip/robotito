@@ -3,15 +3,16 @@ import logging
 logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
 from langchain_openai import ChatOpenAI,OpenAIEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.prompts import ChatPromptTemplate
+from langchain.prompts import ChatPromptTemplate,PromptTemplate
 from langchain_core.messages import  HumanMessage, AIMessage
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from google.cloud import speech
 from google.cloud import texttospeech
 from openai import OpenAI
-
+from langchain.output_parsers import PydanticOutputParser
 from quart import Quart
+from langchain_core.output_parsers import JsonOutputParser
 from quart.logging import default_handler
 from quart_cors import cors
 import os
@@ -22,6 +23,8 @@ from api.conversation import conversation_bp
 from api.security import security_bp
 from langchain_core.messages import  AIMessage,HumanMessage
 import memory
+from typing import List
+from pydantic import BaseModel, Field, model_validator
 
 os.environ["GRPC_VERBOSITY"] = "ERROR"
 os.environ["GLOG_minloglevel"] = "2"
@@ -39,7 +42,20 @@ logger_.setLevel(log_level)
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Create folder if not exists
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
+client_text=None
+class SumaryResume(BaseModel):
+  rating:str = Field(description="Overall rating of errors in sentences")
+  explication:str=Field(description="Explication of why you give this rating")
+ 
+class AnalizePhrase(BaseModel):
+  """Information about each analized setence"""
+  sentence:str = Field(description="Original sentence")
+  status:str=Field(description="Good if the sentence is good")
+  explication:str=Field(description="Explication of why you give this status")
+  correction:str=Field(description="Give an description about what was bad")
+class AnalizePhrases(BaseModel):
+  """Container to keep a list of elemnts of type AnalizePhrase """
+  result :List[AnalizePhrase] = Field(description="An array containing elements of type  'AnalizePhrase'")
 
 async def call_llm(state) :       
     #logging.info(f"call_llm: {state['messages']}")
@@ -82,7 +98,6 @@ async def call_llm(state) :
       ) 
       logger_.debug(f"LLM: Context{context.getText()} Question: {question}")
       if model_api=='ollama':
-#        yield client_text.invoke(chat_prompt)
         async for chunk in client_text.astream(chat_prompt):
             yield  chunk
       else:
@@ -93,20 +108,33 @@ async def call_llm(state) :
     else:
       yield " "
 
-def call_llm_internal(chat_prompt):
-  response=client_text.invoke(chat_prompt)
+def call_llm_internal(chat_prompt,llm=client_text):
+  response=llm.invoke(chat_prompt)
   if model_api=='ollama':
       return response
   else:
       return response.content
-def sumary_history(uuid,msg):
+  
+def sumary_history(uuid,type):
+  
+  if type=='resume':    
+     chain=chain_resume
+     parser=parser_resume
+  else:     
+     chain=chain_detail
+     parser=parser_detail
   memoryData=memory.getMemory(uuid)
   chat_history=memoryData.getChatHistory()
-  
+  msg=""
+  i=1
   for line in chat_history:
     if isinstance(line, HumanMessage):
-       msg += "\n- " + line.content
-  return call_llm_internal(msg)
+       msg += f"{i}- \"{line.content}\"\n"
+       i+=1
+  result= result = chain.invoke({"sentences_input": msg})
+
+  return result
+  
 def save_msg(uuid,type,msg):
     chat_history = memory.getMemory(uuid).getChatHistory()
     if type=='R':
@@ -150,11 +178,11 @@ def save(state):
     all_splits = text_splitter.split_documents(chat_documents)
     _ = vector_store.add_documents(documents=all_splits)
     return state
-def configOllamaAI(model:str,base_url:str):
+def configOllamaAI(model:str,base_url:str,temperature=0.6):
    from langchain_ollama.llms import OllamaLLM
-   model = OllamaLLM(model=model,base_url=base_url)
+   model = OllamaLLM(model=model,base_url=base_url,temperature=temperature)
    return model
-def configOpenAI():
+def configOpenAI(temperature=0.8):
   if version=="3.5":
     model = ChatOpenAI(model_name="o3-mini",                
                    streaming=True)
@@ -162,14 +190,14 @@ def configOpenAI():
     model = ChatOpenAI(model_name="gpt-4o",
                     presence_penalty=1.2,
                    streaming=True,
-                   temperature=0.8)
+                   temperature=temperature)
 
   return model
 
-def configGeminiAI(): 
+def configGeminiAI(temperature=0.6): 
   model = ChatGoogleGenerativeAI(
     model="gemini-2.0-flash-lite",
-    temperature=0.6,
+    temperature=temperature,
     streaming=True,
     max_tokens=None,
     timeout=None,
@@ -319,13 +347,16 @@ if model_api is None:
   model_api="gemini"
 if model_api=="openai":
   model_api="openai"
-  client_text=configOpenAI()  
+  client_text=configOpenAI()
+  llm_texT=configOpenAI(0.0)
 elif model_api=='ollama':
   model_api="ollama"
   client_text=configOllamaAI("gemma3:1b","http://172.24.144.1:11434")   
+  llm_text=configOllamaAI("gemma3:1b","http://172.24.144.1:11434",0.0)   
 else:
   model_api="gemini"
   client_text=configGeminiAI()   
+  llm_text=configGeminiAI(0.0)
 
 speechToText=None
 textToSpeech=None
@@ -352,6 +383,51 @@ else:
   local_whisper=configure_whisper_local()
   stt="local" # Use Whisper Local
 
+prompt_resume_str = """
+Analyze the grammatical correctness of the following sentences. Don't worry about punctuation or meaning or even missing spaces because the phrases sentences were written for someone at level B2, so don't be too harsh.
+Give a final brief summary feedback without talk about specific sentences.
+Provide the results as a JSON object conforming to the following schema.
+
+{format_instructions}
+
+Sentences to analyze:
+{sentences_input}
+
+Ensure your entire response is ONLY the JSON object, starting with {{ and ending with }}.
+"""
+parser_resume = PydanticOutputParser(pydantic_object=SumaryResume)
+
+prompt_resume = PromptTemplate(
+    template=prompt_resume_str,
+    input_variables=["sentences_input"],
+    partial_variables={"format_instructions": parser_resume.get_format_instructions()}
+)
+
+chain_resume = prompt_resume | llm_text | parser_resume
+
+
+prompt_detail_str = """
+Analyze the grammatical correctness of the following sentences.
+For each sentence, identify if it is grammatically correct or not. Don't worry about punctuation or meaning or even missing spaces because the phrases sentences were written for someone at level B2, so don't be too harsh.
+Provide the results as a JSON object conforming to the following schema.
+
+{format_instructions}
+
+Sentences to analyze:
+{sentences_input}
+
+Ensure your entire response is ONLY the JSON object, starting with {{ and ending with }}."""
+
+parser_detail = PydanticOutputParser(pydantic_object=AnalizePhrases)
+format_instructions = parser_detail.get_format_instructions()
+prompt_detail = PromptTemplate(
+    template=prompt_detail_str,
+    input_variables=["sentences_input"],
+    partial_variables={"format_instructions": format_instructions}
+)
+
+chain_detail = prompt_detail | llm_text | parser_detail
+
   
 logger_.info(f"Model API: {model_api}  STT: {stt} TTS: {tts} . Max Lenght Answers: {max_length_answers} Max History: {max_history}" )
 logger_.info("--------------------------------")
@@ -361,7 +437,6 @@ app.register_blueprint(audio_bp, url_prefix='/api/audio')
 app.register_blueprint(context_bp, url_prefix='/api/context')
 app.register_blueprint(conversation_bp, url_prefix='/api/conversation')
 app.register_blueprint(security_bp, url_prefix='/api/security')
-
 
 
 if __name__ == '__main__':

@@ -217,9 +217,9 @@ async getLastUser(): Promise<any> {
       throw error;
     }     
   }
-  async summary_conversation(msg:string): Promise<any> {    
+  async summary_conversation(type:string): Promise<any> {    
     try {
-      const payload={msg: msg}
+      const payload={type:type}
       return await firstValueFrom(this.http.post(`${this.backendUrl}/summary`,payload));
     } catch (error) {
       console.error('get User failed!:', error);

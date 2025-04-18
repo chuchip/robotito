@@ -35,11 +35,19 @@ async def generate(msg_graph):
 @principal_bp.route('/summary', methods=['POST'])
 async def summary_conversation():    
     uuid=request.headers.get("uuid")
-    data = await request.get_json()  
-    msg =  data.get('msg')
+    data = await request.get_json()      
+    type= data.get("type")
     import robotito_ai as ai
-    summary=ai.sumary_history(uuid,msg)
-    return jsonify({'message': f'Summary of UUID: {uuid} got',"status":"OK", "summary":summary})
+    response=ai.sumary_history(uuid,type)
+    if type=='resume':  
+        return jsonify({"status":"OK", "rating":response.rating,"explication": response.explication})
+    else:
+        json_array=[]
+        for line in response.result:
+           json_array.append({ "sentence":line.sentence,"status": line.status,
+                        "explication": line.explication,
+                        "correction": line.correction })
+        return jsonify({"status":"OK", "sentences":json_array})
 
 @principal_bp.route('/send-question', methods=['POST'])
 async def send_question():    
