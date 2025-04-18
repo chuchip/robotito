@@ -12,8 +12,6 @@ from google.cloud import texttospeech
 from openai import OpenAI
 from langchain.output_parsers import PydanticOutputParser
 from quart import Quart
-from langchain_core.output_parsers import JsonOutputParser
-from quart.logging import default_handler
 from quart_cors import cors
 import os
 from api.audio  import audio_bp
@@ -24,7 +22,7 @@ from api.security import security_bp
 from langchain_core.messages import  AIMessage,HumanMessage
 import memory
 from typing import List
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 
 os.environ["GRPC_VERBOSITY"] = "ERROR"
 os.environ["GLOG_minloglevel"] = "2"
@@ -108,8 +106,8 @@ async def call_llm(state) :
     else:
       yield " "
 
-def call_llm_internal(chat_prompt,llm=client_text):
-  response=llm.invoke(chat_prompt)
+def call_llm_internal(chat_prompt):
+  response=llm_text.invoke(chat_prompt)
   if model_api=='ollama':
       return response
   else:
@@ -199,9 +197,8 @@ def configGeminiAI(temperature=0.6):
     model="gemini-2.0-flash-lite",
     temperature=temperature,
     streaming=True,
-    max_tokens=None,
     timeout=None,
-    max_retries=2,  
+    max_retries=2
   )
   return model
 
@@ -348,7 +345,7 @@ if model_api is None:
 if model_api=="openai":
   model_api="openai"
   client_text=configOpenAI()
-  llm_texT=configOpenAI(0.0)
+  llm_text=configOpenAI(0.0)
 elif model_api=='ollama':
   model_api="ollama"
   client_text=configOllamaAI("gemma3:1b","http://172.24.144.1:11434")   

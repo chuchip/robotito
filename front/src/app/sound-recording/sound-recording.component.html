@@ -1,4 +1,10 @@
 <div *ngIf="isRecording" class="recording-indicator-container">
     <i class="fas fa-microphone recording-icon"></i>
     <span class="recording-text">Recording...</span>
+    <button class="stop-recording-btn" (click)="stopRecording()">
+      ⏹ Stop
+    </button>
+    <button class="send-recording-btn" (click)="sendRecorded()">
+      📤 Send
+    </button>
   </div>

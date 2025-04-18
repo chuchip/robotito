@@ -5,7 +5,7 @@
   [style.zIndex]="999" [style.opacity]="50" 
  [style.position]="'absolute'" [style.left.px]="xPos" [style.top.px]="yPos" >
 </app-sound-playing>
-<app-sound-recording [isRecording]=" this.sound.isRecording" 
+<app-sound-recording [isRecording]="this.sound.isRecording"   (valueReturned)="stopRecording($event=='stop'?false:true)"
   [style.zIndex]="999" [style.opacity]="50" 
  [style.position]="'absolute'" [style.left.px]="xPos" [style.top.px]="yPos" >
 </app-sound-recording>

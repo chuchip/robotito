@@ -620,7 +620,6 @@ export class ConversationComponent {
     
   }
 
-
   async toggleSidebar() {
     if (! this.isSidebarOpen)
     {

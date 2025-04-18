@@ -1,5 +1,5 @@
 
-import { Component,Input } from '@angular/core';
+import { Component,Input,Output,EventEmitter  } from '@angular/core';
 import { CommonModule } from '@angular/common'; // Import CommonModule
 
 @Component({
@@ -10,4 +10,15 @@ import { CommonModule } from '@angular/common'; // Import CommonModule
 })
 export class SoundRecordingComponent {
   @Input() isRecording: boolean = false;
+  @Output() valueReturned = new EventEmitter<string>();
+
+  stopRecording()
+  {
+    this.valueReturned.emit("stop");
+  }
+  sendRecorded()
+  {
+    this.valueReturned.emit("send");
+  }
 }
+

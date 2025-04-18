@@ -21,6 +21,47 @@
     font-size: 0.9em;
   }
   
+  .stop-recording-btn {
+    background-color: #e74c3c; /* red */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .stop-recording-btn:hover {
+    background-color: #c0392b;
+  }
+  
+  .stop-recording-btn:active {
+    transform: scale(0.98);
+  }
+  .send-recording-btn {
+    background-color: #2ecc71; /* green */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .send-recording-btn:hover {
+    background-color: #27ae60;
+  }
+  
+  .send-recording-btn:active {
+    transform: scale(0.98);
+  }
+  
   /* Define the pulsing animation */
   @keyframes pulseAnimation {
     0% {
