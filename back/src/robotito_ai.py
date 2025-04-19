@@ -357,9 +357,11 @@ speechToText=None
 textToSpeech=None
 # Configure Text to Sound
 tts = os.getenv("TTS")
-if tts and tts.lower()=="kokoro":
+if not tts :
+   tts="gemini"
+if tts.lower()=="kokoro":
   tts="kokoro"  
-elif tts and tts.lower()=="gemini":
+elif tts.lower()=="gemini":
   stt="gemini"
   textToSpeech = texttospeech.TextToSpeechClient()
 else:
@@ -368,10 +370,12 @@ else:
 
 # Configure Speech to Text
 stt = os.getenv("STT")
-if stt and stt.lower()=="openai":
+if not stt:
+   stt="gemini"
+if stt.lower()=="openai":
   stt="openai"
   speechToText=OpenAI()
-elif stt and stt.lower()=="gemini":
+elif stt.lower()=="gemini":
   stt="gemini"
   speechToText= speech.SpeechClient()
 else:

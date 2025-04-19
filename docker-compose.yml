@@ -2,8 +2,8 @@ version: '3.8'
 
 services:
   backend:
-    image: robotito_back
-    container_name: backend     
+    image: chuchip/robotito_back
+    container_name: back     
    
     ports:
       - "5000:5000"
@@ -11,6 +11,12 @@ services:
       - FLASK_ENV=production  # Adjust as needed
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
       - GOOGLE_APPLICATION_CREDENTIALS=/robotito_google_cloud_key.json
+      - TTS=gemini # kokoro/gemini
+      - STT=gemini # local/gemini
+      - MODEL_API=gemini # ollama / openai / gemini
+      - MAX_LENGHT_ANSWERS=250 # 0=Disable Max lenght of answers
+      - MAX_HISTORY=16 # Max history is unlimiteda
+      - LOG_LEVEL=10
     deploy:
       resources:
         reservations:
@@ -23,8 +29,8 @@ services:
       - app-network
 
   frontend:
-    image: robotito_front
-    container_name: frontend
+    image: chuchip/robotito_front
+    container_name: front
     ports:
       - "80:80"
     depends_on:
@@ -38,4 +44,4 @@ networks:
 
 volumes:
   backend-data:
-    driver: local  #
+    driver: local  
