@@ -44,7 +44,7 @@ async def summary_conversation():
     else:
         json_array=[]
         for line in response.result:
-           json_array.append({ "sentence":line.sentence,"status": line.status,
+           json_array.append({ "sentence":line.sentence,"status": line.rating,
                         "explication": line.explication,
                         "correction": line.correction })
         return jsonify({"status":"OK", "sentences":json_array})
@@ -57,7 +57,7 @@ async def rating_phrase():
     response=ai.rating_phrase(phrase)
    
     return jsonify({ "status":"OK", 
-                    "sentence":response.sentence,"value": response.status,
+                    "sentence":response.sentence,"value": response.rating,
                     "explication": response.explication,
                     "correction": response.correction })
 @principal_bp.route('/send-question', methods=['POST'])

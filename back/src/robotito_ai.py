@@ -47,10 +47,10 @@ class SumaryResume(BaseModel):
  
 class AnalizePhrase(BaseModel):
   """Information about each analized setence"""
-  sentence:str = Field(description="Original sentence")
-  status:str=Field(description="Rating the current sentence. Set the value 'Good' if nothing is wrong")
-  explication:str=Field(description="Explication of why you give this status")
-  correction:str=Field(description="Give an description about what was bad")
+  sentence:str = Field(description="Original sentence to analize")
+  rating:str=Field(description="Set the rating for the original sentence. Set the value 'Good' only the analized sentence doesn't have any grammatical error")
+  explication:str=Field(description="Explication of why you give the previous status")
+  correction:str=Field(description="Give an description of what was wrong on the sentence")
 class AnalizePhrases(BaseModel):
   """Container to keep a list of elemnts of type AnalizePhrase """
   result :List[AnalizePhrase] = Field(description="An array containing elements of type  'AnalizePhrase'")
@@ -124,7 +124,7 @@ def sumary_history(uuid,type):
   i=1
   for line in chat_history:
     if isinstance(line, HumanMessage):
-       msg += f"{i}- \"{line.content}\"\n"
+       msg += f'- Sentence number {i}: "{line.content}" \n'
        i+=1
   result= result = chain.invoke({"sentences_input": msg})
   return result
@@ -190,9 +190,9 @@ def configOpenAI(temperature=0.8):
 
   return model
 
-def configGeminiAI(temperature=0.6): 
+def configGeminiAI(model="gemini-2.0-flash-lite",temperature=0.6): 
   model = ChatGoogleGenerativeAI(
-    model="gemini-2.0-flash-lite",
+    model=model,
     temperature=temperature,
     streaming=True,
     timeout=None,
@@ -351,7 +351,7 @@ elif model_api=='ollama':
 else:
   model_api="gemini"
   client_text=configGeminiAI()   
-  llm_text=configGeminiAI(0.0)
+  llm_text=configGeminiAI("gemini-2.0-flash",0.0)
 
 speechToText=None
 textToSpeech=None
@@ -379,7 +379,8 @@ else:
   stt="local" # Use Whisper Local
 
 prompt_resume_str = """
-Analyze the grammatical correctness of the following sentences. Don't worry about punctuation or meaning or even missing spaces because the phrases sentences were written for someone at level B2, so don't be too harsh.
+Analyze the grammatical correctness of the following sentences. 
+If they are understandable and don't have any serious grammatical errors, don't worry about punctuation, missing spaces, or whether it could be improved for clarity. The phrases were written for someone at level B2, so don't be too harsh. 
 Give a final brief summary feedback without talk about specific sentences.
 Provide the results as a JSON object conforming to the following schema.
 
@@ -402,13 +403,12 @@ chain_resume = prompt_resume | llm_text | parser_resume
 
 
 prompt_detail_str = """
-Analyze the grammatical correctness of the following sentences.
-For each sentence, identify if it is grammatically correct or not. Don't worry about punctuation or meaning or even missing spaces because the phrases sentences were written for someone at level B2, so don't be too harsh.
+In the following sentences, analyze each one and determine if it's understandable and free of grammatical errors. Ignore punctuation, missing spaces, and potential clarity improvements. The target audience is B2 level.
 Provide the results as a JSON object conforming to the following schema.
 
 {format_instructions}
 
-Sentences to analyze:
+Sentences  to analyze:
 {sentences_input}
 
 Ensure your entire response is ONLY the JSON object, starting with {{ and ending with }}."""
@@ -428,7 +428,7 @@ prompt_rating_str = """
 Analyze the grammatical correctness of the following sentence.
 {sentence_input}
 
-In the previous sentence, identify if it is grammatically correct or not. Don't worry about punctuation or meaning or even missing spaces because the phrases sentences were written for someone at level B2, so don't be too harsh.
+If the previous sentence is understandable and has no serious grammatical errors, don't worry about punctuation, missing spaces, or whether it could be improved for clarity.. The phrase was written for someone at level B2, so don't be too harsh. 
 Provide the results as a JSON object conforming to the following schema.
 
 {format_instructions}
