@@ -75,8 +75,26 @@
   gap: 5px; /* Space between buttons */
   cursor: pointer;
 }
+.teacher-button
+{
+  position: absolute;
+  top: 20px;
+  left: -5px;
+  gap: 5px; /* Space between buttons */
+  border: 1px solid #ccc; /* Light gray border */
+  padding: 2px 2px; /* Some padding inside the button */
+  border-radius: 5px; /* Slightly rounded corners */
+  cursor: pointer; /* Change cursor on hover to indicate it's clickable */  
+  //font-size: 16px; /* Adjust font size as needed */
+  
+}
+
+.teacher-icon {  
+  filter: grayscale(100%);
+  color: #555; /* Icon color */
+}
 .line-text-human {
-  margin-left: 15px;
+  margin-left: 25px;
   margin-top: -10px;
   margin-bottom: -5px; /* Push text down to avoid overlap */    
   font-size: 1rem;
@@ -86,7 +104,7 @@
   word-wrap: break-word;
 }
 .line-text-robot {
-  margin-left: 15px;
+  margin-left: 20px;
   margin-top: -10px;
   margin-bottom: -5px; /* Push text down to avoid overlap */      
   font-size: 1rem;

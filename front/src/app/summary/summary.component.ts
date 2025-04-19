@@ -26,10 +26,10 @@ export class SummaryComponent implements OnInit {
     console.log("SummaryComponent initialized");
    
     // Add any additional logic you want to execute after the component is constructed  
-    const data = await this.back.summary_conversation("resume")
+    const data = await this.back.summaryConversation("resume")
     this.rating = data.rating
     this.explication_rating=data.explication
-    let response2=await this.back.summary_conversation("detail")
+    let response2=await this.back.summaryConversation("detail")
     this.summarySentences = response2.sentences.filter((item: { status: string }) => item.status.toLowerCase() !== 'good')
     this.isLoading=false    
   }

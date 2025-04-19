@@ -48,7 +48,7 @@ class SumaryResume(BaseModel):
 class AnalizePhrase(BaseModel):
   """Information about each analized setence"""
   sentence:str = Field(description="Original sentence")
-  status:str=Field(description="Good if the sentence is good")
+  status:str=Field(description="Rating the current sentence. Set the value 'Good' if nothing is wrong")
   explication:str=Field(description="Explication of why you give this status")
   correction:str=Field(description="Give an description about what was bad")
 class AnalizePhrases(BaseModel):
@@ -113,14 +113,11 @@ def call_llm_internal(chat_prompt):
   else:
       return response.content
   
-def sumary_history(uuid,type):
-  
+def sumary_history(uuid,type):  
   if type=='resume':    
-     chain=chain_resume
-     parser=parser_resume
+     chain=chain_resume   
   else:     
      chain=chain_detail
-     parser=parser_detail
   memoryData=memory.getMemory(uuid)
   chat_history=memoryData.getChatHistory()
   msg=""
@@ -130,9 +127,10 @@ def sumary_history(uuid,type):
        msg += f"{i}- \"{line.content}\"\n"
        i+=1
   result= result = chain.invoke({"sentences_input": msg})
-
   return result
-  
+def rating_phrase(phrase): 
+  result= result = chain_rating.invoke({"sentence_input": phrase})
+  return result
 def save_msg(uuid,type,msg):
     chat_history = memory.getMemory(uuid).getChatHistory()
     if type=='R':
@@ -425,7 +423,28 @@ prompt_detail = PromptTemplate(
 
 chain_detail = prompt_detail | llm_text | parser_detail
 
-  
+
+prompt_rating_str = """
+Analyze the grammatical correctness of the following sentence.
+{sentence_input}
+
+In the previous sentence, identify if it is grammatically correct or not. Don't worry about punctuation or meaning or even missing spaces because the phrases sentences were written for someone at level B2, so don't be too harsh.
+Provide the results as a JSON object conforming to the following schema.
+
+{format_instructions}
+
+Ensure your entire response is ONLY the JSON object, starting with {{ and ending with }}."""
+
+parser_rating = PydanticOutputParser(pydantic_object=AnalizePhrase)
+format_instructions = parser_rating.get_format_instructions()
+prompt_rating = PromptTemplate(
+    template=prompt_rating_str,
+    input_variables=["sentence_input"],
+    partial_variables={"format_instructions": format_instructions}
+)
+
+chain_rating = prompt_rating | llm_text | parser_rating
+
 logger_.info(f"Model API: {model_api}  STT: {stt} TTS: {tts} . Max Lenght Answers: {max_length_answers} Max History: {max_history}" )
 logger_.info("--------------------------------")
 

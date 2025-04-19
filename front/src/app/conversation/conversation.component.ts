@@ -1,6 +1,7 @@
 import { Component, ViewChild,HostListener, ElementRef } from '@angular/core';
 import { SoundPlayingComponent } from '../sound-playing/sound-playing.component';
 import { SoundRecordingComponent } from '../sound-recording/sound-recording.component';
+import { RatingPhraseComponent } from '../rating-phrase/rating-phrase.component';
 import {LoadingComponent} from "../loading/loading.component"
 import { SummaryComponent } from '../summary/summary.component';
 import { ApiBackService } from '../services/api-back.service';
@@ -17,11 +18,12 @@ import { PersistenceService } from '../services/persistence.service';
 import { contextDTO } from '../model/context.dto';
 import { conversationHistoryDTO } from '../model/conversationHistory.dto';
 import { Router } from '@angular/router';
+import { RatingPhrase } from '../model/ratingPhrase';
 @Component({  
   selector: 'app-conversation',   
   imports: [CommonModule, MatTooltipModule, MatCheckboxModule, FormsModule,
     MatButtonModule, MatIconModule, SoundPlayingComponent, SoundRecordingComponent,
-    MatSliderModule, LoadingComponent,SummaryComponent], // 
+    MatSliderModule, LoadingComponent,SummaryComponent,RatingPhraseComponent], 
   templateUrl: './conversation.component.html',
   styleUrls: ['./conversation.component.scss']
 })
@@ -57,11 +59,17 @@ export class ConversationComponent {
   @ViewChild('context') contextElement!: ElementRef;
   @ViewChild('conversation') conversationElement!: ElementRef;
   @ViewChild('configuration_window') configurationWinElement!: ElementRef;
-  
-  response_back: string=""
-  chat_history:{line: number,type: string,msg: string,msgClean:string}[]=[]
-  number_line:number=0
+  @ViewChild('summary_window') summaryWinElement!: ElementRef;
+  @ViewChild('rating_window') ratingWinElement!: ElementRef;
 
+  
+  responseBack: string=""
+  chatHistory:{line: number,type: string,msg: string,msgClean:string}[]=[]
+  ratingHistory:RatingPhrase[]=[]
+  swRating=false;
+  ratingPhrase: RatingPhrase | null = null; 
+  numberLine:number=0
+  defaultGreeting:string="Hello, I'm robotito. Do you want to talk?"
   responseMessage:string="Hello, I'm robotito. Do you want to talk?"
   inputText: string = '';
   showRecord=false
@@ -85,6 +93,7 @@ export class ConversationComponent {
        this.router.navigate(['/login']); 
        return
     }
+
     this.back.getLastUser()
       .then(async (data:any) => {   
         this.languageOptions=await this.back.getLanguages()
@@ -115,12 +124,15 @@ export class ConversationComponent {
         {
           this.setDefaultContext()
         }
-        this.chat_history.push({line:this.number_line, type: "R",msg: this.responseMessage,msgClean:this.responseMessage});
         this.responseMessage=""
-        this.number_line++
         this.isLoading=false
         })
   }
+  putGreeting()
+  {
+    this.chatHistory.push({line:this.numberLine, type: "R",msg: this.defaultGreeting,msgClean:this.responseMessage});
+  }
+  
   async setDefaultContext()
   {
     await this.back.contextSetLabel("default")    
@@ -194,23 +206,22 @@ export class ConversationComponent {
     this.sound.playAudio();
   }
   
-
   async sendData() {
     
     this.showRecord=false
     this.inputText=this.inputText.trim()
     this.stopAudio()
     if (this.inputText!='') {
-      this.chat_history.push({line:this.number_line, type: "H",msg: this.inputText.trim(),msgClean: this.inputText.trim()})
+      this.chatHistory.push({line:this.numberLine, type: "H",msg: this.inputText.trim(),msgClean: this.inputText.trim()})
+      this.getRatingTeacher(this.numberLine,this.inputText.trim())
       this.isLoading=true
       this.responseMessage=""
       const response=await this.back.sendQuestion(this.inputText)
-            
+    
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
     
-      if (reader) {
-        
+      if (reader) {        
         let pFin=0
         let pIni=0
         let txt=""
@@ -265,7 +276,7 @@ export class ConversationComponent {
         console.log("No reader")
       }  
       this.isLoading=false
-      this.number_line++
+      this.numberLine++
       const msg=await this.toHtml(this.responseMessage,"R")
       if (this.conversationId=="")
       {
@@ -277,15 +288,20 @@ export class ConversationComponent {
         this.back.saveConversation(this.conversationId, "H",this.inputText);      
         this.back.saveConversation(this.conversationId, "R",this.responseMessage);
       }  
-      this.chat_history.push({line:this.number_line,type: "R",msg: msg,msgClean:this.responseMessage})
+      this.chatHistory.push({line:this.numberLine,type: "R",msg: msg,msgClean:this.responseMessage})
       this.responseMessage="";
-      this.number_line++
+      this.numberLine++
       this.inputText=""
       setTimeout(() => this.scrollToBottom(), 0)
     }
   }
-  async speak_aloud_response(event:MouseEvent,i:number){      
-    const cleanText=this.back.cleanText( this.chat_history[i].msgClean)
+  async speak_aloud_response(event:MouseEvent,i:number){
+    if (this.selectedText.trim()!='')
+    {
+      this.speakAloud(this.selectedText);
+      return;
+    }
+    const cleanText=this.back.cleanText( this.chatHistory[i].msgClean)
     this.xPos=event.clientX
     this.yPos=event.clientY
     let pIni=0;
@@ -501,18 +517,21 @@ export class ConversationComponent {
     }
     const msg=await response.json()
     
-    this.response_back=msg.message     
+    this.responseBack=msg.message     
     setTimeout(() => {
-      this.response_back = ''; 
+      this.responseBack = ''; 
     }, 3000);
   }
   async clearConversation()
   {
-    this.chat_history.length=0
-    this.number_line=0  
+    this.chatHistory.length=0
+    this.ratingHistory.length=0
+    this.numberLine=1 
     this.conversationId=""
     this.showLanguageOptions=false
-    
+    this.persistence.showSummary=false
+    this.swRating=false
+    this.putGreeting()
     const response=await this.back.clearConversation();    
     this.put_message(response)
   }
@@ -613,9 +632,9 @@ export class ConversationComponent {
     await this.list_context()
     this.selectContext=this.context.label
     this.isLoading=false 
-    this.response_back="Changed text to remember"
+    this.responseBack="Changed text to remember"
     setTimeout(() => {
-      this.response_back = ''; 
+      this.responseBack = ''; 
     }, 3000);
     
   }
@@ -640,16 +659,18 @@ export class ConversationComponent {
     const response=await this.back.conversation_by_id(id);
     this.setTextContextById(idContext)
     await this.back.contextSet(this.context.id)
-    this.chat_history.length=0
-    var i=0;  
+    this.chatHistory.length=0
+    this.ratingHistory.length=0
+    this.putGreeting()
+    var i=1;  
     for (const c of response.conversation)
     {
-      this.chat_history.push(
+      this.chatHistory.push(
         {"line": i,"type": c.type,"msg": c.msg,"msgClean":c.msg}        
       )
       i+=1
     }    
-    this.number_line=i
+    this.numberLine=i
     this.isLoading=false
   }
   async hystoryDelete(id: string)
@@ -667,7 +688,7 @@ export class ConversationComponent {
   }
 
   speakOnF4(event: KeyboardEvent, text: string) {      
-      if (event.key === 'F4') { 
+      if (event.key === 'F4') {        
         this.textSpeakAloud=""
         event.preventDefault(); // Prevent default behavior if needed        
         this.speakAloud(text);
@@ -696,9 +717,19 @@ export class ConversationComponent {
       this.clicksWindow++;
       return
     }
-    if (this.showLanguageOptions && !this.configurationWinElement.nativeElement.contains(event.target)) {
+    if (this.showLanguageOptions   && !this.configurationWinElement.nativeElement.contains(event.target)) {
       this.showLanguageOptions = false;
+      this.clicksWindow=0
     }
+    if (this.persistence.showSummary  && !this.summaryWinElement.nativeElement.contains(event.target)) {
+      this.persistence.showSummary=false
+      this.clicksWindow=0
+    }
+    if (this.swRating  && !this.ratingWinElement.nativeElement.contains(event.target)) {
+        this.swRating=false
+        this.clicksWindow=0
+    }
+    
   }
   async pressEnter(swSendData:boolean) {
     if ( this.sound.isRecording) 
@@ -758,6 +789,51 @@ export class ConversationComponent {
   }
   async sumary_conversation()
   {
-    this.persistence.showSummary=true     
+    this.clicksWindow=0
+    this.persistence.showSummary=true         
+  }
+
+  getBackgroundColor(posHistory:number): string {
+    const pos =this.getLineRating(posHistory)
+    
+    if (pos<0 )
+      return 'gray';
+    if (this.ratingHistory[pos].value=='Good')       
+        return 'green';
+    else
+        return 'red';
+  }
+  getLineRating(posHistory:number)
+  {
+    let i=0;
+    for (const rating of this.ratingHistory)
+    {
+      if (rating.line==posHistory)
+        return i
+      i++
+    }
+    return -1
+  }
+  async getRatingTeacher(posHistory:number,phrase:string)
+  {
+    const rating:RatingPhrase=await this.back.ratingTeacher(phrase)
+    rating.line=posHistory
+    this.ratingHistory.push(rating)
+  }
+
+  async showRating(posHistory:number)
+  {
+    let pos =this.getLineRating(posHistory)
+    
+    if (pos<0 )
+    {
+      await this.getRatingTeacher(posHistory,this.chatHistory[posHistory].msgClean)
+    }
+    pos =this.getLineRating(posHistory)
+    if (pos<0 )
+      return    
+    this.ratingPhrase=this.ratingHistory[pos]
+    this.clicksWindow=0
+    this.swRating=true
   }
 }

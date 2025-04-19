@@ -5,11 +5,12 @@
   [style.zIndex]="999" [style.opacity]="50" 
  [style.position]="'absolute'" [style.left.px]="xPos" [style.top.px]="yPos" >
 </app-sound-playing>
+
 <app-sound-recording [isRecording]="this.sound.isRecording"   (valueReturned)="stopRecording($event=='stop'?false:true)"
   [style.zIndex]="999" [style.opacity]="50" 
  [style.position]="'absolute'" [style.left.px]="xPos" [style.top.px]="yPos" >
 </app-sound-recording>
-<div class="system" *ngIf="response_back!=''">{{response_back}}</div>
+<div class="system" *ngIf="responseBack!=''">{{responseBack}}</div>
 <div class="page">  
   <div *ngIf="isSidebarOpen" class="sidebar">
     <button class="button-option button-clear"  (click)="clearConversation()" matTooltip="Clear conversation">
@@ -29,11 +30,15 @@
   <div class="container">
     <!-- Body of the page when I will show the conversation  -->
     <div #conversation class="conversation" (mouseup)="getSelectedText()" (keyup)="getSelectedText()">
-      <div [ngClass]="line_chat.type=='H'? 'line-human':'line-robot'" class="line" *ngFor="let line_chat of chat_history; let i = index">
+      <div [ngClass]="line_chat.type=='H'? 'line-human':'line-robot'" class="line" *ngFor="let line_chat of chatHistory; let i = index">
         <div class="buttons-conversation">
           <button (click)="speak_aloud_response($event,i)"> <span class="material-icons">volume_up</span></button>
           <span class="material-icons" style="color: blue">{{line_chat.type=='H'?"face":"smart_toy" }}</span>
         </div>
+        <button *ngIf="line_chat.type=='H'" class="teacher-button"  [ngStyle]="{'background-color': getBackgroundColor(i)}"
+           (click)="showRating(i)">
+          <span style="font-size: 16px;">ℹ️</span>
+        </button>
         <span [ngClass]="line_chat.type=='H'? 'line-text-human':'line-text-robot'">
           <span [innerHTML]="toHtml(line_chat.msg,line_chat.type)"> </span>
         </span>
@@ -87,7 +92,7 @@
       </div>
     </div>
         
-    <div #configuration_window class="configuration " *ngIf="showLanguageOptions">
+    <div #configuration_window class="configuration" *ngIf="showLanguageOptions">
       <div class="configuration_line">
         <div class="configuration_horizontal">
           <span class="check-option"><input type="checkbox" [(ngModel)]="swTalkResponse" 
@@ -141,4 +146,9 @@
         </div>
       </div>  
     </div>
-    <app-summary *ngIf=persistence.showSummary [selectLanguage]="this.selectLanguage"></app-summary>
+    <div #summary_window >
+      <app-summary *ngIf=persistence.showSummary [selectLanguage]="this.selectLanguage"></app-summary>
+    </div>
+    <div #rating_window >
+      <app-rating-phrase  *ngIf="swRating" [ratingPhrase]="this.ratingPhrase" (valueReturned)="swRating=false"></app-rating-phrase>
+    </div>

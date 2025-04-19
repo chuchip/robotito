@@ -49,6 +49,17 @@ async def summary_conversation():
                         "correction": line.correction })
         return jsonify({"status":"OK", "sentences":json_array})
 
+@principal_bp.route('/rating_phrase', methods=['POST'])
+async def rating_phrase():    
+    data = await request.get_json()      
+    phrase= data.get("phrase")
+    import robotito_ai as ai
+    response=ai.rating_phrase(phrase)
+   
+    return jsonify({ "status":"OK", 
+                    "sentence":response.sentence,"value": response.status,
+                    "explication": response.explication,
+                    "correction": response.correction })
 @principal_bp.route('/send-question', methods=['POST'])
 async def send_question():    
     uuid=request.headers.get("uuid")

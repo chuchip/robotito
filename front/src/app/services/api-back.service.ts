@@ -217,10 +217,19 @@ async getLastUser(): Promise<any> {
       throw error;
     }     
   }
-  async summary_conversation(type:string): Promise<any> {    
+  async summaryConversation(type:string): Promise<any> {    
     try {
       const payload={type:type}
       return await firstValueFrom(this.http.post(`${this.backendUrl}/summary`,payload));
+    } catch (error) {
+      console.error('get User failed!:', error);
+      throw error;
+    }     
+  }
+  async ratingTeacher(phrase:string): Promise<any> {    
+    try {
+      const payload={phrase}
+      return await firstValueFrom(this.http.post(`${this.backendUrl}/rating_phrase`,payload));
     } catch (error) {
       console.error('get User failed!:', error);
       throw error;

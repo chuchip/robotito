@@ -1,0 +1,23 @@
+<div *ngIf="ratingPhrase!=null"  class="configuration">
+    <div class="configuration_line">    
+        <span class="rating-text">Rating</span>
+        <span class="rating-label">{{ratingPhrase.value}}</span>      
+        <button class="close-trigger" (click)="closeWindow()">Close</button>        
+    </div>
+    <div class="configuration_summary">
+        <div class="summary_line">
+            <div class="text_line">
+                <span class="label">Original:</span>
+                <span class="text">{{ratingPhrase.sentence}}</span>
+            </div>
+            <div class="text_line">
+                <span class="label">Explication:</span>
+                <span class="text">{{ratingPhrase.explication}}</span>
+            </div>
+            <div class="text_line">
+                <span class="label">Correction</span>
+                <span class="text"> {{ratingPhrase.correction}}</span>
+            </div>
+        </div>
+    </div>
+</div>
