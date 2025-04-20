@@ -31,12 +31,13 @@ if log_level is None:
    log_level=logging.INFO
 else:
    log_level=int(log_level)
+logger_ = logging.getLogger(__name__)
+logger_.setLevel(log_level)
 app = Quart(__name__)
 logging.getLogger("asyncio").setLevel(logging.ERROR)
 logging.getLogger("hypercorn.access").setLevel(logging.WARNING)
 app=cors(app,allow_origin="*")  # Enable Cross-Origin Resource Sharing
-logger_ = logging.getLogger(__name__)
-logger_.setLevel(log_level)
+
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Create folder if not exists
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -57,6 +58,7 @@ class AnalizePhrases(BaseModel):
 
 async def call_llm(state) :       
     #logging.info(f"call_llm: {state['messages']}")
+    limit_words=f"Your answer should be less than {max_length_answers} words"
     memoryData=memory.getMemory(state['uuid'])
     context = memoryData.getContext()
     rememberText=""
@@ -80,16 +82,17 @@ async def call_llm(state) :
         msgs=chat_history[max_history*-1:]
       else:
         msgs=chat_history
+      context_text=context.getText()
       if max_length_answers != 0:
-        context.setText=f"{context.getText()}. Your answer should be less than {max_length_answers} words."
+        context_text=f"{limit_words}. {context.getText()}"
         insert_pos = len(msgs) - 4
         if insert_pos>0:
-          msgs.insert(insert_pos, HumanMessage(f'Remember: Your answer should be less than {max_length_answers} words.'))  
+          msgs.insert(insert_pos, HumanMessage(f"Remember: {limit_words}"))  
         else:
-          msgs.append(HumanMessage(f'Remember: Your answer should be less than {max_length_answers} words.'))  
+          msgs.append(HumanMessage(f"Remember: {limit_words}"))  
       
       chat_prompt =  prompt.format_messages(
-        system_msg=context.getText(),
+        system_msg=context_text,
         context=[], 
         msgs=msgs,  # Get the last MAX_HISTORY messages
         question=HumanMessage(question)
@@ -106,6 +109,8 @@ async def call_llm(state) :
     else:
       yield " "
 
+def getLogger():
+   return logger_
 def call_llm_internal(chat_prompt):
   response=llm_text.invoke(chat_prompt)
   if model_api=='ollama':

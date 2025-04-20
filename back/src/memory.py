@@ -1,3 +1,6 @@
+import os
+import logging
+
 
 class Context:  
   def __init__(self):
@@ -115,3 +118,13 @@ def saveSession(user,uuid):
 
 memoryData=[]
 sessions=[]
+
+def getLogger() -> logging.Logger:
+  logger_ = logging.getLogger(__name__)
+  log_level = os.getenv("LOG_LEVEL")
+  if log_level is None:
+     log_level=logging.INFO
+  else:
+     log_level=int(log_level)  
+  logger_.setLevel(log_level)
+  return logger_

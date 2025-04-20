@@ -1,12 +1,14 @@
 from quart import Blueprint,  request, jsonify
+import logging
 import persistence as db
 import memory
+
 context_bp = Blueprint('context', __name__)
-import logging
+logger_=memory.getLogger()
 
 @context_bp.route('/label/<string:label>', methods=['put'])
-async def context_setByLabel(label):   
-  logging.info("Set Context by Label: ",label)
+async def context_setByLabel(label):
+  logger_.info(f"Set Context by Label: {label}")
   mem=memory.getMemory(request.headers.get("uuid"))
   context = mem.getContext()
   if context is None:
@@ -23,9 +25,10 @@ async def context_setByLabel(label):
 
 @context_bp.route('/id/<string:id>', methods=['put'])
 async def context_setById(id):
+
   if id is None or id == '' or id=='null':
     return jsonify({'message': 'Context ID is required!','data': None}) 
-  logging.info("Set Context: ",id)
+  logger_.info(f"Set Context: {id}")
   mem=memory.getMemory(request.headers.get("uuid"))
   context = mem.getContext()
   if context is None:
@@ -50,7 +53,7 @@ async def context_setById(id):
 
 ## Work with context
 @context_bp.route('', methods=['POST'])
-async def context_update():       
+async def context_update():      
   data = await request.get_json()  # Get JSON data from the request body   
   mem=memory.getMemory(request.headers.get("uuid")) 
   context =mem.getContext()
@@ -63,10 +66,11 @@ async def context_update():
     return jsonify({'message': f"Context hasn't a valid label", "status:": 'KO','text': data['context']})
 
   context.setLabel(data['label'])
-
-  contextId=db.save_context(user=data['user'],label=data['label'],context=data['context'],remember=data['contextRemember'])
   if 'context' not in data  or 'contextRemember'  not in data:
      return jsonify({'message': f"Context hasn't a valid latext or label", "status:": 'KO','text': data['context']})
+
+  logger_.info(f"Context Update: {data['label']}: {data['context']}")
+  contextId=db.save_context(user=data['user'],label=data['label'],context=data['context'],remember=data['contextRemember'])
   try:
     context.setId(contextId)
     context.setLabel(data['label'])
@@ -83,19 +87,20 @@ async def context_update():
 
 @context_bp.route('/id/<string:id>', methods=['DELETE'])
 async def context_delete_by_id(id):   
-  logging.info("Deleted  context by id: ",id)
+  logger_.info(f"Deleted  context by id: {id}")
   db.delete_context_by_id(id)  
   return jsonify({'message': f'Context with id {id} successfully!', 'text': id})
 
 # Url  /context/user/${user}
 @context_bp.route('/user/<string:user>', methods=['GET'])
 def context_get(user): 
-  logging.info("GET All Context of user: ",user)
+  logger_.info(f"GET All Context of user: {user}")
   data = db.get_all_context(user)  
   return jsonify({'message': 'Context updated successfully!', 'contexts': data})
 
 @context_bp.route('/current', methods=['GET'])
 def context_current_get(): 
-  logging.info("GET Current Context ")  
+  logger_.info("GET Current Context ")  
   context = memory.getMemory(request.headers.get("uuid")).getContext()
   return jsonify(context.__dict__)
+  
