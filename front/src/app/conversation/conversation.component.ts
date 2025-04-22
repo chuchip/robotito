@@ -51,7 +51,7 @@ export class ConversationComponent {
   clicksWindow=0;
   conversationHistory:conversationHistoryDTO[]=[];
   conversationId=""
-  context:contextDTO={id:"",label:"",text:"",remember:""}
+  context:contextDTO={id:"",label:"",text:"",remember:"",maxLengthAnswer:70}
   contexts:contextDTO[]=[]
   
   @ViewChild('input') divInputElement!: ElementRef;
@@ -124,6 +124,7 @@ export class ConversationComponent {
         {
           this.setDefaultContext()
         }
+        this.context.maxLengthAnswer=(await this.back.getMaxLengthAnswer()).maxLength
         this.responseMessage=""
         this.isLoading=false
         })
@@ -835,5 +836,11 @@ export class ConversationComponent {
     this.ratingPhrase=this.ratingHistory[pos]
     this.clicksWindow=0
     this.swRating=true
+  }
+  onMaxLengthAnswerBlur(max_length:string)
+  {
+    if (max_length.trim()=='')
+      return
+    this.back.setMaxLengthAnswer(max_length)
   }
 }

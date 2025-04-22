@@ -38,7 +38,13 @@ class AudioData:
     kpipeline = None
     voice_name="af_heart"
     configGoogle=None
-
+def get_max_length_answer():
+  max_length_answers = os.getenv("MAX_LENGHT_ANSWERS")
+  if max_length_answers is None:
+    max_length_answers=70
+  else:
+    max_length_answers=int(max_length_answers)
+  return max_length_answers
 class memoryDTO:
     def __init__(self, uuid):
         self.user=None
@@ -46,8 +52,13 @@ class memoryDTO:
         self.uuid=uuid
         self.conversationId=None
         self.chat_history =[]
+        self.max_length_answer=get_max_length_answer()
         self.context=None
         self.audioData=AudioData()
+    def getMaxLengthAnswer(self):
+        return self.max_length_answer
+    def setMaxLengthAnswer(self,max_lemgth:int):
+        self.max_length_answer=max_lemgth
     def getConversationId(self):
         return self.conversationId
     def setConversationId(self,conversationId):

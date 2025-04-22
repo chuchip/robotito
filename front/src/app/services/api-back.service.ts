@@ -231,8 +231,25 @@ async getLastUser(): Promise<any> {
       const payload={phrase}
       return await firstValueFrom(this.http.post(`${this.backendUrl}/rating_phrase`,payload));
     } catch (error) {
-      console.error('get User failed!:', error);
+      console.error('ratingTeacher failed!:', error);
       throw error;
     }     
   }
+  async setMaxLengthAnswer(maxLength:string): Promise<any> {    
+    try {    
+      const payload={}
+      return await firstValueFrom(this.http.put(`${this.backendUrl}/max_length_answer/${maxLength}`,payload));
+    } catch (error) {
+      console.error('setMaxLengthAnswer failed!:', error);
+      throw error;
+    }  
+  }   
+  async getMaxLengthAnswer(): Promise<any> {    
+    try {          
+      return await firstValueFrom(this.http.get(`${this.backendUrl}/max_length_answer`));
+    } catch (error) {
+      console.error('getMaxLengthAnswer failed!:', error);
+      throw error;
+    }  
+  }   
 }

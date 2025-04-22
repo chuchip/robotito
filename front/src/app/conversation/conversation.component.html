@@ -101,6 +101,10 @@
               matTooltip="Mode Conversation">Conversation</span>
           <span class="check-option"><input type="checkbox" [(ngModel)]="swSaveConversation" 
                 matTooltip="Save Conversation">Save</span>
+          <span><label>Max. Length Answers:</label> 
+            <input class="max-length-answer" #inputMaxLengthAnswer type="number" [(ngModel)]="this.context.maxLengthAnswer" 
+              (blur)="onMaxLengthAnswerBlur(inputMaxLengthAnswer.value)" min="0">
+          </span>
           <select [(ngModel)]="selectLanguage">
             <option *ngFor="let option of languageOptions" [value]="option.value">
               {{ option.label }}
@@ -142,7 +146,7 @@
           </span>
           <br/>
           <span  class="name_user">User: {{persistence.getUser()}}  <button (click)="login()" matTooltip="Login"> <span
-            class="material-icons">login</span></button>  Version: 20250412.1</span>
+            class="material-icons">login</span></button>  Version: 20250420.1</span>
         </div>
       </div>  
     </div>

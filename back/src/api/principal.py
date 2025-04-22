@@ -5,6 +5,8 @@ import logging
 principal_bp = Blueprint('principal', __name__)
 
 
+logger_=memory.getLogger()
+
 @principal_bp.before_request
 def security_check():
     if request.method == 'OPTIONS':
@@ -32,6 +34,19 @@ async def generate(msg_graph):
   async for msg  in ai.call_llm(msg_graph):
       yield msg
 
+@principal_bp.route('/max_length_answer/<int:max_length>', methods=['PUT'])
+async def set_length_max_answer(max_length:int):
+    logger_.info(f"Setting length max answer to : {max_length}")
+    uuid=request.headers.get("uuid")
+    mem=memory.getMemory(uuid)
+    mem.setMaxLengthAnswer(max_length)
+    return jsonify({"status":"OK","message":f"Length max answer set to : {max_length}"})
+@principal_bp.route('/max_length_answer', methods=['GET'])
+async def get_length_max_answer():    
+    uuid=request.headers.get("uuid")
+    mem=memory.getMemory(uuid)
+    max_length=mem.getMaxLengthAnswer()
+    return jsonify({"status":"OK","maxLength":max_length, "message":f"Length max answer set to : {max_length}"})
 @principal_bp.route('/summary', methods=['POST'])
 async def summary_conversation():    
     uuid=request.headers.get("uuid")

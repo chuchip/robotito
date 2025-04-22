@@ -57,9 +57,10 @@ class AnalizePhrases(BaseModel):
   result :List[AnalizePhrase] = Field(description="An array containing elements of type  'AnalizePhrase'")
 
 async def call_llm(state) :       
-    #logging.info(f"call_llm: {state['messages']}")
-    limit_words=f"Your answer should be less than {max_length_answers} words"
+    #logging.info(f"call_llm: {state['messages']}")    
     memoryData=memory.getMemory(state['uuid'])
+    max_length_answers=memoryData.getMaxLengthAnswer()
+    limit_words=f"Your answer should be less than {max_length_answers} words"
     context = memoryData.getContext()
     rememberText=""
     if not context is None:
@@ -69,7 +70,7 @@ async def call_llm(state) :
           ("system", "{system_msg}"),         
           ("placeholder","{msgs}"),
           ("user","{question}")
-    ])    
+    ])
     question=state["message"]
     if question.strip() != "":
       swRemember=False
@@ -97,7 +98,7 @@ async def call_llm(state) :
         msgs=msgs,  # Get the last MAX_HISTORY messages
         question=HumanMessage(question)
       ) 
-      logger_.debug(f"LLM: Context{context.getText()} Question: {question}")
+      logger_.debug(f"LLM Context: {context_text}\n Question: {question}")
       if model_api=='ollama':
         async for chunk in client_text.astream(chat_prompt):
             yield  chunk
@@ -336,11 +337,7 @@ if max_history is None:
    max_history=12
 else:
    max_history=int(max_history)
-max_length_answers = os.getenv("MAX_LENGHT_ANSWERS")
-if max_length_answers is None:
-   max_length_answers=70
-else:
-   max_length_answers=int(max_length_answers)
+max_length_answers = memory.get_max_length_answer()
 # Configure LLM
 model_api = os.getenv("MODEL_API")
 if model_api is None:
