@@ -39,7 +39,11 @@ async def set_length_max_answer(max_length:int):
     logger_.info(f"Setting length max answer to : {max_length}")
     uuid=request.headers.get("uuid")
     mem=memory.getMemory(uuid)
+    if max_length > memory.get_max_length_answer():
+       return jsonify({"status":"KO","message":f"Max length answer {max_length}  exceed global maximum length: { memory.get_max_length_answer()} "})
+    
     mem.setMaxLengthAnswer(max_length)
+    db.update_max_lenght(mem.getUser(),max_length)
     return jsonify({"status":"OK","message":f"Length max answer set to : {max_length}"})
 @principal_bp.route('/max_length_answer', methods=['GET'])
 async def get_length_max_answer():    
@@ -90,20 +94,23 @@ async def send_question():
 
 @principal_bp.route('/clear', methods=['GET'])
 def clear():   
-  logging.info("Clear conversation")
+  logger_.info("Clear conversation")
   uuid=request.headers.get("uuid")
   if len(memory.memoryData) != 0:
     mem=memory.getMemory(uuid)
     if mem is not None:
-      mem.getChatHistory().clear()        
-      return jsonify({'message': f'Existed conversation with UUID: {uuid} cleared'})
-  memory.memoryData.append(memory.memoryDTO(uuid))
+        mem.getChatHistory().clear()        
+        return jsonify({"status":"OK",'message': f'Existed conversation with UUID: {uuid} cleared'})
+    
+  mem=memory.memoryDTO(uuid)  
+  memory.memoryData.append(mem)
+  
   return jsonify({'message': f'Conversation with UUID: {uuid} cleared'})
   
 
 @principal_bp.route('/last_user', methods=['GET'])
 def get_last_user():
   mem = memory.getMemory(request.headers.get("uuid"))
-  data=db.get_last_user(mem)
+  data=db.get_user_data(mem.getUser())
   logging.info("Last user: ",data)
   return jsonify(data)

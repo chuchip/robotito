@@ -25,9 +25,11 @@ def init_db():
                            password TEXT,
                            language text ,
                            voice text,
+                           role text,
+                           max_length_answer int,
                            last_date DATETIME DEFAULT CURRENT_TIMESTAMP)
                            """)        
-        connection.execute("""INSERT INTO users ( user,name,password,language,voice) VALUES ('default','Guest','changeit','b','bm_fable')""")
+        connection.execute("""INSERT INTO users ( user,name,password,language,voice,role,max_length_answer) VALUES ('default','Guest','changeit','b','bm_fable','admin',150)""")
         connection.commit()    
     # Create table to create context
     
@@ -62,11 +64,11 @@ def init_db():
                            time_msg DATETIME DEFAULT CURRENT_TIMESTAMP)""")
         connection.commit()
 
-def get_last_user(mem):
-    cursor=connection.execute("""SELECT user,language,voice FROM users  where user = ?""",(mem.getUser(),))
+def get_user_data(user:str):
+    cursor=connection.execute("""SELECT user,language,voice,role, max_length_answer FROM users  where user = ?""",(user,))
     data=cursor.fetchall()
     row=data[0]
-    result = {"user": row[0], "language": row[1], "voice": row[2]}
+    result = {"user": row[0], "language": row[1], "voice": row[2],"role":row[3],"max_length_answer":row[4]}
     return result
 
 def get_all_context(user):
@@ -198,6 +200,12 @@ def conversation_delete_by_id(id):
 def update_language(user,language,voice):    
     sql="update users set language = ?, voice=? where user = ? "
     connection.execute(sql,(language,voice,user))    
+    logging.info("Save language preferences")
+    connection.commit()
+    return 
+def update_max_lenght(user,max_length):
+    sql="update users set max_length_answer = ? where user = ? "
+    connection.execute(sql,(max_length,user))    
     logging.info("Save language preferences")
     connection.commit()
     return 

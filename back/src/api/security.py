@@ -18,8 +18,10 @@ async def login():
    if not persistence.checkUser(user,password):
       return jsonify({'status':"KO", 'error': f"User or password invalid"})
    uuid_ = uuid.uuid4()
-   authorization = str(uuid_)   
+   authorization = str(uuid_)
    persistence.save_session(user,authorization)
+   mem.setUser(user)
+   mem.setMaxLengthAnswer((persistence.get_user_data(user)).max_length_answer)
    mem.setSession(memory.Session(user,authorization))
    return jsonify({'status': 'OK', 'session': mem.getSession().__dict__})
 
@@ -32,6 +34,9 @@ async def get_uuid(authorization):
     if session is None:
         return jsonify({'status': 'KO', "error": "Session not found"})
     else:
+       mem.setUser(session.getUser())
+       max_length=persistence.get_user_data(session.getUser())['max_length_answer']
+       mem.setMaxLengthAnswer(max_length)
        mem.setSession(session)
    return jsonify({'status': 'OK', 'session': session.__dict__})
 
