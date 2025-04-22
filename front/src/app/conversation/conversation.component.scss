@@ -22,7 +22,7 @@
   transition: margin-left 0.3s ease;
 }
 .spacer {
-  flex: 1; /* Takes all available space between the boxes */
+  flex: 1; 
 }
 .conversation {
   max-height: 92%;  
@@ -36,13 +36,11 @@
   margin-top: 5px;
   border: 2px solid #ccc;
   padding-top: 10px;
-  padding-bottom: 0px;
+  padding-bottom: 10px;
   padding-left: 3px;
   padding-right: 3px;
   border-radius: 8px;
-//  background-color: red;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);  
-  //margin-top: 5px;
 }
 
 .line {
@@ -125,9 +123,10 @@
   width:100%;
   row-gap: 5px;
   max-width: 100%; 
-  bottom: 5px;
+  bottom: 2px;
   left: 0;
   height:60px;
+  padding-top: 5px;
   border-top: 3px solid black; /* Adjust thickness and color */
   border-radius: 8px;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
@@ -137,7 +136,7 @@
 .input_text
 {    
   display: flex;
-  flex-direction: row;
+  flex-direction: row;  
   box-sizing: border-box;  
   flex-grow: 1;
 }
