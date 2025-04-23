@@ -10,29 +10,30 @@ services:
     environment:
       - FLASK_ENV=production  # Adjust as needed
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-      - GOOGLE_APPLICATION_CREDENTIALS=/robotito_google_cloud_key.json
-      - TTS=gemini # kokoro/gemini
-      - STT=gemini # local/gemini
-      - MODEL_API=gemini # ollama / openai / gemini
-      - MAX_LENGHT_ANSWERS=250 # 0=Disable Max lenght of answers
-      - MAX_HISTORY=16 # Max history is unlimiteda
+      - GOOGLE_APPLICATION_CREDENTIALS=/robotito_google_cloud_key.json 
+      - MAX_LENGHT_ANSWERS=200
+      - MAX_HISTORY=20
       - LOG_LEVEL=10
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - capabilities: [gpu]  # E
+      - MODEL_API=gemini
+      - TTS=gemini
+      - STT=gemini
     volumes:
-      - ./back/robotito_google_cloud_key.json:/robotito_google_cloud_key.json:ro
-      - ./backend-data:/app/robotito_db  # Mount the backend directory
+      - ./robotito_google_cloud_key.json:/robotito_google_cloud_key.json:ro
+      - ./robotito_db:/app/robotito_db 
+    restart: unless-stopped
     networks:
       - app-network
 
   frontend:
     image: chuchip/robotito_front
     container_name: front
+    volumes:
+      - ./default-nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./fullchain.pem:/etc/nginx/certs/fullchain.pem:ro
+      - ./privkey.pem:/etc/nginx/certs/privkey.pem:ro
     ports:
-      - "80:80"
+      - "443:443"
+    restart: unless-stopped
     depends_on:
       - backend
     networks:
@@ -42,6 +43,3 @@ networks:
   app-network:
     driver: bridge
 
-volumes:
-  backend-data:
-    driver: local  

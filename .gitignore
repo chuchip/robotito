@@ -1,2 +1,4 @@
 /robotito_db
 .env
+fullchain.pem
+privkey.pem
