@@ -21,7 +21,8 @@ async def login():
    authorization = str(uuid_)
    persistence.save_session(user,authorization)
    mem.setUser(user)
-   mem.setMaxLengthAnswer((persistence.get_user_data(user)).max_length_answer)
+   data_user=persistence.get_user_data(user)
+   mem.setMaxLengthAnswer(data_user['max_length_answer'])
    mem.setSession(memory.Session(user,authorization))
    return jsonify({'status': 'OK', 'session': mem.getSession().__dict__})
 

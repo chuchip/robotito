@@ -2,3 +2,4 @@
 .env
 fullchain.pem
 privkey.pem
+robotito_google_cloud_key.json

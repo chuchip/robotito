@@ -47,7 +47,7 @@ def get_max_length_answer():
   return max_length_answers
 class memoryDTO:
     def __init__(self, uuid):
-        self.user=None
+        self.user:str=None
         self.session=None
         self.uuid=uuid
         self.conversationId=None
@@ -80,7 +80,7 @@ class memoryDTO:
         self.audioData=AudioData()       
     def getUser(self):
         return self.user
-    def setUser(self,user):
+    def setUser(self,user:str):
         self.user=user  
     def getAudioData(self):
        return self.audioData
