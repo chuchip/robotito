@@ -1,4 +1,5 @@
-cd front
-ng serve &
-cd ../back
+cd back
 ./start.sh &
+sleep 5
+cd ../front
+ng serve &

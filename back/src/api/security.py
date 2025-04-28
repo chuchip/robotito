@@ -3,9 +3,11 @@ import uuid
 import logging
 import persistence
 import memory
-from functools import wraps
-security_bp = Blueprint('security', __name__)
+from robotito_ai import app
 
+security_bp = Blueprint('security', __name__)
+app.register_blueprint(security_bp, url_prefix='/api/security')
+logger_=memory.getLogger()
    
 @security_bp.route('/login', methods=['POST'])
 async def login():

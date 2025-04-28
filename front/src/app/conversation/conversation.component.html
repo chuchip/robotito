@@ -46,8 +46,7 @@
       <div *ngIf="responseMessage!=''"  class="line line-robot" >
         <span class="line-text-robot">
           <span [innerHTML]="toHtml(responseMessage,'R')"></span>
-        </span>
-      </div>
+        </span>      
     </div>
     <div class="spacer"></div>
     <!-- Input and controls -->
@@ -146,7 +145,7 @@
           </span>
           <br/>
           <span  class="name_user">User: {{persistence.getUser()}}  <button (click)="login()" matTooltip="Login"> <span
-            class="material-icons">login</span></button>  Version: 20250420.1</span>
+            class="material-icons">login</span></button>  Version: 20250427.1</span>
         </div>
       </div>  
     </div>

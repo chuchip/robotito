@@ -1,0 +1,9 @@
+Collecting pydantic
+  Using cached pydantic-2.11.3-py3-none-any.whl.metadata (65 kB)
+Requirement already satisfied: annotated-types>=0.6.0 in /home/chuchip/anaconda3/envs/robotito/lib/python3.9/site-packages (from pydantic) (0.7.0)
+Requirement already satisfied: pydantic-core==2.33.1 in /home/chuchip/anaconda3/envs/robotito/lib/python3.9/site-packages (from pydantic) (2.33.1)
+Requirement already satisfied: typing-extensions>=4.12.2 in /home/chuchip/anaconda3/envs/robotito/lib/python3.9/site-packages (from pydantic) (4.12.2)
+Requirement already satisfied: typing-inspection>=0.4.0 in /home/chuchip/anaconda3/envs/robotito/lib/python3.9/site-packages (from pydantic) (0.4.0)
+Using cached pydantic-2.11.3-py3-none-any.whl (443 kB)
+Installing collected packages: pydantic
+Successfully installed pydantic-2.11.3

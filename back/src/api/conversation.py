@@ -2,8 +2,11 @@ from quart import Blueprint,  request, jsonify,Response
 import persistence as db
 import logging
 import memory
-
+from robotito_ai import app
 conversation_bp = Blueprint('conversation', __name__)
+app.register_blueprint(conversation_bp, url_prefix='/api/conversation')
+logger_=memory.getLogger()
+
 
 @conversation_bp.route('/id/<string:id>', methods=['GET'])
 def conversation_getId(id):

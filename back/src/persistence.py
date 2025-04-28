@@ -3,67 +3,16 @@ import sqlite3
 import logging
 import uuid
 import memory
-import asyncio
-def init_db():
-    cursor=connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='user_session'" )
-    # Create table to create User
-    if cursor.fetchone() is  None:
-        connection.execute("""CREATE TABLE user_session (
-                            user TEXT ,
-                            uuid TEXT PRIMARY KEY,
-                            last_date DATETIME DEFAULT CURRENT_TIMESTAMP)
-                            """)  
-        connection.commit()
-    cursor=connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users'" )
-    # Create table to create User
-    if cursor.fetchone() is  None:
-        logging.info("Initialzing the database")    
-        connection.execute("""CREATE TABLE users (
-                           user TEXT PRIMARY KEY,
-                           name TEXT,
-                           email TEXT,
-                           password TEXT,
-                           language text ,
-                           voice text,
-                           role text,
-                           max_length_answer int,
-                           last_date DATETIME DEFAULT CURRENT_TIMESTAMP)
-                           """)        
-        connection.execute("""INSERT INTO users ( user,name,password,language,voice,role,max_length_answer) VALUES ('default','Guest','changeit','b','bm_fable','admin',150)""")
-        connection.commit()    
-    # Create table to create context
-    
-    cursor=connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='context'" )
-    if cursor.fetchone() is  None:
-        connection.execute("""CREATE TABLE context ( 
-                           id INTEGER PRIMARY KEY AUTOINCREMENT,                          
-                           user TEXT, 
-                           label TEXT,
-                           context TEXT,
-                           remember TEXT,
-                           last_time DATETIME DEFAULT CURRENT_TIMESTAMP                           
-                           ) """)
-        connection.execute("""INSERT INTO context ( user,label,context, remember) 
-                            VALUES ('default','default','You are my friend Robotito. Your answers should not have more than 60 words','')""")
-        connection.commit()
-    # Create tables to save conversations
-    cursor=connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='conversation'" )
-    if cursor.fetchone() is  None:
-        connection.execute("""
-            CREATE TABLE conversation (
-                 id text primary key,
-                 user TEXT,
-                 idContext TEXT,
-                 name text,
-                 initial_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-                 final_date DATETIME)
-            """)
-        connection.execute("""CREATE TABLE conversation_lines (id text, 
-                           type TEXT,
-                           msg TEXT,
-                           time_msg DATETIME DEFAULT CURRENT_TIMESTAMP)""")
-        connection.commit()
+import sqlalchemy
+from sqlalchemy import create_engine,  Table, Column,Integer, String,DateTime, MetaData, Integer,ForeignKey, Text,TIMESTAMP,func
+from sqlalchemy.orm import declarative_base,relationship
+import dbtables
 
+
+
+
+
+    
 def get_user_data(user:str):
     cursor=connection.execute("""SELECT user,language,voice,role, max_length_answer FROM users  where user = ?""",(user,))
     data=cursor.fetchall()
