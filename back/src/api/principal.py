@@ -2,10 +2,9 @@ from quart import  Blueprint,Response,request,abort,jsonify
 import persistence as db
 import memory
 import logging
-from robotito_ai import app
 
 principal_bp = Blueprint('principal', __name__)
-app.register_blueprint(principal_bp, url_prefix='/api')
+
 logger_=memory.getLogger()
 
 @principal_bp.before_request

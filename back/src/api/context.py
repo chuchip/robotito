@@ -2,9 +2,9 @@ from quart import Blueprint,  request, jsonify
 import logging
 import persistence as db
 import memory
-from robotito_ai import app
+
 context_bp = Blueprint('context', __name__)
-app.register_blueprint(context_bp, url_prefix='/api/context')
+
 logger_=memory.getLogger()
 
 @context_bp.route('/label/<string:label>', methods=['put'])

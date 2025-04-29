@@ -3,39 +3,37 @@ import sqlite3
 import logging
 import uuid
 import memory
-import sqlalchemy
-from sqlalchemy import create_engine,  Table, Column,Integer, String,DateTime, MetaData, Integer,ForeignKey, Text,TIMESTAMP,func
-from sqlalchemy.orm import declarative_base,relationship
-import dbtables
+from quart import  g
 
 
+def get_DTO_context(row):
+    return {"label": row['label'], "text": row['context'], "remember": row['remember'],"last_time": row['last_time'],"id":row['id']}
 
+async def get_user_data(user:str):
+    row = await g.connection.fetch_one(
+        "SELECT user,language,voice,role, max_length_answer FROM users  where user = :user",
+        {"user": user},
+    )
+   
+    result = {"user": row["user"], "language": row['language'], "voice": row['voice'],"role":row['role'],"max_length_answer":row['max_length_answer']}
+    return result
 
-
+async def get_all_context(user):
+    cursor= await g.connection.fetch_all(f"""select label,context,remember,last_time,id
+                             from context where user = :user order by last_time desc""",{"user": user})
     
-def get_user_data(user:str):
-    cursor=connection.execute("""SELECT user,language,voice,role, max_length_answer FROM users  where user = ?""",(user,))
-    data=cursor.fetchall()
-    row=data[0]
-    result = {"user": row[0], "language": row[1], "voice": row[2],"role":row[3],"max_length_answer":row[4]}
+    result = [ get_DTO_context(row) for row in cursor]
     return result
 
-def get_all_context(user):
-    query=connection.execute(f"""select label,context,remember,last_time,id
-                             from context where user = ? order by last_time desc""",(user,))
-    data=query.fetchall()
-    result = [ get_DTO_context(row) for row in data]
-    return result
-
-def get_context_by_label(user,label):
-    sql=f"select label,context,remember,last_time,id from context where label=? and user=?"    
-    cursor=connection.execute(sql,(label,user))
-    row= cursor.fetchone()
+async def get_context_by_label(user,label):
+    sql=f"select label,context,remember,last_time,id from context where label=:label and user=:user"    
+    row=await g.connection.fetch_one(sql,{"label":label,"user":user})
+    
     if row is None:
         return None
     
     return get_DTO_context(row)
-def save_context(user,label,context,remember):
+async def save_context(user,label,context,remember):
     data=get_context_by_label(user,label)
     if data is  None:
         logging.info(f"Insert context: {label}")
@@ -52,13 +50,14 @@ def save_context(user,label,context,remember):
         connection.execute(sql,(context,remember,label,user))
     connection.commit()
     return id
-def delete_context(user,label):
+async def delete_context(user,label):
     if label==None or label == '' or label=='default':
         return
     sql=f"""delete from context where label=? and user=? """ 
     connection.execute(sql,(label,user))
     connection.commit()
-def delete_context_by_id(id):
+
+async def delete_context_by_id(id):
     data=get_context_by_id(id)
     if data is  None:
         logging.info(f"Context with id {id} not found")
@@ -69,7 +68,7 @@ def delete_context_by_id(id):
     sql=f"delete from context where id=? " 
     connection.execute(sql,(id,))
     connection.commit()
-def get_context_by_id(id):
+async def get_context_by_id(id):
     sql=f"select label, context, remember, last_time,id from context where id=? " 
     cursor=connection.execute(sql,(id,))
     row=cursor.fetchone()
@@ -77,9 +76,8 @@ def get_context_by_id(id):
         return None
     
     return get_DTO_context(row)
-def get_DTO_context(row):
-    return {"label": row[0], "text": row[1], "remember": row[2],"last_time": row[3],"id":row[4]}
-def init_conversation(id ,user,msg,force=False):
+
+async def init_conversation(id ,user,msg,force=False):
     import robotito_ai as ai 
     if id is None or force:
         if len(msg.split())>15:
@@ -99,7 +97,7 @@ def init_conversation(id ,user,msg,force=False):
     return id
 
 # Conversation
-def conversation_save(uuid,id ,user, idContext,type,msg):
+async def conversation_save(uuid,id ,user, idContext,type,msg):
     import robotito_ai as ai
     if id=='X':
         id=init_conversation(None,user,msg,True)
@@ -111,14 +109,14 @@ def conversation_save(uuid,id ,user, idContext,type,msg):
     connection.execute(sql,(id,type,msg))
     connection.commit()
     return id
-def updateConversationContext(idConversation,idContext):
+async def updateConversationContext(idConversation,idContext):
     if idConversation is None or idContext is None:
         return
     sql="update conversation set idContext=? where id = ? "
     connection.execute(sql,(idContext,idConversation))
     connection.commit()
     return idConversation
-def conversation_get_by_id(id):
+async def conversation_get_by_id(id):
     sql = """
         select c.user,c.idContext,c.name,c.initial_time,c.final_date, l.type,l.msg
          from conversation as c, conversation_lines as l where c.id = ? and c.id=l.id order by l.time_msg
@@ -129,7 +127,7 @@ def conversation_get_by_id(id):
             "initial_time": row[3],"final_date":row[4],"type": row[5],"msg": row[6]} for row in data]
     
     return result
-def conversation_get_list(user):
+async def conversation_get_list(user):
     sql = """
         select c.id,c.user,c.idContext,c.name,c.initial_time,c.final_date
          from conversation as c where c.user = ?  order by c.final_date desc
@@ -141,36 +139,36 @@ def conversation_get_list(user):
     
     return result
 
-def conversation_delete_by_id(id):
+async def conversation_delete_by_id(id):
     sql="delete from conversation where id = ? "
     connection.execute(sql,(id,))    
     connection.commit()
     return 
-def update_language(user,language,voice):    
+async def update_language(user,language,voice):    
     sql="update users set language = ?, voice=? where user = ? "
     connection.execute(sql,(language,voice,user))    
     logging.info("Save language preferences")
     connection.commit()
     return 
-def update_max_lenght(user,max_length):
+async def update_max_lenght(user,max_length):
     sql="update users set max_length_answer = ? where user = ? "
     connection.execute(sql,(max_length,user))    
     logging.info("Save language preferences")
     connection.commit()
     return 
 # Save in db and cache an uuid if it not exists
-def save_session(user,authorization):
+async def save_session(user,authorization):
     session= memory.getSessionFromAutorization(authorization)
     if session is not None:
         return
-    sql="select user from user_session where uuid = ?"
+    sql="select user from user_session where uuid = :uuid"
     cursor=connection.execute(sql,(authorization,))
     if cursor.fetchone() is  None:
         sql="insert into user_session  (user,uuid) values (?,?)"
         connection.execute(sql,(user,authorization))
         connection.commit()
     memory.saveSession(user, authorization)
-def get_session(uuid,authorization):
+async def get_session(uuid,authorization):
     session= memory.getSessionFromAutorization(authorization)
     if session is not None:        
         return session
@@ -182,14 +180,12 @@ def get_session(uuid,authorization):
     session=memory.Session(data[0],data[1],)        
     memory.saveSession(session.user, authorization)
     return session
-def checkUser(user,password):
-    cursor=connection.execute("""SELECT user,password FROM users  where user = ?""",(user,))
-    data=cursor.fetchone()
-    if data is None:
+async def checkUser(user,password):
+    row =await g.connection.fetch_one("SELECT user,password FROM users  where user = :user",{"user:":user})
+
+    if row is None:
         return False
-    if data[1] != password:
+    if row['password'] != password:
         return False
     return True
 
-connection=sqlite3.connect("robotito_db/sqllite.db", check_same_thread=False)
-init_db()

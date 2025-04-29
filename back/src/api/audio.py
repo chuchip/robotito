@@ -3,10 +3,9 @@ import logging
 import os
 import persistence
 import memory
-from robotito_ai import app
 
 audio_bp = Blueprint('audio', __name__)
-app.register_blueprint(audio_bp, url_prefix='/api/audio')
+
 logger_=memory.getLogger()
 
 tts = os.getenv("STT")
