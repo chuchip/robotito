@@ -33,29 +33,34 @@ async def get_context_by_label(user,label):
         return None
     
     return get_DTO_context(row)
-async def save_context(user,label,context,remember):
-    data=get_context_by_label(user,label)
+async def save_context(user_id,label,context,remember):
+    data=get_context_by_label(user_id,label)
     if data is  None:
         logging.info(f"Insert context: {label}")
-        sql=f"INSERT INTO context (label,user,context,remember) VALUES (?, ?, ?,?)"        
-        cursor = connection.execute(sql, (label,user,context,remember))
-        id = cursor.lastrowid
+        sql=f"INSERT INTO context (label,user_id,context,remember) VALUES (:label, :user_id, :context,:remember) returning id"        
+        cursor = await g.connection.fetchrow(sql, {"label": label,"user_id":user_id,"context": context,"remember":remember})
+        id = cursor['id']
     else:
         logging.info(f"Update context: {label}")
         id=data['id']
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        sql=f"""UPDATE context SET context = ?,remember= ?, last_time='{now}'
-                where label= ?  and user= ?"""
-        
-        connection.execute(sql,(context,remember,label,user))
-    connection.commit()
+        sql="""UPDATE context SET context = :context,remember= :remember, last_time=:last_time'
+                where label= :label  and user_id= :user_id"""
+        cursor = await g.connection.execute(sql, {
+                "context": context,
+                "remember": remember,
+                "last_time": now,
+                "label": label,
+                "user_id": user_id
+            })        
+    
     return id
-async def delete_context(user,label):
+async def delete_context(user_id,label):
     if label==None or label == '' or label=='default':
         return
-    sql=f"""delete from context where label=? and user=? """ 
-    connection.execute(sql,(label,user))
-    connection.commit()
+    sql="""delete from context where label=:label and user_id=:user"""
+    await g.connection.execute(sql,{"label":label,"user":user_id})
+    
 
 async def delete_context_by_id(id):
     data=get_context_by_id(id)
@@ -65,13 +70,12 @@ async def delete_context_by_id(id):
     if (data['label'] =='default'):
         logging.info(f"Label 'default' cannot be deleted")
         return
-    sql=f"delete from context where id=? " 
-    connection.execute(sql,(id,))
-    connection.commit()
+    sql="delete from context where id=:id" 
+    await g.connection.execute(sql,{"id":id})
+    
 async def get_context_by_id(id):
-    sql=f"select label, context, remember, last_time,id from context where id=? " 
-    cursor=connection.execute(sql,(id,))
-    row=cursor.fetchone()
+    sql=f"select label, context, remember, last_time,id from context where id=:id " 
+    row=await g.connection.fetch_one(sql,(id,))    
     if row is None:
         return None
     
@@ -89,25 +93,23 @@ async def init_conversation(id ,user,msg,force=False):
         random_uuid = uuid.uuid4()  # Generate a random UUID
         id = str(random_uuid)
         logging.info("Init conversation id",id) 
-        sql="""
-                insert into conversation (id,user,name,final_date) values (?,?,?,?)
-            """
-        connection.execute(sql,(id,user,msg,now))
-        connection.commit()
+        sql="insert into conversation (id,user_id,name,final_date) values (:id,:user_id,:name,:final_date)"
+            
+        await g.connection.execute(sql,{"id":id,"user_id":user,"name":msg,"final_date":now})
+        
     return id
 
 # Conversation
-async def conversation_save(uuid,id ,user, idContext,type,msg):
+async def conversation_save(uuid,id ,user, context_id,type,msg):
     import robotito_ai as ai
     if id=='X':
         id=init_conversation(None,user,msg,True)
     ai.save_msg(uuid,type,msg)
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    sql="update conversation set final_date = ?, idContext=? where id = ? "
-    connection.execute(sql,(now,idContext,id))
-    sql="insert into conversation_lines  (id,type,msg) values (?,?,?)"
-    connection.execute(sql,(id,type,msg))
-    connection.commit()
+    sql="update conversation set final_date = :final_date, context_id=:context_id where id = :id "
+    await g.connection.execute(sql,{"final_date":now,"context_id":context_id,"id":id})
+    sql="insert into conversation_lines  (id,type,msg) values (:id,:type,:msg)"
+    await g.connection.execute(sql,{"id":id,"type":type,"msg":msg})    
     return id
 async def updateConversationContext(idConversation,idContext):
     if idConversation is None or idContext is None:

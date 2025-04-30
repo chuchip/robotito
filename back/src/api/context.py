@@ -71,7 +71,7 @@ async def context_update():
      return jsonify({'message': f"Context hasn't a valid latext or label", "status:": 'KO','text': data['context']})
 
   logger_.info(f"Context Update: {data['label']}: {data['context']}")
-  contextId=db.save_context(user=data['user'],label=data['label'],context=data['context'],remember=data['contextRemember'])
+  contextId=db.save_context(user_id=data['user'],label=data['label'],context=data['context'],remember=data['contextRemember'])
   try:
     context.setId(contextId)
     context.setLabel(data['label'])
