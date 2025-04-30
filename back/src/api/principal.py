@@ -90,7 +90,7 @@ async def send_question():
     question =  data.get('text')
     if question is None:
        return ""
-    #id = db.init_conversation(id,user,question)
+    
     msg_graph={"message": question,               
                 "uuid": uuid}     
     
@@ -113,8 +113,8 @@ def clear():
   
 
 @principal_bp.route('/last_user', methods=['GET'])
-def get_last_user():
+async def get_last_user():
   mem = memory.getMemory(request.headers.get("uuid"))
-  data=db.get_user_data(mem.getUser())
+  data=await db.get_user_data(mem.getUser())
   logging.info("Last user: ",data)
   return jsonify(data)

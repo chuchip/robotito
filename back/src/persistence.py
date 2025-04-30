@@ -11,22 +11,23 @@ def get_DTO_context(row):
 
 async def get_user_data(user:str):
     row = await g.connection.fetch_one(
-        "SELECT user,language,voice,role, max_length_answer FROM users  where user = :user",
+        "SELECT user,language,voice,role, max_length_answer FROM users  where user_id = :user",
         {"user": user},
     )
-   
+    if row is None:
+        return None
     result = {"user": row["user"], "language": row['language'], "voice": row['voice'],"role":row['role'],"max_length_answer":row['max_length_answer']}
     return result
 
 async def get_all_context(user):
     cursor= await g.connection.fetch_all(f"""select label,context,remember,last_time,id
-                             from context where user = :user order by last_time desc""",{"user": user})
+                             from context where user_id = :user order by last_time desc""",{"user": user})
     
     result = [ get_DTO_context(row) for row in cursor]
     return result
 
 async def get_context_by_label(user,label):
-    sql=f"select label,context,remember,last_time,id from context where label=:label and user=:user"    
+    sql=f"select label,context,remember,last_time,id from context where label=:label and user_id=:user"    
     row=await g.connection.fetch_one(sql,{"label":label,"user":user})
     
     if row is None:
@@ -142,9 +143,9 @@ async def conversation_get_list(user):
     return result
 
 async def conversation_delete_by_id(id):
-    sql="delete from conversation where id = ? "
-    connection.execute(sql,(id,))    
-    connection.commit()
+    sql="delete from conversation where id = :id"
+    await g.connection.execute(sql,{"id":id})    
+    
     return 
 async def update_language(user,language,voice):    
     sql="update users set language = ?, voice=? where user = ? "
@@ -159,31 +160,30 @@ async def update_max_lenght(user,max_length):
     connection.commit()
     return 
 # Save in db and cache an uuid if it not exists
-async def save_session(user,authorization):
-    session= memory.getSessionFromAutorization(authorization)
+async def save_session(user_id,uuid):
+    session= memory.getSessionFromAutorization(uuid)
     if session is not None:
         return
     sql="select user from user_session where uuid = :uuid"
-    cursor=connection.execute(sql,(authorization,))
-    if cursor.fetchone() is  None:
-        sql="insert into user_session  (user,uuid) values (?,?)"
-        connection.execute(sql,(user,authorization))
-        connection.commit()
-    memory.saveSession(user, authorization)
-async def get_session(uuid,authorization):
-    session= memory.getSessionFromAutorization(authorization)
+    row=await g.connection.fetch_one(sql,{"uuid":uuid})
+    if row is  None:
+        sql="insert into user_session  (user_id,uuid) values (:user_id,:uuid)"
+        await g.connection.execute(sql,{"user_id":user_id,"uuid":uuid})
+        
+    memory.saveSession(user_id, uuid)
+async def get_session(uuid):
+    session= memory.getSessionFromAutorization(uuid)
     if session is not None:        
         return session
-    sql="select user,uuid from user_session where uuid = ?"
-    cursor=connection.execute(sql,(authorization,))
-    data=cursor.fetchone()
-    if data is None:
+    sql="select user,uuid from user_session where uuid = :uuid"
+    row=await g.connection.fetch_one(sql,{"uuid":uuid})
+    if row is None:
         return None
-    session=memory.Session(data[0],data[1],)        
-    memory.saveSession(session.user, authorization)
+    session=memory.Session(row['user'],row['uuid'],)        
+    memory.saveSession(session.user, uuid)
     return session
-async def checkUser(user,password):
-    row =await g.connection.fetch_one("SELECT user,password FROM users  where user = :user",{"user:":user})
+async def checkUser(user_id,password):
+    row =await g.connection.fetch_one("SELECT user_id,password FROM users  where user_id = :user_id",{"user_id":user_id})
 
     if row is None:
         return False
