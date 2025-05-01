@@ -5,6 +5,9 @@ import persistence
 import memory
 
 audio_bp = Blueprint('audio', __name__)
+
+logger_=memory.getLogger()
+
 tts = os.getenv("STT")
 if tts is not None and tts=='gemini':
     language_options = [
@@ -117,5 +120,5 @@ async def set_language():
   audioData.voice_name = data.get('voice') 
   ai.set_language( audioData, languageInput)
  
-  persistence.update_language(user,languageInput,audioData.voice_name)
+  await persistence.update_language(user,languageInput,audioData.voice_name)
   return jsonify({'message': f'Voice changed to {audioData.voice_name} and language to {audioData.language}!'})

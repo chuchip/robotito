@@ -1,5 +1,7 @@
 import logging
 
+from quart_cors import cors
+
 logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
 from langchain_openai import ChatOpenAI,OpenAIEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -12,17 +14,17 @@ from google.cloud import texttospeech
 from openai import OpenAI
 from langchain.output_parsers import PydanticOutputParser
 from quart import Quart
-from quart_cors import cors
-import os
-from api.audio  import audio_bp
-from api.principal import principal_bp
-from api.context  import context_bp
-from api.conversation import conversation_bp
+from api.principal import principal_bp 
 from api.security import security_bp
+from api.audio import audio_bp
+from api.context import context_bp
+from api.conversation import conversation_bp
+import os
 from langchain_core.messages import  AIMessage,HumanMessage
 import memory
 from typing import List
 from pydantic import BaseModel, Field
+from quart_db import QuartDB
 
 os.environ["GRPC_VERBOSITY"] = "ERROR"
 os.environ["GLOG_minloglevel"] = "2"
@@ -34,6 +36,12 @@ else:
 logger_ = logging.getLogger(__name__)
 logger_.setLevel(log_level)
 app = Quart(__name__)
+db_host = os.getenv("DB_HOST")
+db_user=os.getenv("DB_USER")
+db_password=os.getenv("DB_PASSWORD")
+db = QuartDB(app, url=f"postgresql://{db_user}:{db_password}@{db_host}/robotito")
+
+
 logging.getLogger("asyncio").setLevel(logging.ERROR)
 logging.getLogger("hypercorn.access").setLevel(logging.WARNING)
 app=cors(app,allow_origin="*")  # Enable Cross-Origin Resource Sharing
@@ -454,12 +462,11 @@ chain_rating = prompt_rating | llm_text | parser_rating
 logger_.info(f"Model API: {model_api}  STT: {stt} TTS: {tts} . Max Lenght Answers: {max_length_answers} Max History: {max_history}" )
 logger_.info("--------------------------------")
 
-app.register_blueprint(principal_bp, url_prefix='/api')
 app.register_blueprint(audio_bp, url_prefix='/api/audio')
 app.register_blueprint(context_bp, url_prefix='/api/context')
 app.register_blueprint(conversation_bp, url_prefix='/api/conversation')
+app.register_blueprint(principal_bp, url_prefix='/api')
 app.register_blueprint(security_bp, url_prefix='/api/security')
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

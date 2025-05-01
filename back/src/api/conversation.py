@@ -4,14 +4,16 @@ import logging
 import memory
 
 conversation_bp = Blueprint('conversation', __name__)
+logger_=memory.getLogger()
+
 
 @conversation_bp.route('/id/<string:id>', methods=['GET'])
-def conversation_getId(id):
+async def conversation_getId(id):
   import robotito_ai as ai
   logging.info("GET  conversation with id: ",id)
   uuid=request.headers.get("uuid")
   mem=memory.getMemory(uuid)
-  data = db.conversation_get_by_id(id)
+  data = await db.conversation_get_by_id(id)
   if len (data) == 0:
     return jsonify({'message': f'Conversation with id {id} NOT FOUND!', 'conversation': id})
   ai.restore_history(uuid,data)
@@ -34,7 +36,7 @@ async def conversation_saveId(id):
   idContext=None
   if not context is None:
     idContext=context.getId()
-  id_conversation=db.conversation_save(uuid,id,data['user'],
+  id_conversation=await db.conversation_save(uuid,id,data['user'],
                                        idContext,data['type'] ,data['msg'])
   #logging.info(f"Save  conversation with id: {id}{data} ")
   return jsonify({'message': f'Conversation saved on id {id_conversation} !', 'id': id_conversation})
@@ -46,7 +48,7 @@ async def conversation_init():
   uuid=request.headers.get("uuid")
   mem=memory.getMemory(uuid)
   # logging.info(f"Save  conversation with id: {id}{data} ")
-  id_conversation=db.init_conversation(None,data['user'],data['msg'])
+  id_conversation=await db.init_conversation(None,data['user'],data['msg'])
   if mem.getContext() is None:
     db.updateConversationContext(id_conversation, data['contextId'])
   mem.setConversationId(id_conversation)
@@ -54,10 +56,10 @@ async def conversation_init():
 
 
 @conversation_bp.route('/user/<string:user>', methods=['GET'])
-def conversation_getUser(user): 
+async def conversation_getUser(user): 
   logging.info("GET All conversations of the user: ",user)
 
-  data = db.conversation_get_list(user)
+  data = await db.conversation_get_list(user)
   
   return jsonify({'message': f'Conversations of user {user}!', 'conversations': data})
 
