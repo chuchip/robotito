@@ -1,6 +1,5 @@
 from quart import Blueprint,  request,abort, jsonify
 import uuid
-import logging
 import persistence
 import memory
 
@@ -32,12 +31,15 @@ async def get_uuid(authorization):
    mem= memory.getMemory(request.headers.get("uuid"))  
    session= mem.getSession()
    if session is None:
-    session = persistence.get_session(authorization)
+    session = await persistence.get_session(authorization)
     if session is None:
         return jsonify({'status': 'KO', "error": "Session not found"})
     else:
        mem.setUser(session.getUser())
-       max_length=persistence.get_user_data(session.getUser())['max_length_answer']
+       data_user=await persistence.get_user_data(session.getUser())
+       if data_user is None:
+           return jsonify({'status': 'KO', "error": "User not found"})
+       max_length=data_user['max_length_answer']
        mem.setMaxLengthAnswer(max_length)
        mem.setSession(session)
    return jsonify({'status': 'OK', 'session': session.__dict__})

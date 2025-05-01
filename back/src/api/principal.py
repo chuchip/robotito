@@ -39,7 +39,7 @@ async def set_length_max_answer(max_length:int):
     logger_.info(f"Setting length max answer to : {max_length}")
     uuid=request.headers.get("uuid")
     mem=memory.getMemory(uuid)
-    data_user=db.get_user_data(mem.getUser())
+    data_user=await db.get_user_data(mem.getUser())
     if max_length > memory.get_max_length_answer() and data_user['role']!='admin':
        return jsonify({"status":"KO","message":f"Max length answer {max_length}  exceed global maximum length: { memory.get_max_length_answer()} "})
     
@@ -47,7 +47,7 @@ async def set_length_max_answer(max_length:int):
        return jsonify({"status":"KO","message":f"Only admins can put lenght unlimited"})
     
     mem.setMaxLengthAnswer(max_length)
-    db.update_max_lenght(mem.getUser(),max_length)
+    await db.update_max_lenght(mem.getUser(),max_length)
     return jsonify({"status":"OK","message":f"Length max answer set to : {max_length}"})
 @principal_bp.route('/max_length_answer', methods=['GET'])
 async def get_length_max_answer():    
