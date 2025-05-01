@@ -36,9 +36,10 @@ else:
 logger_ = logging.getLogger(__name__)
 logger_.setLevel(log_level)
 app = Quart(__name__)
-db = QuartDB(app, url="postgresql://robotito:secret@localhost:5432/postgres")
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://robotito:secret@localhost:5432/public"
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db_host = os.getenv("DB_HOST")
+db_user=os.getenv("DB_USER")
+db_password=os.getenv("DB_PASSWORD")
+db = QuartDB(app, url=f"postgresql://{db_user}:{db_password}@{db_host}/robotito")
 
 
 logging.getLogger("asyncio").setLevel(logging.ERROR)

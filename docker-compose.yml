@@ -1,6 +1,21 @@
 version: '3.8'
 
 services:
+
+  db:
+    image: postgres:latest
+    container_name: robotito_db
+    environment:
+      - POSTGRES_USER=robotito
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=robotito_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./robotito_db:/var/lib/postgresql/data 
+    restart: unless-stopped
+    networks:
+      - app-network
   backend:
     image: chuchip/robotito_back
     container_name: back     
@@ -15,6 +30,9 @@ services:
       - MODEL_API=gemini
       - TTS=gemini
       - STT=gemini
+      - DB_HOST=db:5432
+      - DB_PASSWORD=secret
+      - DB_USER=robotito_db
     volumes:
       - ./robotito_google_cloud_key.json:/robotito_google_cloud_key.json:ro
       - ./robotito_db:/app/robotito_db 

@@ -44,8 +44,8 @@ async def save_context(user_id,label,context,remember):
     else:
         logging.info(f"Update context: {label}")
         id=data['id']
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        sql="""UPDATE context SET context = :context,remember= :remember, last_time=:last_time'
+        now = datetime.now()
+        sql="""UPDATE context SET context = :context,remember= :remember, last_time=:last_time
                 where label= :label  and user_id= :user_id"""
         cursor = await g.connection.execute(sql, {
                 "context": context,
