@@ -1,0 +1,38 @@
+.error-container {
+  background-color: #f44336; /* Red */
+  color: white;
+  padding: 10px 20px;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px; /* Add some space below */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  position: fixed; /* Or 'absolute' depending on desired placement */
+  top: 20px;       /* Adjust position as needed */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;   /* Ensure it's on top of other content */
+  width: fit-content;
+  max-width: 90%;
+}
+
+.error-text {
+  margin: 0;
+  flex-grow: 1;
+}
+
+.dismiss-button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.2em;
+  cursor: pointer;
+  margin-left: 15px;
+  padding: 0;
+  line-height: 1;
+}
+
+.dismiss-button:hover {
+  opacity: 0.8;
+}
