@@ -356,8 +356,8 @@ if model_api=="openai":
   llm_text=configOpenAI(0.0)
 elif model_api=='ollama':
   model_api="ollama"
-  client_text=configOllamaAI("gemma3:1b","http://172.24.144.1:11434")   
-  llm_text=configOllamaAI("gemma3:1b","http://172.24.144.1:11434",0.0)   
+  client_text=configOllamaAI("gemma3","http://172.24.144.1:11434")   
+  llm_text=configOllamaAI("gemma3","http://172.24.144.1:11434",0.0)   
 else:
   model_api="gemini"
   client_text=configGeminiAI()   

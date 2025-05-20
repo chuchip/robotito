@@ -64,13 +64,13 @@ async def context_update():
     context=memory.Context()
     mem.setContext(context)
   if "label" not in data or data['label'] is None:
-    return jsonify({'message': f"Context hasn't label", "status:": 'KO','text': data['context']})
+    return jsonify({'message': f"Context hasn't label", "status:": 'KO','text': data['context']}),501
   if data['label'].strip() == '':
-    return jsonify({'message': f"Context hasn't a valid label", "status:": 'KO','text': data['context']})
+    return jsonify({'message': f"Context hasn't a valid label", "status:": 'KO','text': data['context']}),501
 
   context.setLabel(data['label'])
   if 'context' not in data  or 'contextRemember'  not in data:
-     return jsonify({'message': f"Context hasn't a valid latext or label", "status:": 'KO','text': data['context']})
+     return jsonify({'message': f"Context hasn't a valid latext or label", "status:": 'KO','text': data['context']}),501
 
   logger_.info(f"Context Update: {data['label']}: {data['context']}")
   contextId=await db.save_context(user_id=data['user'],label=data['label'],context=data['context'],remember=data['contextRemember'])
@@ -85,7 +85,7 @@ async def context_update():
     if data is not None:
       for key, value in data.items():
         logging.error(f"{key}: {value}")
-    return jsonify({'message': f"Context updated successfully!. Update Context of: '{data['label']}'", "status:": 'KO','text': 'error'})  
+    return jsonify({'message': f"Context updated successfully!. Update Context of: '{data['label']}'", "status:": 'KO','text': 'error'}) ,501
   return jsonify({'message': f"Context updated successfully!. Update Context of: '{data['label']}'", "status:": 'OK','text': data['context']})
 
 @context_bp.route('/id/<string:id>', methods=['DELETE'])

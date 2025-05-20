@@ -15,7 +15,7 @@ async def conversation_getId(id):
   mem=memory.getMemory(uuid)
   data = await db.conversation_get_by_id(id)
   if len (data) == 0:
-    return jsonify({'message': f'Conversation with id {id} NOT FOUND!', 'conversation': id})
+    return jsonify({'message': f'Conversation with id {id} NOT FOUND!', 'conversation': id}),404
   ai.restore_history(uuid,data)
   mem.setConversationId(id)
   return jsonify({'message': f'This is the conversation with id {id}!', 'conversation': data})

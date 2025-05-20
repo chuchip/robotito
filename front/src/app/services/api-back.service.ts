@@ -168,7 +168,7 @@ async getLastUser(): Promise<any> {
   }
   async conversation_by_id(id:string): Promise<any> {    
     try {
-      return await firstValueFrom(this.http.get(`${this.backendUrl}/conversation/id/${id}`));
+      return await firstValueFrom(this.http.get(`${this.backendUrl}/conversation1/id/${id}`));
     } catch (error) {
       console.error('get conversation_by_id failed!:', error);
       throw error;

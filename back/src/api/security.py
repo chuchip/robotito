@@ -16,7 +16,7 @@ async def login():
    if user is None or password is None:
        return jsonify({'status':"KO", 'error': f"User and password required"})
    if not await persistence.checkUser(user,password):
-      return jsonify({'status':"KO", 'error': f"User or password invalid"})
+    return jsonify({'status':"KO", 'error': "User or password invalid"})
    uuid_ = uuid.uuid4()
    authorization = str(uuid_)
    await persistence.save_session(user,authorization)
