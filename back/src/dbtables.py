@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine,  Column, Integer, Text, DateTime, func, ForeignKey
 from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.dialects.postgresql import SERIAL
 
 from robotito_ai import db,app
 

@@ -7,8 +7,7 @@ from typing import List
 def configGeminiAI(temperature=0.6): 
   model = ChatGoogleGenerativeAI(
     model="gemini-2.5-flash-preview-04-17",
-    temperature=temperature,
-    streaming=True,
+    temperature=temperature,    
     timeout=None,
     max_retries=2
   )

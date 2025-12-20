@@ -111,8 +111,12 @@ async def call_llm(state) :
         async for chunk in client_text.astream(chat_prompt):
             yield  chunk
       else:
-        async for chunk in client_text.astream(chat_prompt):        
-            yield  chunk.content
+        try:
+          async for chunk in client_text.astream(chat_prompt):        
+              yield  chunk.content
+        except Exception as e:
+            logger_.error(f"Error in LLM call: {e}")
+            yield ""
       if swRemember:
           yield "*"    
     else:
@@ -208,7 +212,6 @@ def configGeminiAI(model="gemini-2.0-flash-lite",temperature=0.6):
   model = ChatGoogleGenerativeAI(
     model=model,
     temperature=temperature,
-    streaming=True,
     timeout=None,
     max_retries=2
   )
@@ -361,7 +364,7 @@ elif model_api=='ollama':
 else:
   model_api="gemini"
   client_text=configGeminiAI()   
-  llm_text=configGeminiAI("gemini-2.0-flash",0.0)
+  llm_text=configGeminiAI("gemini-2.5-flash",0.0)
 
 speechToText=None
 textToSpeech=None
