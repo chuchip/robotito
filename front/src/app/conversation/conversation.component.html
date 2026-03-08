@@ -30,7 +30,8 @@
   <div class="container">
     <!-- Body of the page when I will show the conversation  -->
     <div #conversation class="conversation" (mouseup)="getSelectedText()" (keyup)="getSelectedText()">
-      <div [ngClass]="line_chat.type=='H'? 'line-human':'line-robot'" class="line" *ngFor="let line_chat of chatHistory; let i = index">
+      <ng-container *ngFor="let line_chat of chatHistory; let i = index">
+        <div [ngClass]="line_chat.type=='H'? 'line-human':'line-robot'" class="line" [class.hidden-text]="line_chat.type!='H' && !isRobotVisible">
         <div class="buttons-conversation">
           <button (click)="speak_aloud_response($event,i,line_chat.type)"> <span class="material-icons">volume_up</span></button>
           <span class="material-icons" style="color: blue">{{line_chat.type=='H'?"face":"smart_toy" }}</span>
@@ -39,11 +40,12 @@
            (click)="showRating(i)">
           <span style="font-size: 16px;">ℹ️</span>
         </button>
-        <span [ngClass]="line_chat.type=='H'? 'line-text-human':'line-text-robot'">
+        <span   [ngClass]="line_chat.type=='H'? 'line-text-human':'line-text-robot'">
           <span [innerHTML]="toHtml(line_chat.msg,line_chat.type)"> </span>
         </span>
       </div>
-      <div *ngIf="responseMessage!=''"  class="line line-robot" >
+      </ng-container>
+      <div *ngIf="responseMessage!=''"  class="line line-robot" [class.hidden-text]="!isRobotVisible" >
         <span class="line-text-robot">
           <span [innerHTML]="toHtml(responseMessage,'R')"></span>
         </span>      
@@ -88,6 +90,9 @@
       <div class="vertical">
         <button class="button-action" (click)=" sumary_conversation()" matTooltip="Summary">
           <span class="material-icons">summarize</span>
+        </button>
+        <button class="button-action" (click)="toggleRobotVisibility()" matTooltip="Toggle Robot Messages Visibility">
+          <span class="material-icons">{{ isRobotVisible ? 'visibility_off' : 'visibility' }}</span>
         </button>
       </div>
     </div>

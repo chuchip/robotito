@@ -52,6 +52,7 @@ export class ConversationComponent {
   ttsArray:Response[]=[]
   ttsStart=false
   isSidebarOpen = false;
+  isRobotVisible: boolean = true;
   
   clicksWindow=0;
   conversationHistory:conversationHistoryDTO[]=[];
@@ -665,6 +666,10 @@ export class ConversationComponent {
       this.getConversationsHistory()
     }
     this.isSidebarOpen = !this.isSidebarOpen;
+  }
+
+  toggleRobotVisibility() {
+    this.isRobotVisible = !this.isRobotVisible;
   }
   async getConversationsHistory()
   {

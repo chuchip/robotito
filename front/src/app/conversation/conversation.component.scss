@@ -117,6 +117,12 @@
   word-wrap: break-word;
 }
 
+.line.hidden-text .line-text-robot,
+.line.hidden-text .line-text-human {
+  color: inherit;
+  opacity: 0;
+}
+
 .input
 {    
   display: flex;    
