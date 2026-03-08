@@ -1,0 +1,104 @@
+.avatar {
+  position: relative;
+  width: 50px;
+  height: 85px;
+  z-index: 100;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+/* small antenna on top */
+.antenna {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  width: 4px;
+  height: 20px;
+  background: #666;
+  transform: translateX(-50%);
+  border-radius: 2px;
+}
+
+/* simple talking animation - mouth opens/closes */
+@keyframes mouth-talk {
+  0%, 100% { height: 4px; }
+  50% { height: 12px; }
+}
+
+.avatar.talking .mouth {
+  animation: mouth-talk 0.3s infinite;
+}
+
+/* eyebrows move up slightly when talking */
+@keyframes brow-talk {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+.avatar.talking .eyebrow {
+  animation: brow-talk 0.5s ease-in-out infinite;
+}
+
+/* eyes move left-right periodically */
+@keyframes eye-scan {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  50% { transform: translateX(2px); }
+  75% { transform: translateX(-2px); }
+}
+
+.face {
+  width: 100%;
+  height: 100%;
+  background: #ccc; /* metallic color */
+  border-radius: 8px;
+  position: relative;
+  box-shadow: 0 0 4px rgba(0,0,0,.3);
+  border: 2px solid #888;
+}
+
+.eyebrow {
+  width: 20px;
+  height: 4px;
+  background: #333;
+  position: absolute;
+  top: 20%;
+  border-radius: 2px;
+}
+
+.eye {
+  width: 14px;
+  height: 14px;
+  background: #333;
+  border-radius: 50%;
+  position: absolute;
+  top: 30%;
+  /* eyes stay fixed by default */
+}
+
+/* eyes only move slightly when talking */
+@keyframes eye-scan {
+  0%,100% { transform: translateX(0); }
+  50% { transform: translateX(1px); }
+}
+
+.avatar.talking .eye {
+  animation: eye-scan 1.5s ease-in-out infinite;
+}
+
+.eyebrow.left { left: 15%; }
+.eyebrow.right { right: 15%; }
+.eye.left { left: 20%; }
+.eye.right { right: 20%; }
+
+.mouth {
+  width: 30px;
+  height: 4px;
+  position: absolute;
+  bottom: 24%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 2px solid #444;
+  border-radius: 2px;
+  background: #222;
+}
