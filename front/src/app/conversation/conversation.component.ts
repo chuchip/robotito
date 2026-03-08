@@ -4,6 +4,7 @@ import { SoundRecordingComponent } from '../sound-recording/sound-recording.comp
 import { RatingPhraseComponent } from '../rating-phrase/rating-phrase.component';
 import {LoadingComponent} from "../loading/loading.component"
 import { SummaryComponent } from '../summary/summary.component';
+import { AvatarComponent } from '../avatar/avatar.component';
 import { ApiBackService } from '../services/api-back.service';
 import { SoundService } from '../services/sound.service';
 import { FormsModule } from '@angular/forms';
@@ -15,6 +16,8 @@ import { marked } from 'marked';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSliderModule } from '@angular/material/slider';
 import { PersistenceService } from '../services/persistence.service';
+import { AvatarService } from '../services/avatar.service';
+import { Observable } from 'rxjs';
 import { contextDTO } from '../model/context.dto';
 import { conversationHistoryDTO } from '../model/conversationHistory.dto';
 import { Router } from '@angular/router';
@@ -23,7 +26,7 @@ import { RatingPhrase } from '../model/ratingPhrase';
   selector: 'app-conversation',   
   imports: [CommonModule, MatTooltipModule, MatCheckboxModule, FormsModule,
     MatButtonModule, MatIconModule, SoundPlayingComponent, SoundRecordingComponent,
-    MatSliderModule, LoadingComponent,SummaryComponent,RatingPhraseComponent], 
+    MatSliderModule, LoadingComponent,SummaryComponent,RatingPhraseComponent,AvatarComponent], 
   templateUrl: './conversation.component.html',
   styleUrls: ['./conversation.component.scss']
 })
@@ -33,6 +36,7 @@ import { RatingPhrase } from '../model/ratingPhrase';
  */
 export class ConversationComponent {
   selectedText: string = '';
+  human_voice='am_fenrir'
   isLoading=false;
   pressEscape=false
   xPos = 0
@@ -43,7 +47,8 @@ export class ConversationComponent {
   playbackSpeed=1
   isPlayingSound=false
   semaphoreStopAudio:number=0
-  private readonly backendUrl = 'http://localhost:5000'; 
+  avatarTalking$: Observable<boolean> = new Observable();
+  private readonly backendUrl = 'http://localhost:5000';
   ttsArray:Response[]=[]
   ttsStart=false
   isSidebarOpen = false;
@@ -86,8 +91,9 @@ export class ConversationComponent {
   languageOptions:{label:string, value:string}[] = []
   voiceOptions:{language:string, label:string,gender:string}[] = []
    
-  constructor(private router: Router,public sound: SoundService,public back: ApiBackService,public persistence: PersistenceService) {
+  constructor(private router: Router,public sound: SoundService,public back: ApiBackService,public persistence: PersistenceService,private avatarService: AvatarService) {
     this.isLoading=true
+    this.avatarTalking$ = this.avatarService.talking$;
     if (persistence.getAuthorization()=='')
     {
        this.router.navigate(['/login']); 
@@ -296,10 +302,14 @@ export class ConversationComponent {
       setTimeout(() => this.scrollToBottom(), 0)
     }
   }
-  async speak_aloud_response(event:MouseEvent,i:number){
+  async speak_aloud_response(event:MouseEvent,i:number,type_line:string){
+    var voice=this.selectVoice
+    if (type_line =="H") {
+      voice=this.human_voice
+    } 
     if (this.selectedText.trim()!='')
     {
-      this.speakAloud(this.selectedText);
+      this.speakAloud(this.selectedText,voice);
       return;
     }
     const cleanText=this.back.cleanText( this.chatHistory[i].msgClean)
@@ -318,7 +328,7 @@ export class ConversationComponent {
       if (pFin!=-1) {
         txt+=cleanText.substring(pIni,pFin)
         if (txt.length>150){                      
-          const response=await this.back.text_to_sound(txt)      
+          const response=await this.back.text_to_sound(txt,voice)      
           this.ttsArray.push(response)
           txt=""
           if (swStart)
@@ -334,7 +344,7 @@ export class ConversationComponent {
     if (this.responseMessage.length>pFin) {              
       txt+=cleanText.substring(pIni)
       if (txt.length>0) {        
-        const response=await this.back.text_to_sound(txt)      
+        const response=await this.back.text_to_sound(txt,voice)      
         this.ttsArray.push(response)
         if (swStart)
         {
@@ -412,13 +422,16 @@ export class ConversationComponent {
       this.conversationElement.nativeElement.scrollTop = this.conversationElement.nativeElement.scrollHeight;
     }
   }
-  async speakAloud(inputText:string){    
+  async speakAloud(inputText:string,voice:string="") {    
     this.stopAudio()
     this.showSoundLoading() 
+    if (voice=="" )  {
+      voice=this.selectVoice
+    }
     if (inputText.trim()!='') {      
       if (this.textSpeakAloud!=inputText ) {
         this.textSpeakAloud=inputText
-        this.responseTextToSound= await this.back.text_to_sound(this.back.cleanText(inputText));
+        this.responseTextToSound= await this.back.text_to_sound(this.back.cleanText(inputText),voice);
         console.log("1 speakAloud . playing sound false")
         this.isPlayingSound=false
       }  
@@ -458,10 +471,14 @@ export class ConversationComponent {
     this.audio = new Audio(this.audioUrl);
     this.audio.playbackRate = this.playbackSpeed; 
     this.isPlayingSound=true;
+    // start talking animation
+    this.avatarService.setTalking(true);
     this.audio.play();
     this.audio.onended = () => {
       // Add your custom logic here
       this.isPlayingSound = false; // Example: Reset the playing state
+      // stop talking animation
+      this.avatarService.setTalking(false);
     };
   }
 
@@ -478,6 +495,8 @@ export class ConversationComponent {
     this.isPlayingSound=true  
   }
   stopAudio(): void {
+    // ensure avatar stops talking when audio is killed
+    this.avatarService.setTalking(false);
     if (this.sound.isRecording && ! this.sound.chating) {           
       this.sound.stopRecording()
     }
@@ -692,7 +711,7 @@ export class ConversationComponent {
       if (event.key === 'F4') {        
         this.textSpeakAloud=""
         event.preventDefault(); // Prevent default behavior if needed        
-        this.speakAloud(text);
+        this.speakAloud(text,this.human_voice);
         this.focusInputElement();
       }
   }

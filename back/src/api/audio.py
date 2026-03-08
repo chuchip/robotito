@@ -49,7 +49,7 @@ else:
         { "language": "en-EU", "label": "af_bella" ,"gender":"Female"},
         { "language": "en-EU", "label": "af_sky" ,"gender":""},
         { "language": "en-EU", "label": "am_michael","gender":"Male" },
-        { "language": "en-EU", "label": "am_fenrir","gender":"" },
+        { "language": "en-EU", "label": "am_fenrir","gender":"Male" },
         { "language": "en-EU", "label": "af_kore" ,"gender":""},
         { "language": "en-EU", "label": "am_puck","gender":"Male" },
         { "language": "en-GB", "label": "bf_emma","gender":"Female" },
@@ -96,11 +96,14 @@ async def tts():
     data = await request.get_json()  # Get JSON data from the request body
     text = data.get('text')
     uuid=request.headers.get("uuid")
+    voice_name=memory.getMemory(uuid).getAudioData().voice_name
+    if data.get('voice_name') is not None:        
+        voice_name = data.get('voice_name') if data.get('voice_name') != '' else voice_name
     audioData=memory.getMemory(uuid).getAudioData()
     if text=='':
         return Response(None, mimetype='audio/webm')  
     #logging.info(f"In tts {text}")
-    webm_file = ai.getAudioFromText(text,audioData,uuid)
+    webm_file = ai.getAudioFromText(text,audioData,uuid,voice_name)
 
     def generate():
         with open(webm_file, 'rb') as file:  # Open file in binary mode

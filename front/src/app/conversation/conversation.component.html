@@ -32,7 +32,7 @@
     <div #conversation class="conversation" (mouseup)="getSelectedText()" (keyup)="getSelectedText()">
       <div [ngClass]="line_chat.type=='H'? 'line-human':'line-robot'" class="line" *ngFor="let line_chat of chatHistory; let i = index">
         <div class="buttons-conversation">
-          <button (click)="speak_aloud_response($event,i)"> <span class="material-icons">volume_up</span></button>
+          <button (click)="speak_aloud_response($event,i,line_chat.type)"> <span class="material-icons">volume_up</span></button>
           <span class="material-icons" style="color: blue">{{line_chat.type=='H'?"face":"smart_toy" }}</span>
         </div>
         <button *ngIf="line_chat.type=='H'" class="teacher-button"  [ngStyle]="{'background-color': getBackgroundColor(i)}"
@@ -51,6 +51,7 @@
     <div class="spacer"></div>
     <!-- Input and controls -->
     <div #input class='input' >
+      <app-avatar [talking]="(avatarTalking$ | async) || false" class="input-avatar"></app-avatar>
       <div class="vertical">
         <button class="button-action" (click)="toggleSidebar()" matTooltip="Show Conversations list">
           <span class="material-icons">{{ isSidebarOpen ? 'close' : 'menu' }}</span>

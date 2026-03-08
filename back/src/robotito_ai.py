@@ -208,7 +208,7 @@ def configOpenAI(temperature=0.8):
 
   return model
 
-def configGeminiAI(model="gemini-2.0-flash-lite",temperature=0.6): 
+def configGeminiAI(model="gemini-2.5-flash-lite",temperature=0.6): 
   model = ChatGoogleGenerativeAI(
     model=model,
     temperature=temperature,
@@ -278,16 +278,18 @@ def getTextFromAudio(audioData:memory.AudioData,filepath):
     text=sound_openai.stt_api_whisper(filepath)
   return text
    #text = ai.testWhisper(filepath)
-def getAudioFromKokoro(text,audioData,uuid): 
+def getAudioFromKokoro(text,audioData,uuid,voice_name:str=""): 
   import soundfile as sf
   import numpy as np
   import subprocess
+  if (voice_name == ""):
+      voice_name=audioData.voice_name
   if audioData.kpipeline is None:
       from kokoro import KPipeline
       audioData.kpipeline = KPipeline(lang_code=audioData.language)
   generator = audioData.kpipeline(
           text, 
-          voice= audioData.voice_name,
+          voice= voice_name,
           speed=1, split_pattern=r'\n+'
       )    
 
@@ -309,15 +311,15 @@ def getAudioFromKokoro(text,audioData,uuid):
   return webm_file
 
 # Convert  text to audio en webm format
-def getAudioFromText(text,audioData,uuid):
+def getAudioFromText(text,audioData,uuid,voice_name):
   if tts=="kokoro":
-     fileOutput= getAudioFromKokoro(text,audioData,uuid)
+     fileOutput= getAudioFromKokoro(text,audioData,uuid,voice_name)
   elif tts=="gemini":
      import sound_google
-     fileOutput= sound_google.getAudioFromText(audioData,text,uuid)
+     fileOutput= sound_google.getAudioFromText(audioData,text,uuid,voice_name)
   else:
     import sound_openai
-    fileOutput= sound_openai.getAudioFromText(audioData,text,uuid)
+    fileOutput= sound_openai.getAudioFromText(audioData,text,uuid,voice_name)
    
   return fileOutput
 def set_language(audioData,languageInput):

@@ -9,7 +9,7 @@ import { CommonModule } from "@angular/common";
   selector: 'app-root',
   imports: [RouterOutlet,ErrorMessageComponent,CommonModule ],
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.scss']
 })
 export class AppComponent  implements OnInit {
   title = 'routing-app';

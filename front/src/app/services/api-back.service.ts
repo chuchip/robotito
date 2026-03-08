@@ -11,11 +11,13 @@ export class ApiBackService {
 
   constructor(private http: HttpClient,private persistence:PersistenceService ) {}
 
-  async text_to_sound(inputText:string) : Promise<Response>  {  
+  async text_to_sound(inputText:string,voice:string="") : Promise<Response>  {  
+    var json_voice={text: inputText,user:this.persistence.getUser(),voice_name:voice }
+  
     const response = await fetch(`${this.backendUrl}/audio/tts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'uuid': this.persistence.uuid, "Authorization": this.persistence.getAuthorization() },
-      body: JSON.stringify({ text: inputText,user:this.persistence.getUser() }),
+      body: JSON.stringify(json_voice),
     });
    return response
   }

@@ -48,6 +48,7 @@ Example:
 > docker run --name robotito_db  -p5432:5432  -e POSTGRES_USER=robotito -e POSTGRES_PASSWORD=secret  -d postgres
 ## Front:
 You have the front in the directory 'front':
+
 It's made with Angular so you will need node 19:
 
 ### Dependencies

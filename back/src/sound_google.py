@@ -33,13 +33,13 @@ def getTextFromAudio(audioData:memory.AudioData,file_path):
       text=text+ result.alternatives[0].transcript
   return text
 
-def getAudioFromText(audioData:memory.AudioData,text,uuid):
+def getAudioFromText(audioData:memory.AudioData,text,uuid,voice_name):
   ssml_output = text_to_ssml(text)
     # Set the text input
   synthesis_input = texttospeech.SynthesisInput(ssml=ssml_output)
   voice = texttospeech.VoiceSelectionParams(
         language_code=audioData.language,
-        name=audioData.voice_name,
+        name=voice_name,
     )
     
     # Set audio configuration
