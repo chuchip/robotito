@@ -57,6 +57,7 @@ quart-db==0.9.0
 tenacity==9.0.0
 tiktoken==0.9.0
 tqdm==4.67.1
+trafilatura==2.0.0
 typing-inspection==0.4.0
 typing_extensions==4.13.0
 urllib3==2.3.0

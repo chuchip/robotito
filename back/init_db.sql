@@ -37,5 +37,11 @@ CREATE TABLE IF NOT EXISTS conversation_lines (
     time_msg timestamp DEFAULT CURRENT_TIMESTAMP);
  
 
+CREATE TABLE IF NOT EXISTS conversation_notes (
+    conversation_id TEXT PRIMARY KEY REFERENCES conversation(id) ON DELETE CASCADE,
+    notes TEXT,
+    last_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 INSERT INTO users ( user_id,name,password,language,voice,role,max_length_answer) VALUES ('default','Guest','secret','b','bm_fable','admin',150);
 INSERT INTO context ( user_id,label,context, remember)  VALUES ('default','default','You are my friend Robotito','')

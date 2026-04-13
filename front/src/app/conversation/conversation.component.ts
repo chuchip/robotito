@@ -36,7 +36,7 @@ import { RatingPhrase } from '../model/ratingPhrase';
  */
 export class ConversationComponent {
   selectedText: string = '';
-  human_voice='am_fenrir'
+  human_voice='bf_emma'
   isLoading=false;
   pressEscape=false
   xPos = 0
@@ -89,6 +89,7 @@ export class ConversationComponent {
   selectLanguage: string = 'a';
   selectLanguageDesc:string="American English"
   selectVoice: string = 'af_heart';  
+  contextUrl: string = '';
   languageOptions:{label:string, value:string}[] = []
   voiceOptions:{language:string, label:string,gender:string}[] = []
    
@@ -132,6 +133,7 @@ export class ConversationComponent {
           this.setDefaultContext()
         }
         this.context.maxLengthAnswer=(await this.back.getMaxLengthAnswer()).maxLength
+        await this.loadContextUrl()
         this.responseMessage=""
         this.isLoading=false
         })
@@ -659,6 +661,34 @@ export class ConversationComponent {
     }, 3000);
     
   }
+  async loadContextUrl() {
+    try {
+      const response = await this.back.contextGetUrl();
+      this.contextUrl = response?.url || '';
+    } catch (error) {
+      this.contextUrl = '';
+    }
+  }
+
+  async contextUrlSend() {
+    const url = this.contextUrl.trim();
+    if (url === '') {
+      return;
+    }
+    this.isLoading = true;
+    const response = await this.back.contextSetUrl(url);
+    this.isLoading = false;
+    this.put_message(response);
+    await this.loadContextUrl();
+  }
+
+  async contextUrlClear() {
+    this.isLoading = true;
+    const response = await this.back.contextClearUrl();
+    this.contextUrl = '';
+    this.isLoading = false;
+    this.put_message(response);
+  }
 
   async toggleSidebar() {
     if (! this.isSidebarOpen)
@@ -816,6 +846,13 @@ export class ConversationComponent {
   {
     this.clicksWindow=0
     this.persistence.showSummary=true         
+  }
+
+  openNotes()
+  {
+    if (!this.conversationId) return;
+    this.persistence.saveToLocalStorage();
+    window.open(`/notes/${this.conversationId}`, 'robotito_notes', 'width=680,height=750,resizable=yes');
   }
 
   getBackgroundColor(posHistory:number): string {

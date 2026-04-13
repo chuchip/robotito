@@ -60,6 +60,13 @@ class ConversationLines(db.Model):
     time_msg = Column(DateTime, default=func.now())
     conversation = relationship("Conversation", back_populates="lines")
 
+class ConversationNotes(db.Model):
+    __tablename__ = 'conversation_notes'
+    conversation_id = Column(Text, ForeignKey('conversation.id', ondelete='CASCADE'), primary_key=True)
+    notes = Column(Text)
+    last_update = Column(DateTime, default=func.now())
+    conversation = relationship("Conversation")
+
 async def create_tables():
     """
     Creates the tables in the PostgreSQL database.

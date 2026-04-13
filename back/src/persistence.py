@@ -117,6 +117,24 @@ async def updateConversationContext(conversation_id,context_id):
         return
     sql="update conversation set context_id=:context_id where id = :id "
     await g.connection.execute(sql,{"idContext":context_id,"id": conversation_id})
+
+# Notes
+async def get_notes(conversation_id: str):
+    sql = "SELECT notes FROM conversation_notes WHERE conversation_id = :conversation_id"
+    row = await g.connection.fetch_one(sql, {"conversation_id": conversation_id})
+    if row is None:
+        return None
+    return row["notes"]
+
+async def save_notes(conversation_id: str, notes: str):
+    existing = await get_notes(conversation_id)
+    from datetime import datetime
+    now = datetime.now()
+    if existing is None:
+        sql = "INSERT INTO conversation_notes (conversation_id, notes, last_update) VALUES (:conversation_id, :notes, :last_update)"
+    else:
+        sql = "UPDATE conversation_notes SET notes = :notes, last_update = :last_update WHERE conversation_id = :conversation_id"
+    await g.connection.execute(sql, {"conversation_id": conversation_id, "notes": notes, "last_update": now})
     
     return conversation_id
 async def conversation_get_by_id(id):

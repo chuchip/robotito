@@ -1,0 +1,129 @@
+.notes-window {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  width: 80%;
+  max-width: 600px;
+  max-height: 70vh;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  border-top: 3px solid black;
+  background-color: rgb(174, 180, 173);
+  padding: 3px;
+  border-radius: 4px;
+}
+
+.notes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgb(80, 120, 143);
+}
+
+.notes-title {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.notes-body {
+  flex: 1;
+  padding: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.notes-textarea {
+  flex: 1;
+  width: 100%;
+  min-height: 250px;
+  resize: vertical;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.notes-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-top: 1px solid rgb(80, 120, 143);
+}
+
+.save-message {
+  font-size: 13px;
+  color: green;
+}
+
+.close-btn, .save-btn {
+  padding: 6px 14px;
+  font-size: 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.close-btn {
+  background-color: #f44336;
+  color: white;
+}
+
+.save-btn {
+  background-color: #4caf50;
+  color: white;
+}
+
+.save-btn:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.toggle-btn {
+  padding: 6px 14px;
+  font-size: 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background-color: #1976d2;
+  color: white;
+}
+
+.notes-preview {
+  flex: 1;
+  min-height: 250px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 8px 12px;
+  background: white;
+  overflow-y: auto;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.6;
+
+  h1, h2, h3, h4, h5, h6 { margin: 0.5em 0; font-weight: bold; }
+  h1 { font-size: 1.5em; }
+  h2 { font-size: 1.3em; }
+  h3 { font-size: 1.1em; }
+  ul, ol { padding-left: 1.5em; }
+  code { background: #f0f0f0; padding: 2px 4px; border-radius: 3px; font-family: monospace; }
+  pre { background: #f0f0f0; padding: 8px; border-radius: 4px; overflow-x: auto; }
+  blockquote { border-left: 3px solid #aaa; margin: 0; padding-left: 12px; color: #555; }
+  a { color: #1976d2; }
+}

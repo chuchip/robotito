@@ -74,3 +74,17 @@ def current_history():
   })
 
 
+@conversation_bp.route('/id/<string:id>/notes', methods=['GET'])
+async def conversation_get_notes(id):
+  notes = await db.get_notes(id)
+  return jsonify({'notes': notes if notes is not None else ''})
+
+
+@conversation_bp.route('/id/<string:id>/notes', methods=['PUT'])
+async def conversation_save_notes(id):
+  data = await request.get_json()
+  notes = data.get('notes', '')
+  await db.save_notes(id, notes)
+  return jsonify({'message': 'Notes saved', 'notes': notes})
+
+

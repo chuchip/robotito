@@ -55,6 +55,8 @@ class memoryDTO:
         self.max_length_answer=get_max_length_answer()
         self.context=None
         self.audioData=AudioData()
+        self.url_context:str=None
+        self.url_source:str=None
     def getMaxLengthAnswer(self):
         return self.max_length_answer
     def setMaxLengthAnswer(self,max_lemgth:int):
@@ -77,7 +79,9 @@ class memoryDTO:
         self.session=None
         self.chat_history.clear()
         self.context=None
-        self.audioData=AudioData()       
+        self.audioData=AudioData()
+        self.url_context=None
+        self.url_source=None       
     def getUser(self):
         return self.user
     def setUser(self,user:str):
@@ -97,7 +101,17 @@ class memoryDTO:
     def clearChatHistory(self):
         self.chat_history.clear()
     def clearContext(self):
-        self.context=None()   
+        self.context=None()
+    def getUrlContext(self):
+        return self.url_context
+    def setUrlContext(self, url_context:str, url_source:str):
+        self.url_context=url_context
+        self.url_source=url_source
+    def getUrlSource(self):
+        return self.url_source
+    def clearUrlContext(self):
+        self.url_context=None
+        self.url_source=None
     def getUuid(self):    
         return self.uuid
 

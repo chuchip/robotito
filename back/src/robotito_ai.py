@@ -100,6 +100,11 @@ async def call_llm(state) :
         else:
           msgs.append(HumanMessage(f"Remember: {limit_words}"))  
       
+      url_context = memoryData.getUrlContext()
+      if url_context:
+        url_source = memoryData.getUrlSource()
+        context_text += f"\n\nUse the following web page content as reference to answer questions. Source: {url_source}\n---\n{url_context}\n---"
+
       chat_prompt =  prompt.format_messages(
         system_msg=context_text,
         context=[], 

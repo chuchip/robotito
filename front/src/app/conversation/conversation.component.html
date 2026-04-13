@@ -91,6 +91,9 @@
         <button class="button-action" (click)=" sumary_conversation()" matTooltip="Summary">
           <span class="material-icons">summarize</span>
         </button>
+        <button class="button-action" (click)="openNotes()" matTooltip="Notes">
+          <span class="material-icons">note_alt</span>
+        </button>
         <button class="button-action" (click)="toggleRobotVisibility()" matTooltip="Toggle Robot Messages Visibility">
           <span class="material-icons">{{ isRobotVisible ? 'visibility_off' : 'visibility' }}</span>
         </button>
@@ -143,6 +146,17 @@
           (keydown.esc)="showLanguageOptions=false" [(ngModel)]="this.context.text" placeholder="Type an context..."></textarea>
         <textarea #context_remember class="context_textarea" (keydown.enter)="contextRememberSend($event)"
           (keydown.esc)="showLanguageOptions=false" [(ngModel)]="this.context.remember" placeholder="Type something the AI has to remember ..."></textarea>
+        <div class="configuration_horizontal context-url-line">
+          <label for="context_url">Context URL:</label>
+          <input id="context_url" type="text" [(ngModel)]="contextUrl" placeholder="https://example.com/article"
+            (keydown.enter)="contextUrlSend(); $event.preventDefault()">
+          <button (click)="contextUrlSend()" matTooltip="Load URL as context">
+            <span class="material-icons">link</span>
+          </button>
+          <button (click)="contextUrlClear()" matTooltip="Clear URL context">
+            <span class="material-icons">link_off</span>
+          </button>
+        </div>
       </div>
       <div class="configuration_line">
         <div>Actual Language: <span class="configuration_line_text"><input type="text"

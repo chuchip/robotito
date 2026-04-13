@@ -2,6 +2,8 @@ from quart import Blueprint,  request, jsonify
 import logging
 import persistence as db
 import memory
+import trafilatura
+import asyncio
 
 context_bp = Blueprint('context', __name__)
 
@@ -106,4 +108,42 @@ def context_current_get():
   logger_.info("GET Current Context ")  
   context = memory.getMemory(request.headers.get("uuid")).getContext()
   return jsonify(context.__dict__)
+
+@context_bp.route('/url', methods=['PUT'])
+async def context_set_url():
+  data = await request.get_json()
+  url = data.get("url")
+  if not url:
+    return jsonify({'status': 'KO', 'message': 'URL is required'}), 400
+
+  mem = memory.getMemory(request.headers.get("uuid"))
+  try:
+    downloaded = await asyncio.to_thread(trafilatura.fetch_url, url)
+    if downloaded is None:
+      return jsonify({'status': 'KO', 'message': 'Could not fetch the URL'}), 400
+    text = trafilatura.extract(downloaded, include_comments=False, include_tables=True)
+    if not text:
+      return jsonify({'status': 'KO', 'message': 'Could not extract content from the page'}), 400
+    mem.setUrlContext(text, url)
+    logger_.info(f"URL context set from: {url} ({len(text)} chars)")
+    return jsonify({'status': 'OK', 'message': f'URL content loaded ({len(text)} chars)', 'url': url, 'length': len(text)})
+  except Exception as e:
+    logger_.error(f"Error fetching URL {url}: {e}")
+    return jsonify({'status': 'KO', 'message': f'Error fetching URL: {str(e)}'}), 500
+
+@context_bp.route('/url', methods=['DELETE'])
+def context_clear_url():
+  logger_.info("Clearing URL context")
+  mem = memory.getMemory(request.headers.get("uuid"))
+  mem.clearUrlContext()
+  return jsonify({'status': 'OK', 'message': 'URL context cleared'})
+
+@context_bp.route('/url', methods=['GET'])
+def context_get_url():
+  mem = memory.getMemory(request.headers.get("uuid"))
+  url_source = mem.getUrlSource()
+  url_context = mem.getUrlContext()
+  if url_context is None:
+    return jsonify({'status': 'OK', 'url': None, 'length': 0})
+  return jsonify({'status': 'OK', 'url': url_source, 'length': len(url_context)})
   

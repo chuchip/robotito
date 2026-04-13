@@ -139,6 +139,30 @@ async getLastUser(): Promise<any> {
       throw error;
     }
   }
+  async contextSetUrl(url: string): Promise<any> {
+    try {
+      return await firstValueFrom(this.http.put(`${this.backendUrl}/context/url`, { url }));
+    } catch (error) {
+      console.error('context_set_url failed!:', error);
+      throw error;
+    }
+  }
+  async contextGetUrl(): Promise<any> {
+    try {
+      return await firstValueFrom(this.http.get(`${this.backendUrl}/context/url`));
+    } catch (error) {
+      console.error('context_get_url failed!:', error);
+      throw error;
+    }
+  }
+  async contextClearUrl(): Promise<any> {
+    try {
+      return await firstValueFrom(this.http.delete(`${this.backendUrl}/context/url`));
+    } catch (error) {
+      console.error('context_clear_url failed!:', error);
+      throw error;
+    }
+  }
 
   async conversation_user():  Promise<any> {    
     try {
@@ -253,5 +277,24 @@ async getLastUser(): Promise<any> {
       console.error('getMaxLengthAnswer failed!:', error);
       throw error;
     }  
-  }   
+  }
+
+  async getNotes(conversationId: string): Promise<string> {
+    try {
+      const result: any = await firstValueFrom(this.http.get(`${this.backendUrl}/conversation/id/${conversationId}/notes`));
+      return result.notes ?? '';
+    } catch (error) {
+      console.error('getNotes failed!:', error);
+      throw error;
+    }
+  }
+
+  async saveNotes(conversationId: string, notes: string): Promise<any> {
+    try {
+      return await firstValueFrom(this.http.put(`${this.backendUrl}/conversation/id/${conversationId}/notes`, { notes }));
+    } catch (error) {
+      console.error('saveNotes failed!:', error);
+      throw error;
+    }
+  }
 }

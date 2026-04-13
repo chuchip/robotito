@@ -18,26 +18,28 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  height: 98vh;
+  height: 100vh;
   width: 95vw;
   transition: margin-left 0.3s ease;
+  min-height: 0; /* For proper flex child overflow handling */
+  padding-bottom: 90px; /* Reserve space for fixed input */
 }
 .spacer {
-  flex: 1; 
+  flex: 1;   
 }
 .conversation {
-  max-height: 92%;  
-  flex: 0 0 auto;
+  flex: 1;
+  min-height: 0; /* allow flex child to shrink correctly */
   overflow-y: auto;   /* Enables vertical scrolling */
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
   align-items: baseline;
   //height: 100vh;
-  margin-top: 5px;
+  margin-top: 5px;  
   border: 2px solid #ccc;
   padding-top: 10px;
-  padding-bottom: 10px;
+  padding-bottom: 15px;
   padding-left: 3px;
   padding-right: 3px;
   border-radius: 8px;
@@ -130,13 +132,12 @@
   align-items: flex-start;
   justify-content: center;
   position: fixed;
-  background-color: #333;
-  width:100%;
+  bottom: 5px;
+  left: 0;
+  width: 100%;
+  height: 72px;
   row-gap: 5px;
   max-width: 100%; 
-  bottom: 2px;
-  left: 0;
-  height:100px;
   padding-top: 5px;
   border-top: 3px solid black; /* Adjust thickness and color */
   border-radius: 8px;
@@ -153,7 +154,7 @@
 }
 .input_text  textarea
 {
-  height: 55px;
+  height: 60px;
   font-size: 1rem;
   font-family: 'Google Sans,Helvetica Neue,sans-serif';
 }
@@ -302,6 +303,12 @@ mat-checkbox .mat-checkbox-label {
   max-width: 50%;
   margin-left: 10px;
 }
+.context-url-line {
+  margin-top: 6px;
+}
+.context-url-line input {
+  max-width: 70%;
+}
 .vertical
 {
   display: flex;
@@ -338,7 +345,7 @@ mat-checkbox .mat-checkbox-label {
 .sidebar {
   flex: 0 0 auto;
   overflow-y: auto;
-  height: 88%;
+  height: calc(100vh - 90px);
   max-width: 22vw;
   background-color: #e2e9ec;
   color: rgb(6, 1, 17);  

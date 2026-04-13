@@ -7,6 +7,7 @@ export class PersistenceService {
   public uuid:string="";
   public clearLogin=false  
   public showSummary=false;
+  public showNotes=false;
 
   constructor() {
     this.uuid = this.generateUuid();
@@ -85,5 +86,20 @@ export class PersistenceService {
 
   public deleteCookie(cookieName:string) {
     this.setCookie({ name: cookieName, value: '', expireDays: -1 });
+  }
+
+  saveToLocalStorage() {
+    localStorage.setItem('rbt_uuid', this.uuid);
+    localStorage.setItem('rbt_authorization', this.getAuthorization());
+    localStorage.setItem('rbt_user', this.getUser());
+  }
+
+  restoreFromLocalStorage() {
+    const uuid = localStorage.getItem('rbt_uuid');
+    const authorization = localStorage.getItem('rbt_authorization');
+    const user = localStorage.getItem('rbt_user');
+    if (uuid) this.uuid = uuid;
+    if (authorization) this.setAuthorization(authorization);
+    if (user) this.setUser(user);
   }
 }
