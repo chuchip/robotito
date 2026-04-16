@@ -729,14 +729,13 @@ export class ConversationComponent {
     this.numberLine=i
     this.isLoading=false
   }
-  async hystoryDelete(id: string)
+  async hystoryDelete(event: Event, id: string)
   {
+    event.stopPropagation();
     this.isLoading=true
     const response=await this.back.conversation_delete_by_id(id);
     this.put_message(response)
     this.getConversationsHistory()
-    
-    setTimeout(() => this.clearConversation() , 200)    
     this.isLoading=false
   }
   getFormattedDate(dateString: string): Date {

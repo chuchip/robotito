@@ -139,6 +139,12 @@ async def get_notes(conversation_id: str):
     return row["notes"]
 
 async def save_notes(conversation_id: str, notes: str):
+    # Check if conversation exists
+    sql_check = "SELECT id FROM conversation WHERE id = :id"
+    row = await g.connection.fetch_one(sql_check, {"id": conversation_id})
+    if row is None:
+        raise ValueError(f"Conversation {conversation_id} does not exist")
+    
     existing = await get_notes(conversation_id)
     from datetime import datetime
     now = datetime.now()

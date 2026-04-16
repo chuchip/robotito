@@ -33,10 +33,12 @@ CREATE TABLE IF NOT EXISTS context (
 ALTER TABLE conversation ADD COLUMN IF NOT EXISTS url_source TEXT;
 CREATE TABLE IF NOT EXISTS conversation_lines (
     id text ,
-    conversation_id text,
+    conversation_id text REFERENCES conversation(id) ON DELETE CASCADE,
     type TEXT,
     msg TEXT,
     time_msg timestamp DEFAULT CURRENT_TIMESTAMP);
+ALTER TABLE conversation_lines DROP CONSTRAINT IF EXISTS conversation_lines_conversation_id_fkey;
+ALTER TABLE conversation_lines ADD CONSTRAINT conversation_lines_conversation_id_fkey FOREIGN KEY (conversation_id) REFERENCES conversation(id) ON DELETE CASCADE;
  
 
 CREATE TABLE IF NOT EXISTS conversation_notes (

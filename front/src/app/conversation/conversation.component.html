@@ -20,7 +20,7 @@
       <span class="sidebar_line" [matTooltipClass]="'custom-tooltip'"
         matTooltip="{{getFormattedDate(line.final_date) | date: 'dd/MMM HH:mm'}}"
         (click)="historyChoose(line.id,line.idContext)">
-        <button (click)="hystoryDelete(line.id)" matTooltip="Remove Conversation"> <span
+        <button (click)="hystoryDelete($event, line.id)" matTooltip="Remove Conversation"> <span
             class="material-icons">remove_circle</span></button>
         {{ line.name}}
       </span>

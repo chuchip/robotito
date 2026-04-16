@@ -12,7 +12,7 @@ logger_=memory.getLogger()
 @conversation_bp.route('/id/<string:id>', methods=['GET'])
 async def conversation_getId(id):
   import robotito_ai as ai
-  logging.info("GET  conversation with id: ",id)
+  logging.info(f"GET  conversation with id: {id}")
   uuid=request.headers.get("uuid")
   mem=memory.getMemory(uuid)
   data = await db.conversation_get_by_id(id)
@@ -38,9 +38,9 @@ async def conversation_getId(id):
 
 
 @conversation_bp.route('/id/<string:id>', methods=['DELETE'])
-def conversation_deleteId(id): 
-  logging.info("GET  conversation with id: ",id)
-  db.conversation_delete_by_id(id)  
+async def conversation_deleteId(id): 
+  logging.info(f"DELETE conversation with id: {id}")
+  await db.conversation_delete_by_id(id)  
   return jsonify({'message': f'Conversation with id {id} DELETED!', 'conversation': id})
 
 
@@ -75,7 +75,7 @@ async def conversation_init():
 
 @conversation_bp.route('/user/<string:user>', methods=['GET'])
 async def conversation_getUser(user): 
-  logging.info("GET All conversations of the user: ",user)
+  logging.info(f"GET All conversations of the user: {user}")
 
   data = await db.conversation_get_list(user)
   
@@ -102,7 +102,10 @@ async def conversation_get_notes(id):
 async def conversation_save_notes(id):
   data = await request.get_json()
   notes = data.get('notes', '')
-  await db.save_notes(id, notes)
-  return jsonify({'message': 'Notes saved', 'notes': notes})
+  try:
+    await db.save_notes(id, notes)
+    return jsonify({'message': 'Notes saved', 'notes': notes})
+  except ValueError as e:
+    return jsonify({'message': str(e)}), 404
 
 

@@ -55,7 +55,7 @@ class Conversation(db.Model):
 class ConversationLines(db.Model):
     __tablename__ = 'conversation_lines'
     id = Column(Text, primary_key=True)
-    conversation_id = Column(Text, ForeignKey('conversation.id'))
+    conversation_id = Column(Text, ForeignKey('conversation.id', ondelete='CASCADE'))
     type = Column(Text)
     msg = Column(Text)
     time_msg = Column(DateTime, default=func.now())
