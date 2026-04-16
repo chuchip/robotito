@@ -2,6 +2,8 @@ from quart import Blueprint,  request, jsonify,Response
 import persistence as db
 import logging
 import memory
+import asyncio
+import trafilatura
 
 conversation_bp = Blueprint('conversation', __name__)
 logger_=memory.getLogger()
@@ -16,9 +18,23 @@ async def conversation_getId(id):
   data = await db.conversation_get_by_id(id)
   if len (data) == 0:
     return jsonify({'message': f'Conversation with id {id} NOT FOUND!', 'conversation': id}),404
+
+  first_row = data[0]
+  mem.clearUrlContext()
+  url_source = first_row.get('url_source')
+  if url_source:
+    try:
+      downloaded = await asyncio.to_thread(trafilatura.fetch_url, url_source)
+      if downloaded is not None:
+        text = trafilatura.extract(downloaded, include_comments=False, include_tables=True)
+        if text:
+          mem.setUrlContext(text, url_source)
+    except Exception as e:
+      logger_.error(f"Error fetching URL for conversation {id}: {e}")
+
   ai.restore_history(uuid,data)
   mem.setConversationId(id)
-  return jsonify({'message': f'This is the conversation with id {id}!', 'conversation': data})
+  return jsonify({'message': f'This is the conversation with id {id}!', 'conversation': data, 'url': url_source})
 
 
 @conversation_bp.route('/id/<string:id>', methods=['DELETE'])
@@ -50,7 +66,9 @@ async def conversation_init():
   # logging.info(f"Save  conversation with id: {id}{data} ")
   id_conversation=await db.init_conversation(None,data['user'],data['msg'])
   if mem.getContext() is None:
-    db.updateConversationContext(id_conversation, data['contextId'])
+    await db.updateConversationContext(id_conversation, data.get('contextId'))
+  if mem.getUrlSource():
+    await db.updateConversationUrl(id_conversation, mem.getUrlSource())
   mem.setConversationId(id_conversation)
   return jsonify({'message': f'Conversation saved on id {id_conversation} !', 'id': id_conversation})
 

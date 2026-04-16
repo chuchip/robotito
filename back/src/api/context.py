@@ -125,6 +125,9 @@ async def context_set_url():
     if not text:
       return jsonify({'status': 'KO', 'message': 'Could not extract content from the page'}), 400
     mem.setUrlContext(text, url)
+    conversation_id = mem.getConversationId()
+    if conversation_id:
+      await db.updateConversationUrl(conversation_id, url)
     logger_.info(f"URL context set from: {url} ({len(text)} chars)")
     return jsonify({'status': 'OK', 'message': f'URL content loaded ({len(text)} chars)', 'url': url, 'length': len(text)})
   except Exception as e:
@@ -132,10 +135,13 @@ async def context_set_url():
     return jsonify({'status': 'KO', 'message': f'Error fetching URL: {str(e)}'}), 500
 
 @context_bp.route('/url', methods=['DELETE'])
-def context_clear_url():
+async def context_clear_url():
   logger_.info("Clearing URL context")
   mem = memory.getMemory(request.headers.get("uuid"))
+  conversation_id = mem.getConversationId()
   mem.clearUrlContext()
+  if conversation_id:
+    await db.clearConversationUrl(conversation_id)
   return jsonify({'status': 'OK', 'message': 'URL context cleared'})
 
 @context_bp.route('/url', methods=['GET'])

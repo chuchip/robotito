@@ -44,6 +44,7 @@ class Conversation(db.Model):
     user_id = Column(Text, ForeignKey('users.user_id'))
     context_id = Column(Text, ForeignKey('context.id'))
     name = Column(Text)
+    url_source = Column(Text)
     initial_time = Column(DateTime, default=func.now())
     final_date = Column(DateTime)
     user = relationship("User", back_populates="conversations")

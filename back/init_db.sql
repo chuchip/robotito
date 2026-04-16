@@ -27,8 +27,10 @@ CREATE TABLE IF NOT EXISTS context (
     user_id TEXT,
     context_id TEXT,
     name text,
+    url_source TEXT,
     initial_time timestamp DEFAULT CURRENT_TIMESTAMP,
     final_date timestamp);
+ALTER TABLE conversation ADD COLUMN IF NOT EXISTS url_source TEXT;
 CREATE TABLE IF NOT EXISTS conversation_lines (
     id text ,
     conversation_id text,

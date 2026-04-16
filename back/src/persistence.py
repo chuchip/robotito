@@ -118,6 +118,18 @@ async def updateConversationContext(conversation_id,context_id):
     sql="update conversation set context_id=:context_id where id = :id "
     await g.connection.execute(sql,{"idContext":context_id,"id": conversation_id})
 
+async def updateConversationUrl(conversation_id, url_source):
+    if conversation_id is None:
+        return
+    sql = "update conversation set url_source = :url_source where id = :id "
+    await g.connection.execute(sql, {"url_source": url_source, "id": conversation_id})
+
+async def clearConversationUrl(conversation_id):
+    if conversation_id is None:
+        return
+    sql = "update conversation set url_source = null where id = :id "
+    await g.connection.execute(sql, {"id": conversation_id})
+
 # Notes
 async def get_notes(conversation_id: str):
     sql = "SELECT notes FROM conversation_notes WHERE conversation_id = :conversation_id"
@@ -139,13 +151,13 @@ async def save_notes(conversation_id: str, notes: str):
     return conversation_id
 async def conversation_get_by_id(id):
     sql = """
-        select c.user_id,c.context_id,c.name,c.initial_time,c.final_date, l.type,l.msg
+        select c.user_id,c.context_id,c.name,c.initial_time,c.final_date,c.url_source, l.type,l.msg
          from conversation as c, conversation_lines as l where c.id = :id and c.id=l.conversation_id order by l.time_msg
     """
 
     data=await g.connection.fetch_all(sql,{"id":id})
     result = [{"user": row['user_id'], "idContext   ": row['context_id'], "name": row['name'],
-            "initial_time": row['initial_time'],"final_date":row['final_date'],"type": row['type'],"msg": row['msg']} for row in data]
+            "initial_time": row['initial_time'],"final_date":row['final_date'],"url_source": row['url_source'],"type": row['type'],"msg": row['msg']} for row in data]
     
     return result
 async def conversation_get_list(user):

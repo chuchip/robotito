@@ -712,6 +712,7 @@ export class ConversationComponent {
     this.isLoading=true
     this.conversationId=id
     const response=await this.back.conversation_by_id(id);
+    this.contextUrl = response.url || '';
     this.setTextContextById(idContext)
     await this.back.contextSet(this.context.id)
     this.chatHistory.length=0
