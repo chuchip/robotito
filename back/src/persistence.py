@@ -155,6 +155,61 @@ async def save_notes(conversation_id: str, notes: str):
     await g.connection.execute(sql, {"conversation_id": conversation_id, "notes": notes, "last_update": now})
     
     return conversation_id
+
+# Dictionary Words
+async def get_words(conversation_id: str):
+    sql = "SELECT id, word, translation, examples, created_date FROM dictionary_words WHERE conversation_id = :conversation_id ORDER BY created_date DESC"
+    rows = await g.connection.fetch_all(sql, {"conversation_id": conversation_id})
+    if rows is None:
+        return []
+    return [{"id": row["id"], "word": row["word"], "translation": row["translation"], "examples": row["examples"], "createdDate": row["created_date"]} for row in rows]
+
+async def add_word(conversation_id: str, user_id: str, word: str, translation: str, examples: str):
+    # Check if conversation exists
+    # sql_check = "SELECT id FROM conversation WHERE id = :id"
+    # row = await g.connection.fetch_one(sql_check, {"id": conversation_id})
+    # if row is None:
+    #     raise ValueError(f"Conversation {conversation_id} does not exist")
+    
+    word_id = str(uuid.uuid4())
+    from datetime import datetime
+    now = datetime.now()
+    sql = """INSERT INTO dictionary_words (id, conversation_id, user_id, word, translation, examples, created_date, last_update) 
+             VALUES (:id, :conversation_id, :user_id, :word, :translation, :examples, :created_date, :last_update)"""
+    await g.connection.execute(sql, {
+        "id": word_id,
+        "conversation_id": conversation_id,
+        "user_id": user_id,
+        "word": word,
+        "translation": translation,
+        "examples": examples,
+        "created_date": now,
+        "last_update": now
+    })
+    
+    return {"id": word_id, "word": word, "translation": translation, "examples": examples, "createdDate": now}
+
+async def update_word(conversation_id: str, word_id: str, translation: str, examples: str):
+    from datetime import datetime
+    now = datetime.now()
+    sql = """UPDATE dictionary_words SET translation = :translation, examples = :examples, last_update = :last_update 
+             WHERE id = :id AND conversation_id = :conversation_id"""
+    await g.connection.execute(sql, {
+        "id": word_id,
+        "conversation_id": conversation_id,
+        "translation": translation,
+        "examples": examples,
+        "last_update": now
+    })
+    
+    return word_id
+
+async def delete_word(conversation_id: str, word_id: str):
+    sql = "DELETE FROM dictionary_words WHERE id = :id AND conversation_id = :conversation_id"
+    await g.connection.execute(sql, {"id": word_id, "conversation_id": conversation_id})
+    
+    return word_id
+
 async def conversation_get_by_id(id):
     sql = """
         select c.user_id,c.context_id,c.name,c.initial_time,c.final_date,c.url_source, l.type,l.msg

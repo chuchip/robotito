@@ -8,13 +8,21 @@ import trafilatura
 conversation_bp = Blueprint('conversation', __name__)
 logger_=memory.getLogger()
 
+def get_or_create_memory(uuid):
+    """Get memory object for UUID, creating it if it doesn't exist"""
+    mem = memory.getMemory(uuid)
+    if mem is None:
+        mem = memory.memoryDTO(uuid)
+        memory.memoryData.append(mem)
+    return mem
+
 
 @conversation_bp.route('/id/<string:id>', methods=['GET'])
 async def conversation_getId(id):
   import robotito_ai as ai
   logging.info(f"GET  conversation with id: {id}")
   uuid=request.headers.get("uuid")
-  mem=memory.getMemory(uuid)
+  mem=get_or_create_memory(uuid)
   data = await db.conversation_get_by_id(id)
   if len (data) == 0:
     return jsonify({'message': f'Conversation with id {id} NOT FOUND!', 'conversation': id}),404
@@ -48,7 +56,8 @@ async def conversation_deleteId(id):
 async def conversation_saveId(id):     
   data = await request.get_json()
   uuid=request.headers.get("uuid")  
-  context = memory.getMemory(uuid).getContext()  
+  mem = get_or_create_memory(uuid)
+  context = mem.getContext()  
   idContext=None
   if not context is None:
     idContext=context.getId()
@@ -62,7 +71,7 @@ async def conversation_saveId(id):
 async def conversation_init():     
   data = await request.get_json()
   uuid=request.headers.get("uuid")
-  mem=memory.getMemory(uuid)
+  mem=get_or_create_memory(uuid)
   # logging.info(f"Save  conversation with id: {id}{data} ")
   id_conversation=await db.init_conversation(None,data['user'],data['msg'])
   if mem.getContext() is None:
@@ -84,7 +93,8 @@ async def conversation_getUser(user):
 @conversation_bp.route('/history', methods=['GET'])
 def current_history(): 
   uuid=request.headers.get("uuid")
-  chat_history=memory.getMemory(uuid).getChatHistory()
+  mem = get_or_create_memory(uuid)
+  chat_history=mem.getChatHistory()
  
   return jsonify({
       'message': f'History of conversation id: {id}',
@@ -105,6 +115,78 @@ async def conversation_save_notes(id):
   try:
     await db.save_notes(id, notes)
     return jsonify({'message': 'Notes saved', 'notes': notes})
+  except ValueError as e:
+    return jsonify({'message': str(e)}), 404
+
+# Dictionary Words endpoints
+@conversation_bp.route('/id/<string:id>/words', methods=['GET'])
+async def conversation_get_words(id):
+  try:
+    words = await db.get_words(id)
+    return jsonify({'words': words})
+  except ValueError as e:
+    return jsonify({'message': str(e)}), 404
+
+@conversation_bp.route('/id/<string:id>/words', methods=['POST'])
+async def conversation_add_word(id):
+  import robotito_ai as ai
+  
+  data = await request.get_json()
+  word = data.get('word', '').strip()
+  
+  if not word:
+    return jsonify({'message': 'Word cannot be empty'}), 400
+  
+  try:
+    uuid = request.headers.get("uuid")
+    mem = get_or_create_memory(uuid)
+    user_id = mem.getUser()
+    
+    if not user_id:
+      return jsonify({'message': 'User not authenticated'}), 401
+    
+    # Call LLM to get translation
+    try:
+      translation_result = await ai.call_llm_translate(word)
+      translation = translation_result.translation
+      examples = translation_result.examples
+      logging.info(f"LLM translation successful for '{word}'")
+    except Exception as llm_error:
+      logging.error(f"LLM translation failed: {str(llm_error)}")
+      translation = f"Translation for '{word}'"
+      examples = "Examples: [Translation service temporarily unavailable]"
+    
+    # Add word to database
+    try:
+      result = await db.add_word(id, user_id, word, translation, examples)
+      logging.info(f"Word added successfully: {result}")
+      return jsonify(result), 201
+    except Exception as db_error:
+      logging.error(f"Database error adding word: {str(db_error)}")
+      return jsonify({'message': 'Database error'}), 500
+  except ValueError as e:
+    return jsonify({'message': str(e)}), 404
+  except Exception as e:
+    logger_.error(f"Error adding word '{word}': {str(e)}")
+    return jsonify({'message': 'Internal server error'}), 500 
+
+@conversation_bp.route('/id/<string:id>/words/<string:word_id>', methods=['PUT'])
+async def conversation_update_word(id, word_id):
+  data = await request.get_json()
+  translation = data.get('translation', '')
+  examples = data.get('examples', '')
+  
+  try:
+    await db.update_word(id, word_id, translation, examples)
+    return jsonify({'message': 'Word updated', 'id': word_id})
+  except ValueError as e:
+    return jsonify({'message': str(e)}), 404
+
+@conversation_bp.route('/id/<string:id>/words/<string:word_id>', methods=['DELETE'])
+async def conversation_delete_word(id, word_id):
+  try:
+    await db.delete_word(id, word_id)
+    return jsonify({'message': 'Word deleted', 'id': word_id})
   except ValueError as e:
     return jsonify({'message': str(e)}), 404
 

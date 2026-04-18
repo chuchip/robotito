@@ -10,7 +10,11 @@ logger_=memory.getLogger()
 @security_bp.route('/login', methods=['POST'])
 async def login():
    data = await request.get_json()  
-   mem= memory.getMemory(request.headers.get("uuid"))
+   uuid_header = request.headers.get("uuid")
+   mem = memory.getMemory(uuid_header)
+   if mem is None:
+       mem = memory.memoryDTO(uuid_header)
+       memory.memoryData.append(mem)
    user=data.get('user')
    password=data.get('password')
    if user is None or password is None:
@@ -28,7 +32,11 @@ async def login():
 
 @security_bp.route('/uuid/<string:authorization>', methods=['GET'])
 async def get_uuid(authorization):
-   mem= memory.getMemory(request.headers.get("uuid"))  
+   uuid_header = request.headers.get("uuid")
+   mem = memory.getMemory(uuid_header)
+   if mem is None:
+       mem = memory.memoryDTO(uuid_header)
+       memory.memoryData.append(mem)
    session= mem.getSession()
    if session is None:
     session = await persistence.get_session(authorization)

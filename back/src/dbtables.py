@@ -1,12 +1,11 @@
 from sqlalchemy import create_engine,  Column, Integer, Text, DateTime, func, ForeignKey
 from sqlalchemy.orm import declarative_base, relationship
-from sqlalchemy.dialects.postgresql import SERIAL
 
 from robotito_ai import db,app
 
 Base = declarative_base()
 
-class User(db.Model):
+class User(Base):
     __tablename__ = 'users'
     user_id = Column(Text, primary_key=True)
     name = Column(Text)
@@ -21,16 +20,16 @@ class User(db.Model):
     contexts = relationship("Context", back_populates="user")
     conversations = relationship("Conversation", back_populates="user")
 
-class UserSession(db.Model):
+class UserSession(Base):
     __tablename__ = 'user_session'
     uuid = Column(Text, primary_key=True)
     user_id = Column(Text, ForeignKey('users.user_id'))
     last_date = Column(DateTime, default=func.now())
     user = relationship("User", back_populates="sessions")
 
-class Context(db.Model):
+class Context(Base):
     __tablename__ = 'context'
-    id = Column(SERIAL, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Text, ForeignKey('users.user_id'))
     label = Column(Text)
     context = Column(Text)
@@ -38,11 +37,11 @@ class Context(db.Model):
     last_time = Column(DateTime, default=func.now())
     user = relationship("User", back_populates="contexts")
 
-class Conversation(db.Model):
+class Conversation(Base):
     __tablename__ = 'conversation'
     id = Column(Text, primary_key=True)
     user_id = Column(Text, ForeignKey('users.user_id'))
-    context_id = Column(Text, ForeignKey('context.id'))
+    context_id = Column(Integer, ForeignKey('context.id'))
     name = Column(Text)
     url_source = Column(Text)
     initial_time = Column(DateTime, default=func.now())
@@ -50,9 +49,10 @@ class Conversation(db.Model):
     user = relationship("User", back_populates="conversations")
     context = relationship("Context")
     lines = relationship("ConversationLines", back_populates="conversation")
+    notes = relationship("ConversationNotes")
 
 
-class ConversationLines(db.Model):
+class ConversationLines(Base):
     __tablename__ = 'conversation_lines'
     id = Column(Text, primary_key=True)
     conversation_id = Column(Text, ForeignKey('conversation.id', ondelete='CASCADE'))
@@ -61,12 +61,25 @@ class ConversationLines(db.Model):
     time_msg = Column(DateTime, default=func.now())
     conversation = relationship("Conversation", back_populates="lines")
 
-class ConversationNotes(db.Model):
+class ConversationNotes(Base):
     __tablename__ = 'conversation_notes'
     conversation_id = Column(Text, ForeignKey('conversation.id', ondelete='CASCADE'), primary_key=True)
     notes = Column(Text)
     last_update = Column(DateTime, default=func.now())
     conversation = relationship("Conversation")
+
+class DictionaryWord(Base):
+    __tablename__ = 'dictionary_words'
+    id = Column(Text, primary_key=True)
+    conversation_id = Column(Text, ForeignKey('conversation.id', ondelete='CASCADE'))
+    user_id = Column(Text, ForeignKey('users.user_id'))
+    word = Column(Text)
+    translation = Column(Text)
+    examples = Column(Text)
+    created_date = Column(DateTime, default=func.now())
+    last_update = Column(DateTime, default=func.now())
+    conversation = relationship("Conversation")
+    user = relationship("User")
 
 async def create_tables():
     """

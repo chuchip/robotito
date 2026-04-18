@@ -855,6 +855,13 @@ export class ConversationComponent {
     window.open(`/notes/${this.conversationId}`, 'robotito_notes', 'width=680,height=750,resizable=yes');
   }
 
+  openDictionary()
+  {
+    if (!this.conversationId) return;
+    this.persistence.saveToLocalStorage();
+    window.open(`/dictionary/${this.conversationId}`, 'robotito_dictionary', 'width=800,height=700,resizable=yes');
+  }
+
   getBackgroundColor(posHistory:number): string {
     const pos =this.getLineRating(posHistory)
     

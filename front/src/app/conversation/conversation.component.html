@@ -91,13 +91,20 @@
         <button class="button-action" (click)=" sumary_conversation()" matTooltip="Summary">
           <span class="material-icons">summarize</span>
         </button>
-        <button class="button-action" (click)="openNotes()" matTooltip="Notes">
-          <span class="material-icons">note_alt</span>
-        </button>
+     
         <button class="button-action" (click)="toggleRobotVisibility()" matTooltip="Toggle Robot Messages Visibility">
           <span class="material-icons">{{ isRobotVisible ? 'visibility_off' : 'visibility' }}</span>
         </button>
       </div>
+       <div class="vertical">
+        <button class="button-action" (click)="openNotes()" matTooltip="Notes">
+          <span class="material-icons">note_alt</span>
+        </button>
+
+        <button class="button-action" (click)="openDictionary()" matTooltip="Dictionary">
+          <span class="material-icons">library_books</span>
+        </button>
+       </div>
     </div>
         
     <div #configuration_window class="configuration" *ngIf="showLanguageOptions">

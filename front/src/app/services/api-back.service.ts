@@ -297,4 +297,43 @@ async getLastUser(): Promise<any> {
       throw error;
     }
   }
+
+  // Dictionary methods
+  async getWords(conversationId: string): Promise<any> {
+    try {
+      const result: any = await firstValueFrom(this.http.get(`${this.backendUrl}/conversation/id/${conversationId}/words`));
+      return result.words ?? [];
+    } catch (error) {
+      console.error('getWords failed!:', error);
+      throw error;
+    }
+  }
+
+  async addWord(conversationId: string, word: string): Promise<any> {
+    try {
+      const result: any = await firstValueFrom(this.http.post(`${this.backendUrl}/conversation/id/${conversationId}/words`, { word }));
+      return result;
+    } catch (error) {
+      console.error('addWord failed!:', error);
+      throw error;
+    }
+  }
+
+  async updateWord(conversationId: string, wordId: string, wordData: any): Promise<any> {
+    try {
+      return await firstValueFrom(this.http.put(`${this.backendUrl}/conversation/id/${conversationId}/words/${wordId}`, wordData));
+    } catch (error) {
+      console.error('updateWord failed!:', error);
+      throw error;
+    }
+  }
+
+  async deleteWord(conversationId: string, wordId: string): Promise<any> {
+    try {
+      return await firstValueFrom(this.http.delete(`${this.backendUrl}/conversation/id/${conversationId}/words/${wordId}`));
+    } catch (error) {
+      console.error('deleteWord failed!:', error);
+      throw error;
+    }
+  }
 }

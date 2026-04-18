@@ -25,6 +25,7 @@ import memory
 from typing import List
 from pydantic import BaseModel, Field
 from quart_db import QuartDB
+import dbtables
 
 os.environ["GRPC_VERBOSITY"] = "ERROR"
 os.environ["GLOG_minloglevel"] = "2"
@@ -40,6 +41,14 @@ db_host = os.getenv("DB_HOST")
 db_user=os.getenv("DB_USER")
 db_password=os.getenv("DB_PASSWORD")
 db = QuartDB(app, url=f"postgresql://{db_user}:{db_password}@{db_host}/robotito")
+
+# Database tables should be created manually
+# try:
+#     from dbtables import Base
+#     with app.app_context():
+#         Base.metadata.create_all(db.engine)
+# except Exception as e:
+#     print(f"Warning: Could not create tables automatically: {e}")
 
 
 logging.getLogger("asyncio").setLevel(logging.ERROR)
@@ -63,6 +72,11 @@ class AnalizePhrase(BaseModel):
 class AnalizePhrases(BaseModel):
   """Container to keep a list of elemnts of type AnalizePhrase """
   result :List[AnalizePhrase] = Field(description="An array containing elements of type  'AnalizePhrase'")
+
+class TranslationResult(BaseModel):
+  """Translation result with examples"""
+  translation: str = Field(description="Spanish translation of the word")
+  examples: str = Field(description="2-3 short usage examples with translations in Spanish (max 80 words total)")
 
 async def call_llm(state) :       
     #logging.info(f"call_llm: {state['messages']}")    
@@ -466,6 +480,37 @@ prompt_rating = PromptTemplate(
     input_variables=["sentence_input"],
     partial_variables={"format_instructions": format_instructions}
 )
+
+# Translation chain for dictionary
+prompt_translation_str = """
+Translate the following English word to Spanish and provide 2-3 short usage examples.
+Keep the total response under 80 words.
+
+Word: {word_input}
+
+{format_instructions}
+
+Ensure your entire response is ONLY the JSON object, starting with {{ and ending with }}."""
+
+parser_translation = PydanticOutputParser(pydantic_object=TranslationResult)
+format_instructions_translation = parser_translation.get_format_instructions()
+
+prompt_translation = PromptTemplate(
+    template=prompt_translation_str,
+    input_variables=["word_input"],
+    partial_variables={"format_instructions": format_instructions_translation}
+)
+
+chain_translation = prompt_translation | llm_text | parser_translation
+
+async def call_llm_translate(word: str):
+    """Translate a word to Spanish with examples"""
+    try:
+        result = chain_translation.invoke({"word_input": word})
+        return result.translation, result.examples
+    except Exception as e:
+        logger_.error(f"Translation error for word '{word}': {str(e)}")
+        return f"Translation for '{word}'", "Examples: [Add examples here]"
 
 chain_rating = prompt_rating | llm_text | parser_rating
 
