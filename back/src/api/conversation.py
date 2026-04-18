@@ -154,7 +154,7 @@ async def conversation_add_word(id):
     except Exception as llm_error:
       logging.error(f"LLM translation failed: {str(llm_error)}")
       translation = f"Translation for '{word}'"
-      examples = "Examples: [Translation service temporarily unavailable]"
+      examples = {"english_phrase": "Example sentence in English", "spanish_phrase": "Oración de ejemplo en español"}
     
     # Add word to database
     try:

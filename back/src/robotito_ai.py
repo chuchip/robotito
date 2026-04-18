@@ -73,10 +73,14 @@ class AnalizePhrases(BaseModel):
   """Container to keep a list of elemnts of type AnalizePhrase """
   result :List[AnalizePhrase] = Field(description="An array containing elements of type  'AnalizePhrase'")
 
+class ExamplePhrase(BaseModel):
+    english_phrase: str = Field(description="Example sentence in English")
+    spanish_phrase: str = Field(description="Example sentence in Spanish")
+
 class TranslationResult(BaseModel):
   """Translation result with examples"""
   translation: str = Field(description="Spanish translation of the word")
-  examples: str = Field(description="2-3 short usage examples with translations in Spanish (max 80 words total)")
+  examples: List[ExamplePhrase] = Field(description="List of usage examples with both English and Spanish phrases")
 
 async def call_llm(state) :       
     #logging.info(f"call_llm: {state['messages']}")    
@@ -166,7 +170,7 @@ def sumary_history(uuid,type):
   result= result = chain.invoke({"sentences_input": msg})
   return result
 def rating_phrase(phrase): 
-  result= result = chain_rating.invoke({"sentence_input": phrase})
+  result = chain_rating.invoke({"sentence_input": phrase})
   return result
 def save_msg(uuid,type,msg):
     chat_history = memory.getMemory(uuid).getChatHistory()
@@ -483,8 +487,8 @@ prompt_rating = PromptTemplate(
 
 # Translation chain for dictionary
 prompt_translation_str = """
-Translate the following English word to Spanish and provide 2-3 short usage examples.
-Keep the total response under 80 words.
+Translate the following English word to Spanish. If a word have more than one meaning, return no more than 5 of them them separate by comma. 
+Provide on examples in both English and Spanish for each word meaning.
 
 Word: {word_input}
 
@@ -507,10 +511,19 @@ async def call_llm_translate(word: str):
     """Translate a word to Spanish with examples"""
     try:
         result = chain_translation.invoke({"word_input": word})
-        return result.translation, result.examples
+        return result
     except Exception as e:
         logger_.error(f"Translation error for word '{word}': {str(e)}")
-        return f"Translation for '{word}'", "Examples: [Add examples here]"
+        # Return a proper TranslationResult object on error with a list of examples
+        return TranslationResult(
+            translation=f"Translation for '{word}'",
+            examples=[
+                ExamplePhrase(
+                    english_phrase="Example sentence in English",
+                    spanish_phrase="Oración de ejemplo en español"
+                )
+            ]
+        )
 
 chain_rating = prompt_rating | llm_text | parser_rating
 

@@ -336,4 +336,20 @@ async getLastUser(): Promise<any> {
       throw error;
     }
   }
+
+  // Shared audio playback utility
+  async playAudioFromResponse(response: Response, playbackSpeed: number = 1): Promise<HTMLAudioElement> {
+    if (!response.ok) {
+      console.error('Error fetching audio:', response.statusText);
+    }
+
+    const audioBlob = await response.blob();
+    const audioUrl = URL.createObjectURL(audioBlob);
+
+    const audio = new Audio(audioUrl);
+    audio.playbackRate = playbackSpeed;
+    audio.play();
+
+    return audio;
+  }
 }

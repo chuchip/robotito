@@ -1,0 +1,82 @@
+<div class="page">
+    <div class="header">
+        <span class="title">📚 Conversation Dictionary</span>
+        <button class="close-btn" (click)="closeWindow()">Close</button>
+    </div>
+
+    <div class="search-section">
+        <input type="text" class="search-input" [(ngModel)]="searchTerm" placeholder="Search words..."
+            (keyup)="filterWords()">
+    </div>
+
+    <div class="body">
+        <div class="add-word-section">
+            <input type="text" [(ngModel)]="newWord" placeholder="Enter a word to translate..." class="word-input"
+                (keydown.enter)="addWord()">
+            <button (click)="addWord()" class="add-btn" [disabled]="isAdding || !newWord.trim()">
+                {{ isAdding ? 'Adding...' : 'Add Word' }}
+            </button>
+        </div>
+
+        <div *ngIf="filteredWords.length === 0" class="no-words-message">
+            No words added yet. Add a word to get started!
+        </div>
+
+        <div class="words-list">
+            <div *ngFor="let item of filteredWords" class="word-card" [class.editing]="editingId === item.id">
+                <div class="word-header">
+                    <strong class="word-text">{{ item.word }}</strong>
+                    <div class="word-actions">
+                        <button (click)="readAloud(item)" class="action-btn" title="Read aloud"
+                            [disabled]="readingAloudWordId === item.id || isAdding">
+                            <span *ngIf="readingAloudWordId === item.id"> {{ statusPlaying }}</span>
+                            <span *ngIf="readingAloudWordId !== item.id" class="material-icons">volume_up</span>
+                        </button>
+                        <button (click)="toggleEdit(item)" class="action-btn"
+                            [title]="editingId === item.id ? 'Save' : 'Edit'">
+                            <span class="material-icons">{{ editingId === item.id ? 'check' : 'edit' }}</span>
+                        </button>
+                        <button (click)="deleteWord(item.id!)" class="action-btn delete-btn" title="Delete">
+                            <span class="material-icons">delete</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div *ngIf="editingId !== item.id" class="word-content">
+                    <div class="translation">
+                        <strong>Translation:</strong> {{ item.translation }}
+                    </div>
+                    <div class="examples">
+                        <strong>Examples:</strong>
+                        <div *ngFor="let example of item.examples" class="example-item">
+                            <div *ngIf="example.english_phrase">
+                                <strong>English:</strong> {{ example.english_phrase }}
+                            </div>
+                            <div *ngIf="example.spanish_phrase">
+                                <strong>Spanish:</strong> {{ example.spanish_phrase }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div *ngIf="editingId === item.id" class="word-edit">
+                    <div>
+                        <label>Translation:</label>
+                        <textarea [(ngModel)]="item.translation" class="edit-textarea"></textarea>
+                    </div>
+                    <div *ngFor="let example of item.examples; let i = index">
+                        <label>English Example {{ i + 1 }}:</label>
+                        <textarea [(ngModel)]="example.english_phrase" class="edit-textarea"></textarea>
+                        <label>Spanish Example {{ i + 1 }}:</label>
+                        <textarea [(ngModel)]="example.spanish_phrase" class="edit-textarea"></textarea>
+                    </div>
+                    <button (click)="toggleEdit(item)" class="save-btn">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <span class="status-message">{{ statusMessage }}</span>
+    </div>
+</div>
