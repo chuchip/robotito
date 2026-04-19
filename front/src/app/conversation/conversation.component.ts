@@ -619,6 +619,7 @@ export class ConversationComponent {
   {
     if (this.context.label=='default')
       return
+   
     const response= await this.back.contextDelete(id);
     this.list_context()
     this.isLoading=false
@@ -732,6 +733,9 @@ export class ConversationComponent {
   async hystoryDelete(event: Event, id: string)
   {
     event.stopPropagation();
+     if (!confirm('Are you sure you want to delete this context?')) {
+      return;
+    }
     this.isLoading=true
     const response=await this.back.conversation_delete_by_id(id);
     this.put_message(response)

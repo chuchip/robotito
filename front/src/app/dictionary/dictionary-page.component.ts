@@ -32,6 +32,7 @@ export class DictionaryPageComponent implements OnInit {
   audio: HTMLAudioElement | null = null;
   selectedText: string = '';
   readingAloudWordId: string | null = null;
+  expandedWordIds: Set<string> = new Set<string>();
 
   constructor(
     private route: ActivatedRoute,
@@ -79,6 +80,13 @@ export class DictionaryPageComponent implements OnInit {
       this.newWord = '';
       this.statusMessage = 'Word added!';
       setTimeout(() => this.statusMessage = '', 2000);
+
+      setTimeout(() => {
+        const wordsList = document.querySelector('.words-list') as HTMLElement | null;
+        if (wordsList) {
+          wordsList.scrollTop = wordsList.scrollHeight;
+        }
+      }, 0);
     } catch (error) {
       console.error('Failed to add word:', error);
       this.statusMessage = 'Error adding word';
@@ -120,6 +128,21 @@ export class DictionaryPageComponent implements OnInit {
       console.error('Failed to delete word:', error);
       this.statusMessage = 'Error deleting word';
     }
+  }
+
+  toggleExamples(word: Word) {
+    if (!word.id) {
+      return;
+    }
+    if (this.expandedWordIds.has(word.id)) {
+      this.expandedWordIds.delete(word.id);
+    } else {
+      this.expandedWordIds.add(word.id);
+    }
+  }
+
+  isExamplesExpanded(word: Word): boolean {
+    return word.id ? this.expandedWordIds.has(word.id) : false;
   }
 
   async readAloud(word: Word) {

@@ -4,20 +4,21 @@
         <button class="close-btn" (click)="closeWindow()">Close</button>
     </div>
 
-    <div class="search-section">
-        <input type="text" class="search-input" [(ngModel)]="searchTerm" placeholder="Search words..."
-            (keyup)="filterWords()">
+    <div class="search-add-wrapper">
+      <div class="search-section">
+          <input type="text" class="search-input" [(ngModel)]="searchTerm" placeholder="Search words..."
+              (keyup)="filterWords()">
+      </div>
+      <div class="add-word-section">
+          <input type="text" [(ngModel)]="newWord" placeholder="Enter a word to translate..." class="word-input"
+              (keydown.enter)="addWord()">
+          <button (click)="addWord()" class="add-btn" [disabled]="isAdding || !newWord.trim()">
+              {{ isAdding ? 'Adding...' : 'Add Word' }}
+          </button>
+      </div>
     </div>
 
     <div class="body">
-        <div class="add-word-section">
-            <input type="text" [(ngModel)]="newWord" placeholder="Enter a word to translate..." class="word-input"
-                (keydown.enter)="addWord()">
-            <button (click)="addWord()" class="add-btn" [disabled]="isAdding || !newWord.trim()">
-                {{ isAdding ? 'Adding...' : 'Add Word' }}
-            </button>
-        </div>
-
         <div *ngIf="filteredWords.length === 0" class="no-words-message">
             No words added yet. Add a word to get started!
         </div>
@@ -43,18 +44,22 @@
                 </div>
 
                 <div *ngIf="editingId !== item.id" class="word-content">
-                    <div class="translation">
-                        <strong>Translation:</strong> {{ item.translation }}
+                    <div class="translation-row">
+                        <div class="translation-text">
+                            <strong>Translation:</strong> {{ item.translation }}
+                        </div>
+                        <button type="button" class="toggle-examples-btn" (click)="toggleExamples(item)">
+                            {{ isExamplesExpanded(item) ? 'Hide examples' : 'Show examples' }}
+                        </button>
                     </div>
-                    <div class="examples">
-                        <strong>Examples:</strong>
-                        <div *ngFor="let example of item.examples" class="example-item">
-                            <div *ngIf="example.english_phrase">
-                                <strong>English:</strong> {{ example.english_phrase }}
-                            </div>
-                            <div *ngIf="example.spanish_phrase">
-                                <strong>Spanish:</strong> {{ example.spanish_phrase }}
-                            </div>
+                    <div class="examples-panel" *ngIf="isExamplesExpanded(item)">
+                        <div class="example-table-header">
+                            <div class="example-table-cell example-table-cell-title">English</div>
+                            <div class="example-table-cell example-table-cell-title">Spanish</div>
+                        </div>
+                        <div *ngFor="let example of item.examples" class="example-item example-row">
+                            <div class="example-table-cell">{{ example.english_phrase }}</div>
+                            <div class="example-table-cell">{{ example.spanish_phrase }}</div>
                         </div>
                     </div>
                 </div>
