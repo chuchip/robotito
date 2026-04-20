@@ -1,4 +1,4 @@
-from quart import  Blueprint,Response,request,abort,jsonify
+from quart import  Blueprint,Response,request,jsonify
 import persistence as db
 import memory
 import logging
@@ -6,28 +6,6 @@ import logging
 principal_bp = Blueprint('principal', __name__)
 
 logger_=memory.getLogger()
-
-@principal_bp.before_request
-def security_check():
-    if request.method == 'OPTIONS':
-        return
-    current_endpoint = request.endpoint
-    logging.info(f"Current endpoint: {current_endpoint}")
-    if 'uuid' not in request.headers:
-        abort(401)   
-    if current_endpoint == 'principal.clear' or current_endpoint == 'security.get_uuid' or current_endpoint == 'security.login': 
-        return
-    if 'Authorization' not in request.headers:
-        abort(401)  # Unauthorized
-    authorization=request.headers.get("Authorization")
-    mem= memory.getMemory(request.headers.get("uuid")) 
-    session= mem.getSession()
-    if session is None:
-          abort(401)
-    else:
-        if session.getAuthorization()!=authorization:
-          abort(401)
-    logging.info("Security check OK")
 
 async def generate(msg_graph):
   import robotito_ai as ai

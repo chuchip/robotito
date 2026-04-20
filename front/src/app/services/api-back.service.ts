@@ -11,24 +11,30 @@ export class ApiBackService {
 
   constructor(private http: HttpClient,private persistence:PersistenceService ) {}
 
-  async text_to_sound(inputText:string,voice:string="") : Promise<Response>  {  
-    var json_voice={text: inputText,user:this.persistence.getUser(),voice_name:voice }
-  
-    const response = await fetch(`${this.backendUrl}/audio/tts`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'uuid': this.persistence.uuid, "Authorization": this.persistence.getAuthorization() },
-      body: JSON.stringify(json_voice),
-    });
-   return response
+  /** Headers used for the one remaining raw `fetch()` call (streaming). */
+  private getAuthHeaders(): Record<string, string> {
+    return {
+      'Content-Type': 'application/json',
+      'uuid': this.persistence.uuid,
+      'Authorization': this.persistence.getAuthorization(),
+    };
   }
-  async sendQuestion(text:string):  Promise<Response> 
+
+  async text_to_sound(inputText:string,voice:string="") : Promise<Blob>  {
+    const body = { text: inputText, user: this.persistence.getUser(), voice_name: voice };
+    return await firstValueFrom(
+      this.http.post(`${this.backendUrl}/audio/tts`, body, { responseType: 'blob' })
+    );
+  }
+  async sendQuestion(text:string):  Promise<Response>
   {
-    const response= await fetch(`${this.backendUrl}/send-question`, {
+    // Still uses fetch() because HttpClient buffers the full response body;
+    // LLM streaming requires reading chunks as they arrive via ReadableStream.
+    return await fetch(`${this.backendUrl}/send-question`, {
       method: 'POST',
       body: JSON.stringify({ text }),
-      headers: { 'Content-Type': 'application/json','uuid': this.persistence.uuid,"Authorization":this.persistence.getAuthorization() },
+      headers: this.getAuthHeaders(),
     });
-    return response;
   }
   uploadAudio(audioChunks:Blob[]): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -347,12 +353,7 @@ async getLastUser(): Promise<any> {
   }
 
   // Shared audio playback utility
-  async playAudioFromResponse(response: Response, playbackSpeed: number = 1): Promise<HTMLAudioElement> {
-    if (!response.ok) {
-      console.error('Error fetching audio:', response.statusText);
-    }
-
-    const audioBlob = await response.blob();
+  async playAudioFromResponse(audioBlob: Blob, playbackSpeed: number = 1): Promise<HTMLAudioElement> {
     const audioUrl = URL.createObjectURL(audioBlob);
 
     const audio = new Audio(audioUrl);

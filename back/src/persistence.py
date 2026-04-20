@@ -170,7 +170,6 @@ async def save_notes(conversation_id: str, notes: str):
         raise ValueError(f"Conversation {conversation_id} does not exist")
     
     existing = await get_notes(conversation_id)
-    from datetime import datetime
     now = datetime.now()
     if existing is None:
         sql = "INSERT INTO conversation_notes (conversation_id, notes, last_update) VALUES (:conversation_id, :notes, :last_update)"
@@ -213,7 +212,6 @@ async def get_words(conversation_id: str):
 async def add_word(conversation_id: str, user_id: str, word: str, translation: str, examples):
     # examples can be a list of dicts/ExamplePhrase objects or a single dict
     word_id = str(uuid.uuid4())
-    from datetime import datetime
     now = datetime.now()
     
     # Handle list of examples or single example
@@ -263,7 +261,6 @@ async def add_word(conversation_id: str, user_id: str, word: str, translation: s
     return {"id": word_id, "word": word, "translation": translation, "examples": example_list, "createdDate": now}
 
 async def update_word(conversation_id: str, word_id: str, translation: str, examples):
-    from datetime import datetime
     now = datetime.now()
     
     # Handle list of examples or single example

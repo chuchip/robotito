@@ -44,14 +44,14 @@ export class ConversationComponent {
   xPos = 0
   yPos =0
   textSpeakAloud=""
-  responseTextToSound: Response | null = null;
+  responseTextToSound: Blob | null = null;
   audioUrl = '';
   playbackSpeed=1
   isPlayingSound=false
   semaphoreStopAudio:number=0
   avatarTalking$: Observable<boolean> = new Observable();
   private readonly backendUrl = 'http://localhost:5000';
-  ttsArray:Response[]=[]
+  ttsArray:Blob[]=[]
   ttsStart=false
   isSidebarOpen = false;
   isRobotVisible: boolean = true;
@@ -459,14 +459,8 @@ export class ConversationComponent {
     }
   }
 
-  async prepareAudio(response:Response) {
-    
-    if (!response.ok) {
-      console.error('Error fetching audio:', response.statusText);
-    }
-  
-    const audioBlob = await response.blob();
-    this.audioUrl = URL.createObjectURL(audioBlob);   
+  async prepareAudio(audioBlob: Blob) {
+    this.audioUrl = URL.createObjectURL(audioBlob);
     
      // Stop the previous audio if it’s playing
     if (this.audio) {

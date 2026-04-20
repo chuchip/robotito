@@ -14,6 +14,7 @@ import os
 from quart import Quart
 from quart_cors import cors
 from quart_db import QuartDB
+from quart import request, abort
 from openai import OpenAI
 from google.cloud import speech, texttospeech
 
@@ -157,6 +158,36 @@ app.register_blueprint(context_bp, url_prefix='/api/context')
 app.register_blueprint(conversation_bp, url_prefix='/api/conversation')
 app.register_blueprint(principal_bp, url_prefix='/api')
 app.register_blueprint(security_bp, url_prefix='/api/security')
+
+
+# ---------------------------------------------------------------------------
+# Global auth gate. Runs on every request; only enforces for /api/* paths.
+# Unauthenticated endpoints (login, session restore, logout) are allow-listed.
+# ---------------------------------------------------------------------------
+_OPEN_ENDPOINTS = frozenset({
+    'security.login',
+    'security.get_uuid',
+    'security.logout',
+})
+
+
+@app.before_request
+def global_security_check():
+    if not request.path.startswith('/api'):
+        return
+    if request.method == 'OPTIONS':
+        return
+    if request.endpoint in _OPEN_ENDPOINTS:
+        return
+    if 'uuid' not in request.headers or 'Authorization' not in request.headers:
+        abort(401)
+    authorization = request.headers.get("Authorization")
+    mem = memory.getMemory(request.headers.get("uuid"))
+    if mem is None:
+        abort(401)
+    session = mem.getSession()
+    if session is None or session.getAuthorization() != authorization:
+        abort(401)
 
 
 if __name__ == '__main__':
