@@ -1,0 +1,7 @@
+<div mat-dialog-content>
+  <p>{{ data.message }}</p>
+</div>
+<div mat-dialog-actions align="end">
+  <button mat-button (click)="onNoClick()">Cancel</button>
+  <button mat-button color="warn" (click)="onYesClick()" cdkFocusInitial>Delete</button>
+</div>
