@@ -2,11 +2,11 @@ from robotito_ai import speechToText,textToSpeech
 import memory
 
 def stt_api_whisper(audio_file):
-  audio_file= open(audio_file, "rb")
-  transcription = speechToText.audio.transcriptions.create(
-      model="whisper-1", 
-      file=audio_file
-  )
+  with open(audio_file, "rb") as fh:
+    transcription = speechToText.audio.transcriptions.create(
+        model="whisper-1",
+        file=fh,
+    )
   return transcription.text
 def getAudioFromText(audioData:memory.AudioData,text,uuid,voice_name):
     voice = voice_name if voice_name else audioData.voice_name
@@ -17,4 +17,5 @@ def getAudioFromText(audioData:memory.AudioData,text,uuid,voice_name):
       input=text,
     )
     fileOutput=f"audio/{uuid}_output.webm"
-    return response.stream_to_file(fileOutput)
+    response.stream_to_file(fileOutput)
+    return fileOutput

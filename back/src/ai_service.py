@@ -3,6 +3,7 @@
 Depends on `init()` being called from the application entry point with the
 configured LLM clients and chains before any other function is invoked.
 """
+import asyncio
 import logging
 from langchain.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage, AIMessage
@@ -93,14 +94,14 @@ async def call_llm(state):
         yield " "
 
 
-def call_llm_internal(chat_prompt):
-    response = _llm_text.invoke(chat_prompt)
+async def call_llm_internal(chat_prompt):
+    response = await asyncio.to_thread(_llm_text.invoke, chat_prompt)
     if _model_api == 'ollama':
         return response
     return response.content
 
 
-def sumary_history(uuid, type):
+async def sumary_history(uuid, type):
     chain = _chains['resume'] if type == 'resume' else _chains['detail']
     memoryData = memory.getMemory(uuid)
     chat_history = memoryData.getChatHistory()
@@ -110,11 +111,11 @@ def sumary_history(uuid, type):
         if isinstance(line, HumanMessage):
             msg += f'- Sentence number {i}: "{line.content}" \n'
             i += 1
-    return chain.invoke({"sentences_input": msg})
+    return await asyncio.to_thread(chain.invoke, {"sentences_input": msg})
 
 
-def rating_phrase(phrase):
-    return _chains['rating'].invoke({"sentence_input": phrase})
+async def rating_phrase(phrase):
+    return await asyncio.to_thread(_chains['rating'].invoke, {"sentence_input": phrase})
 
 
 def save_msg(uuid, type, msg):
@@ -138,7 +139,7 @@ def restore_history(uuid, jsonHistory):
 async def call_llm_translate(word: str):
     """Translate a word to Spanish with examples."""
     try:
-        return _chains['translation'].invoke({"word_input": word})
+        return await asyncio.to_thread(_chains['translation'].invoke, {"word_input": word})
     except Exception as e:
         _logger.error(f"Translation error for word '{word}': {str(e)}")
         return TranslationResult(

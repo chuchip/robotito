@@ -34,7 +34,9 @@ async def conversation_getId(id):
     try:
       downloaded = await asyncio.to_thread(trafilatura.fetch_url, url_source)
       if downloaded is not None:
-        text = trafilatura.extract(downloaded, include_comments=False, include_tables=True)
+        text = await asyncio.to_thread(
+          trafilatura.extract, downloaded, include_comments=False, include_tables=True
+        )
         if text:
           mem.setUrlContext(text, url_source)
     except Exception as e:

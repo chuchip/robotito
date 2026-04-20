@@ -1,6 +1,8 @@
 from quart import current_app,Blueprint,  request, jsonify,Response
+import asyncio
 import logging
 import os
+import uuid as uuid_lib
 import persistence
 import memory
 
@@ -84,10 +86,20 @@ async def upload_audio():
         return jsonify({'error': 'No selected file'}), 400
     uuid=request.headers.get("uuid")
     audioData=memory.getMemory(uuid).getAudioData()
-    filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], uuid+"_"+file.filename)
-    await  file.save(filepath) 
-    text = ai.getTextFromAudio(audioData,filepath)
-    
+    request_id = uuid_lib.uuid4().hex
+    filepath = os.path.join(
+        current_app.config['UPLOAD_FOLDER'],
+        f"{uuid}_{request_id}_{file.filename}",
+    )
+    await  file.save(filepath)
+    try:
+        text = await asyncio.to_thread(ai.getTextFromAudio, audioData, filepath)
+    finally:
+        try:
+            await asyncio.to_thread(os.remove, filepath)
+        except OSError as exc:
+            logger_.warning(f"Could not remove upload {filepath}: {exc}")
+
     return jsonify({'message': 'Audio uploaded successfully!', 'text': text})
 
 @audio_bp.route('/tts', methods=['POST'])
@@ -101,14 +113,31 @@ async def tts():
         voice_name = data.get('voice_name') if data.get('voice_name') != '' else voice_name
     audioData=memory.getMemory(uuid).getAudioData()
     if text=='':
-        return Response(None, mimetype='audio/webm')  
+        return Response(None, mimetype='audio/webm')
     #logging.info(f"In tts {text}")
-    webm_file = ai.getAudioFromText(text,audioData,uuid,voice_name)
+    # Unique key per request so concurrent TTS calls for the same user
+    # do not overwrite each other's output file.
+    file_key = f"{uuid}_{uuid_lib.uuid4().hex}"
+    webm_file = await asyncio.to_thread(
+        ai.getAudioFromText, text, audioData, file_key, voice_name
+    )
 
-    def generate():
-        with open(webm_file, 'rb') as file:  # Open file in binary mode
-            while chunk := file.read(1024 * 1024):  # Read in 1MB chunks
-                yield chunk  # Stream the chunks to the client
+    async def generate():
+        try:
+            file = await asyncio.to_thread(open, webm_file, 'rb')
+            try:
+                while True:
+                    chunk = await asyncio.to_thread(file.read, 1024 * 1024)
+                    if not chunk:
+                        break
+                    yield chunk
+            finally:
+                await asyncio.to_thread(file.close)
+        finally:
+            try:
+                await asyncio.to_thread(os.remove, webm_file)
+            except OSError as exc:
+                logger_.warning(f"Could not remove tts output {webm_file}: {exc}")
 
     return Response(generate(), mimetype='audio/webm')  # Set proper MIME type  
 
@@ -121,7 +150,7 @@ async def set_language():
   user=memory.getMemory(uuid).getUser()
   languageInput = data.get('language') 
   audioData.voice_name = data.get('voice') 
-  ai.set_language( audioData, languageInput)
+  await asyncio.to_thread(ai.set_language, audioData, languageInput)
  
   await persistence.update_language(user,languageInput,audioData.voice_name)
   return jsonify({'message': f'Voice changed to {audioData.voice_name} and language to {audioData.language}!'})

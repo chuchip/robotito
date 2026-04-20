@@ -121,7 +121,9 @@ async def context_set_url():
     downloaded = await asyncio.to_thread(trafilatura.fetch_url, url)
     if downloaded is None:
       return jsonify({'status': 'KO', 'message': 'Could not fetch the URL'}), 400
-    text = trafilatura.extract(downloaded, include_comments=False, include_tables=True)
+    text = await asyncio.to_thread(
+      trafilatura.extract, downloaded, include_comments=False, include_tables=True
+    )
     if not text:
       return jsonify({'status': 'KO', 'message': 'Could not extract content from the page'}), 400
     mem.setUrlContext(text, url)

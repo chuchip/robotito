@@ -39,7 +39,7 @@ async def summary_conversation():
     data = await request.get_json()      
     type= data.get("type")
     import robotito_ai as ai
-    response=ai.sumary_history(uuid,type)
+    response=await ai.sumary_history(uuid,type)
     if type=='resume':  
         return jsonify({"status":"OK", "rating":response.rating,"explication": response.explication})
     else:
@@ -55,7 +55,7 @@ async def rating_phrase():
     data = await request.get_json()      
     phrase= data.get("phrase")
     import robotito_ai as ai
-    response=ai.rating_phrase(phrase)
+    response=await ai.rating_phrase(phrase)
    
     return jsonify({ "status":"OK", 
                     "sentence":response.sentence,"value": response.rating,

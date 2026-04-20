@@ -45,6 +45,7 @@ def getTextFromAudio(audioData: memory.AudioData, filepath):
 def getAudioFromKokoro(text, audioData, uuid, voice_name: str = ""):
     import soundfile as sf
     import numpy as np
+    import os
     import subprocess
     if voice_name == "":
         voice_name = audioData.voice_name
@@ -74,6 +75,10 @@ def getAudioFromKokoro(text, audioData, uuid, voice_name: str = ""):
         webm_file,
     ]
     subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    try:
+        os.remove(wav_file)
+    except OSError as exc:
+        _logger.warning(f"Could not remove kokoro wav {wav_file}: {exc}")
     return webm_file
 
 
