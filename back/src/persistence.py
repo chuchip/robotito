@@ -64,7 +64,7 @@ async def delete_context(user_id,label):
     
 
 async def delete_context_by_id(id):
-    data=get_context_by_id(id)
+    data=await get_context_by_id(id)
     if data is  None:
         logging.info(f"Context with id {id} not found")
         return
@@ -89,11 +89,11 @@ async def init_conversation(id ,user,msg,force=False):
             # Do a sumary of the message
             resp = ai.call_llm_internal(f"Create a summary of less than 12 words from this sentence: '{msg}'")
             msg=resp
-            logging.info("Summary: ",msg)
+            logging.info(f"Summary: {msg}")
         now = datetime.now()
         random_uuid = uuid.uuid4()  # Generate a random UUID
         id = str(random_uuid)
-        logging.info("Init conversation id",id) 
+        logging.info(f"Init conversation id: {id}") 
         sql="insert into conversation (id,user_id,name,final_date) values (:id,:user_id,:name,:final_date)"
             
         await g.connection.execute(sql,{"id":id,"user_id":user,"name":msg,"final_date":now})
@@ -104,7 +104,7 @@ async def init_conversation(id ,user,msg,force=False):
 async def conversation_save(uuid,id ,user, context_id,type,msg):
     import robotito_ai as ai
     if id=='X':
-        id=init_conversation(None,user,msg,True)
+        id=await init_conversation(None,user,msg,True)
     ai.save_msg(uuid,type,msg)
     now = datetime.now()
     sql="update conversation set final_date = :final_date, context_id=:context_id where id = :id "
@@ -116,7 +116,7 @@ async def updateConversationContext(conversation_id,context_id):
     if conversation_id is None or context_id is None:
         return
     sql="update conversation set context_id=:context_id where id = :id "
-    await g.connection.execute(sql,{"idContext":context_id,"id": conversation_id})
+    await g.connection.execute(sql,{"context_id":context_id,"id": conversation_id})
 
 async def updateConversationUrl(conversation_id, url_source):
     if conversation_id is None:
@@ -296,7 +296,7 @@ async def conversation_get_by_id(id):
     """
 
     data=await g.connection.fetch_all(sql,{"id":id})
-    result = [{"user": row['user_id'], "idContext   ": row['context_id'], "name": row['name'],
+    result = [{"user": row['user_id'], "idContext": row['context_id'], "name": row['name'],
             "initial_time": row['initial_time'],"final_date":row['final_date'],"url_source": row['url_source'],"type": row['type'],"msg": row['msg']} for row in data]
     
     return result

@@ -13,7 +13,7 @@ def get_or_create_memory(uuid):
     mem = memory.getMemory(uuid)
     if mem is None:
         mem = memory.memoryDTO(uuid)
-        memory.memoryData.append(mem)
+        memory.addMemory(mem)
     return mem
 
 

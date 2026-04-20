@@ -8,8 +8,8 @@ audio_bp = Blueprint('audio', __name__)
 
 logger_=memory.getLogger()
 
-tts = os.getenv("STT")
-if tts is not None and tts=='gemini':
+tts_env = os.getenv("TTS")
+if tts_env is not None and tts_env=='gemini':
     language_options = [
         { "label": "American English", "value": "en-US" },
         { "label": "British English", "value": "en-GB" },

@@ -93,7 +93,7 @@ async def context_update():
 @context_bp.route('/id/<string:id>', methods=['DELETE'])
 async def context_delete_by_id(id):   
   logger_.info(f"Deleted  context by id: {id}")
-  db.delete_context_by_id(id)  
+  await db.delete_context_by_id(id)  
   return jsonify({'message': f'Context with id {id} successfully deleted!', 'text': id})
 
 # Url  /context/user/${user}

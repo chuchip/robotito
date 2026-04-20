@@ -12,7 +12,7 @@ def security_check():
     if request.method == 'OPTIONS':
         return
     current_endpoint = request.endpoint
-    logging.info("Current endpoint: ",current_endpoint)
+    logging.info(f"Current endpoint: {current_endpoint}")
     if 'uuid' not in request.headers:
         abort(401)   
     if current_endpoint == 'principal.clear' or current_endpoint == 'security.get_uuid' or current_endpoint == 'security.login': 
@@ -107,7 +107,7 @@ def clear():
         return jsonify({"status":"OK",'message': f'Existed conversation with UUID: {uuid} cleared'})
     
   mem=memory.memoryDTO(uuid)  
-  memory.memoryData.append(mem)
+  memory.addMemory(mem)
   
   return jsonify({'message': f'Conversation with UUID: {uuid} cleared'})
   
@@ -116,5 +116,5 @@ def clear():
 async def get_last_user():
   mem = memory.getMemory(request.headers.get("uuid"))
   data=await db.get_user_data(mem.getUser())
-  logging.info("Last user: ",data)
+  logging.info(f"Last user: {data}")
   return jsonify(data)

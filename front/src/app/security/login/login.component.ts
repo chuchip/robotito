@@ -16,17 +16,16 @@ export class LoginComponent {
   error_login=""
   init=false
   constructor(public router: Router,public persistence: PersistenceService,public back: ApiBackService ) {
-    this.back.clearConversation().then(async () => {      
-      if (persistence.clearLogin)
-      {
-        this.init=true
-        return;    
-      }
-      const cookie= this.persistence.getCookie("robotito-uuid");
-      console.log("Cookie: ",cookie)
-      if (cookie!='')
-      {
-        const valor = await this.back.getLoginUser(cookie) 
+    if (persistence.clearLogin)
+    {
+      this.init=true
+      return;
+    }
+    const cookie= this.persistence.getCookie("robotito-auth");
+    console.log("Cookie: ",cookie)
+    if (cookie!='')
+    {
+      this.back.getLoginUser(cookie).then((valor) => {
         if (valor.status=='OK')
         {
           this.persistence.setUser(valor.session.user)
@@ -34,12 +33,11 @@ export class LoginComponent {
           this.router.navigate(['/conversation']);
         }
         this.init=true
-        console.log(valor) 
-      }
+        console.log(valor)
+      });
+    } else {
       this.init=true
-
     }
-   )      
   }
 
   async onSubmit() {
@@ -56,7 +54,7 @@ export class LoginComponent {
       this.persistence.setUser(this.userName)
       this.persistence.setAuthorization(valor['session']['authorization'])
       this.persistence.setCookie({
-        name: "robotito-uuid",
+        name: "robotito-auth",
         value: valor['session']['authorization']
       });
       this.router.navigate(['/conversation']); 

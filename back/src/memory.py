@@ -34,10 +34,11 @@ class Context:
   def hasToRemember(self):
     return self.remember_number%self.remember_each==0 or self.remember_number==0
 class AudioData:
-    language='en-EU'
-    kpipeline = None
-    voice_name="af_heart"
-    configGoogle=None
+    def __init__(self):
+        self.language='en-EU'
+        self.kpipeline = None
+        self.voice_name="af_heart"
+        self.configGoogle=None
 def get_max_length_answer():
   max_length_answers = os.getenv("MAX_LENGHT_ANSWERS")
   if max_length_answers is None:
@@ -101,7 +102,7 @@ class memoryDTO:
     def clearChatHistory(self):
         self.chat_history.clear()
     def clearContext(self):
-        self.context=None()
+        self.context=None
     def getUrlContext(self):
         return self.url_context
     def setUrlContext(self, url_context:str, url_source:str):
@@ -126,23 +127,21 @@ class Session:
   
 # Return a object type memoryDto or None
 def getMemory(uuid) -> memoryDTO:
-    for mem in memoryData:
-        if mem.getUuid()==uuid:
-            return mem
-    return None
+    return memoryData.get(uuid)
+
+def addMemory(mem:memoryDTO):
+    memoryData[mem.getUuid()] = mem
+
 # This is a memory cache for sessions
 def getSessionFromAutorization(authorization):
-  for session in sessions:
-     if session.authorization==authorization:
-        return session
-  return None
+  return sessions.get(authorization)
 
 # Save in  memory cache a session
-def saveSession(user,uuid):
-  sessions.append( Session(user,uuid))
+def saveSession(user,authorization):
+  sessions[authorization] = Session(user,authorization)
 
-memoryData=[]
-sessions=[]
+memoryData={}
+sessions={}
 
 def getLogger() -> logging.Logger:
   logger_ = logging.getLogger(__name__)

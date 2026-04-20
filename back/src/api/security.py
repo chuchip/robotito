@@ -14,7 +14,7 @@ async def login():
    mem = memory.getMemory(uuid_header)
    if mem is None:
        mem = memory.memoryDTO(uuid_header)
-       memory.memoryData.append(mem)
+       memory.addMemory(mem)
    user=data.get('user')
    password=data.get('password')
    if user is None or password is None:
@@ -36,7 +36,7 @@ async def get_uuid(authorization):
    mem = memory.getMemory(uuid_header)
    if mem is None:
        mem = memory.memoryDTO(uuid_header)
-       memory.memoryData.append(mem)
+       memory.addMemory(mem)
    session= mem.getSession()
    if session is None:
     session = await persistence.get_session(authorization)
