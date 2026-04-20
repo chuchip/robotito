@@ -37,14 +37,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         switch (error.status) {
           case 400:
             errorMessage = 'Bad Request: The server could not understand the request.';
-            // Often, you'd want to display specific validation errors from the server here
             if (error.error && error.error.errors) {
               const validationErrors = Object.values(error.error.errors).flat();
               errorMessage += `\nDetails: ${validationErrors.join(', ')}`;
             }
             break;
           case 401:
-            errorMessage = 'Unauthorized: Please log in again.';            
+            errorMessage = 'Unauthorized: Please log in again.';
             break;
           case 403:
             errorMessage = 'Forbidden: You do not have permission to access this resource.';
@@ -55,7 +54,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           case 409:
             errorMessage = 'Conflict: The request could not be completed due to a conflict.';
             if (error.error && error.error.message) {
-              errorMessage = error.error.message; // Use server-provided conflict message
+              errorMessage = error.error.message;
             }
             break;
           case 500:
@@ -65,7 +64,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             errorMessage = 'Service Unavailable: The server is currently unable to handle the request.';
             break;
           default:
-            // For other status codes, you might have a generic message or parse server response
             if (error.error && error.error.message) {
               errorMessage = `Error ${error.status}: ${error.error.message}`;
             }
@@ -73,8 +71,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         }
       }
       errorHandlerService.showError(errorMessage);
-      router.navigate(['/login']);
-      // Re-throw the error so that subscribing components can also handle it if needed
+      // Only force re-auth on 401/403. Other errors (404, 500, etc.) shouldn't kick the user out.
+      if (error.status === 401 || error.status === 403) {
+        persistenceService.logout();
+        router.navigate(['/login']);
+      }
       return throwError(() => new Error(errorMessage));
     })
   )

@@ -871,8 +871,10 @@ export class ConversationComponent {
   }
   login()
   {
-    this.persistence.clearLogin=true;
-    this.router.navigate(['/login']); 
+    this.back.logoutUser().finally(() => {
+      this.persistence.logout();
+      this.router.navigate(['/login']);
+    });
   }
   async sumary_conversation()
   {

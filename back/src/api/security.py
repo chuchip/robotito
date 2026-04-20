@@ -52,3 +52,17 @@ async def get_uuid(authorization):
        mem.setSession(session)
    return jsonify({'status': 'OK', 'session': session.__dict__})
 
+
+@security_bp.route('/logout', methods=['POST'])
+async def logout():
+    """Invalidate the current session in the DB and in-memory cache."""
+    authorization = request.headers.get("Authorization")
+    uuid_header = request.headers.get("uuid")
+    if authorization:
+        await persistence.delete_session(authorization)
+    mem = memory.getMemory(uuid_header)
+    if mem is not None:
+        mem.clear()
+    logger_.info(f"Logout: session {authorization} invalidated")
+    return jsonify({'status': 'OK'})
+

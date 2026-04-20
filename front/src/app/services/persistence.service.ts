@@ -102,4 +102,17 @@ export class PersistenceService {
     if (authorization) this.setAuthorization(authorization);
     if (user) this.setUser(user);
   }
+
+  clearLocalStorage() {
+    localStorage.removeItem('rbt_uuid');
+    localStorage.removeItem('rbt_authorization');
+    localStorage.removeItem('rbt_user');
+  }
+
+  logout() {
+    this.security = { user: '', authorization: '' };
+    this.clearLocalStorage();
+    this.deleteCookie('robotito-auth');
+    this.clearLogin = true;
+  }
 }

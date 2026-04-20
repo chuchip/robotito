@@ -25,6 +25,7 @@ class UserSession(Base):
     uuid = Column(Text, primary_key=True)
     user_id = Column(Text, ForeignKey('users.user_id'))
     last_date = Column(DateTime, default=func.now())
+    expires_at = Column(DateTime)
     user = relationship("User", back_populates="sessions")
 
 class Context(Base):

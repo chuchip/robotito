@@ -54,7 +54,17 @@ db_user = os.getenv("DB_USER")
 db_password = os.getenv("DB_PASSWORD")
 db = QuartDB(app, url=f"postgresql://{db_user}:{db_password}@{db_host}/robotito")
 
-app = cors(app, allow_origin="*")
+_allowed_origins_env = os.getenv("ALLOWED_ORIGINS")
+if _allowed_origins_env:
+    _allowed_origins = [o.strip() for o in _allowed_origins_env.split(",") if o.strip()]
+else:
+    # Safe local-dev default. Set ALLOWED_ORIGINS to a comma-separated list for production.
+    _allowed_origins = ["http://localhost:4200"]
+    logger_.warning(
+        "ALLOWED_ORIGINS not set; defaulting CORS to %s. Configure this in production.",
+        _allowed_origins,
+    )
+app = cors(app, allow_origin=_allowed_origins)
 
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)

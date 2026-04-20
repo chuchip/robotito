@@ -1,9 +1,33 @@
-from datetime  import datetime
+from datetime  import datetime, timedelta
 import sqlite3
 import logging
+import os
 import uuid
+import bcrypt
 import memory
 from quart import  g
+
+
+SESSION_TTL_DAYS = int(os.getenv("SESSION_TTL_DAYS", "7"))
+
+
+def hash_password(password: str) -> str:
+    """Hash a plaintext password with bcrypt."""
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+
+def _is_bcrypt_hash(value: str) -> bool:
+    return isinstance(value, str) and value.startswith(("$2a$", "$2b$", "$2y$"))
+
+
+def verify_password(password: str, stored: str) -> bool:
+    """Check plaintext password against bcrypt hash. Returns False if either is falsy."""
+    if not password or not stored:
+        return False
+    try:
+        return bcrypt.checkpw(password.encode("utf-8"), stored.encode("utf-8"))
+    except (ValueError, TypeError):
+        return False
 
 
 def get_DTO_context(row):
@@ -328,34 +352,69 @@ async def update_max_lenght(user,max_length):
     logging.info("Save language preferences")    
     
 # Save in db and cache an uuid if it not exists
-async def save_session(user_id,uuid):
-    session= memory.getSessionFromAutorization(uuid)
+async def save_session(user_id, uuid):
+    session = memory.getSessionFromAutorization(uuid)
     if session is not None:
         return
-    sql="select user from user_session where uuid = :uuid"
-    row=await g.connection.fetch_one(sql,{"uuid":uuid})
-    if row is  None:
-        sql="insert into user_session  (user_id,uuid) values (:user_id,:uuid)"
-        await g.connection.execute(sql,{"user_id":user_id,"uuid":uuid})
-        
+    expires_at = datetime.now() + timedelta(days=SESSION_TTL_DAYS)
+    sql = "select user_id from user_session where uuid = :uuid"
+    row = await g.connection.fetch_one(sql, {"uuid": uuid})
+    if row is None:
+        sql = "insert into user_session (user_id, uuid, expires_at) values (:user_id, :uuid, :expires_at)"
+        await g.connection.execute(sql, {"user_id": user_id, "uuid": uuid, "expires_at": expires_at})
+    else:
+        sql = "update user_session set expires_at = :expires_at where uuid = :uuid"
+        await g.connection.execute(sql, {"expires_at": expires_at, "uuid": uuid})
+
     memory.saveSession(user_id, uuid)
+
+
 async def get_session(uuid):
-    session= memory.getSessionFromAutorization(uuid)
-    if session is not None:        
+    session = memory.getSessionFromAutorization(uuid)
+    if session is not None:
         return session
-    sql="select user,uuid from user_session where uuid = :uuid"
-    row=await g.connection.fetch_one(sql,{"uuid":uuid})
+    sql = "select user_id, uuid, expires_at from user_session where uuid = :uuid"
+    row = await g.connection.fetch_one(sql, {"uuid": uuid})
     if row is None:
         return None
-    session=memory.Session(row['user'],row['uuid'],)        
+    expires_at = row['expires_at']
+    if expires_at is not None and expires_at < datetime.now():
+        # Clean up the expired session
+        await g.connection.execute(
+            "delete from user_session where uuid = :uuid", {"uuid": uuid}
+        )
+        return None
+    session = memory.Session(row['user_id'], row['uuid'])
     memory.saveSession(session.user, uuid)
     return session
-async def checkUser(user_id,password):
-    row =await g.connection.fetch_one("SELECT user_id,password FROM users  where user_id = :user_id",{"user_id":user_id})
 
+
+async def delete_session(authorization):
+    """Remove a session from both the DB and the in-memory cache."""
+    await g.connection.execute(
+        "delete from user_session where uuid = :uuid", {"uuid": authorization}
+    )
+    memory.sessions.pop(authorization, None)
+
+
+async def checkUser(user_id, password):
+    row = await g.connection.fetch_one(
+        "SELECT user_id, password FROM users where user_id = :user_id",
+        {"user_id": user_id},
+    )
     if row is None:
         return False
-    if row['password'] != password:
+    stored = row['password']
+    if _is_bcrypt_hash(stored):
+        return verify_password(password, stored)
+    # Legacy plaintext password: verify, then upgrade to bcrypt transparently.
+    if stored != password:
         return False
+    new_hash = hash_password(password)
+    await g.connection.execute(
+        "update users set password = :password where user_id = :user_id",
+        {"password": new_hash, "user_id": user_id},
+    )
+    logging.info(f"Upgraded plaintext password to bcrypt for user: {user_id}")
     return True
 

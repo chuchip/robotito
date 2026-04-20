@@ -243,6 +243,15 @@ async getLastUser(): Promise<any> {
       throw error;
     }     
   }
+  async logoutUser(): Promise<any> {
+    try {
+      return await firstValueFrom(this.http.post(`${this.backendUrl}/security/logout`, {}));
+    } catch (error) {
+      console.error('logoutUser failed!:', error);
+      // Swallow errors: the client should proceed with logout regardless.
+      return null;
+    }
+  }
   async summaryConversation(type:string): Promise<any> {    
     try {
       const payload={type:type}
