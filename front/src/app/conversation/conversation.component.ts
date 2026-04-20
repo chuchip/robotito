@@ -22,11 +22,13 @@ import { contextDTO } from '../model/context.dto';
 import { conversationHistoryDTO } from '../model/conversationHistory.dto';
 import { Router } from '@angular/router';
 import { RatingPhrase } from '../model/ratingPhrase';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 @Component({  
   selector: 'app-conversation',   
   imports: [CommonModule, MatTooltipModule, MatCheckboxModule, FormsModule,
     MatButtonModule, MatIconModule, SoundPlayingComponent, SoundRecordingComponent,
-    MatSliderModule, LoadingComponent,SummaryComponent,RatingPhraseComponent,AvatarComponent], 
+    MatSliderModule, LoadingComponent,SummaryComponent,RatingPhraseComponent,AvatarComponent, MatDialogModule, ConfirmDialogComponent], 
   templateUrl: './conversation.component.html',
   styleUrls: ['./conversation.component.scss']
 })
@@ -92,8 +94,10 @@ export class ConversationComponent {
   contextUrl: string = '';
   languageOptions:{label:string, value:string}[] = []
   voiceOptions:{language:string, label:string,gender:string}[] = []
+  notesWindow: Window | null = null;
+  dictionaryWindow: Window | null = null;
    
-  constructor(private router: Router,public sound: SoundService,public back: ApiBackService,public persistence: PersistenceService,private avatarService: AvatarService) {
+  constructor(private router: Router,public sound: SoundService,public back: ApiBackService,public persistence: PersistenceService,private avatarService: AvatarService, private dialog: MatDialog) {
     this.isLoading=true
     this.avatarTalking$ = this.avatarService.talking$;
     if (persistence.getAuthorization()=='')
@@ -292,6 +296,7 @@ export class ConversationComponent {
       {
         var conversation=await this.back.initConversation( this.inputText);        
         this.conversationId=conversation.id
+        await this.getConversationsHistory();
       }
       if (this.swSaveConversation) 
       {
@@ -555,6 +560,15 @@ export class ConversationComponent {
     this.persistence.showSummary=false
     this.swRating=false
     this.putGreeting()
+    // Close notes and dictionary windows
+    if (this.notesWindow) {
+      this.notesWindow.close();
+      this.notesWindow = null;
+    }
+    if (this.dictionaryWindow) {
+      this.dictionaryWindow.close();
+      this.dictionaryWindow = null;
+    }
     const response=await this.back.clearConversation();    
     this.put_message(response)
   }
@@ -728,19 +742,33 @@ export class ConversationComponent {
       i+=1
     }    
     this.numberLine=i
+    // Reload notes and dictionary windows if open
+    if (this.notesWindow && !this.notesWindow.closed) {
+      this.notesWindow.location.href = `/notes/${this.conversationId}`;
+    }
+    if (this.dictionaryWindow && !this.dictionaryWindow.closed) {
+      this.dictionaryWindow.location.href = `/dictionary/${this.conversationId}`;
+    }
     this.isLoading=false
   }
   async hystoryDelete(event: Event, id: string)
   {
     event.stopPropagation();
-     if (!confirm('Are you sure you want to delete this context?')) {
-      return;
-    }
-    this.isLoading=true
-    const response=await this.back.conversation_delete_by_id(id);
-    this.put_message(response)
-    this.getConversationsHistory()
-    this.isLoading=false
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '300px',
+      data: { message: 'Are you sure you want to delete this conversation?' }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.isLoading = true;
+        this.back.conversation_delete_by_id(id).then(response => {
+          this.put_message(response);
+          this.getConversationsHistory();
+          this.isLoading = false;
+        });
+      }
+    });
   }
   getFormattedDate(dateString: string): Date {
     return new Date(dateString);
@@ -856,14 +884,14 @@ export class ConversationComponent {
   {
     if (!this.conversationId) return;
     this.persistence.saveToLocalStorage();
-    window.open(`/notes/${this.conversationId}`, 'robotito_notes', 'width=680,height=750,resizable=yes');
+    this.notesWindow = window.open(`/notes/${this.conversationId}`, 'robotito_notes', 'width=680,height=750,resizable=yes');
   }
 
   openDictionary()
   {
     if (!this.conversationId) return;
     this.persistence.saveToLocalStorage();
-    window.open(`/dictionary/${this.conversationId}`, 'robotito_dictionary', 'width=800,height=700,resizable=yes');
+    this.dictionaryWindow = window.open(`/dictionary/${this.conversationId}`, 'robotito_dictionary', 'width=800,height=700,resizable=yes');
   }
 
   getBackgroundColor(posHistory:number): string {
