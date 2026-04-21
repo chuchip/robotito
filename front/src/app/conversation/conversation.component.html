@@ -52,9 +52,9 @@
         <span class="line-text-robot">
           <span [innerHTML]="toHtml(responseMessage,'R')"></span>
         </span>
+      </div>
     </div>
-    <div class="spacer"></div>
-    <!-- Input and controls -->
+    <!-- Input and controls (fixed at viewport bottom) -->
     <div #input class='input' >
       <app-avatar [talking]="(avatarTalking$ | async) || false" class="input-avatar"></app-avatar>
       <div class="vertical">
@@ -127,91 +127,23 @@
       </div>
     </div>
 
-    <div #configuration_window class="configuration" *ngIf="showLanguageOptions">
-      <div class="configuration_line">
-        <div class="configuration_horizontal">
-          <span class="check-option"><input type="checkbox" [(ngModel)]="swTalkResponse"
-              matTooltip="Reproduce Sound Automatically"> Speak aloud</span>
-          <span class="check-option"><input type="checkbox" [(ngModel)]="modeConversation"
-              matTooltip="Mode Conversation">Conversation</span>
-          <span class="check-option"><input type="checkbox" [(ngModel)]="swSaveConversation"
-                matTooltip="Save Conversation">Save</span>
-          <span><label>Max. Length Answers:</label>
-            <input class="max-length-answer" #inputMaxLengthAnswer type="number" [(ngModel)]="this.context.maxLengthAnswer"
-              (blur)="onMaxLengthAnswerBlur(inputMaxLengthAnswer.value)" min="0">
-          </span>
-          <select [(ngModel)]="selectLanguage" aria-label="Language">
-            <option *ngFor="let option of languageOptions" [value]="option.value">
-              {{ option.label }}
-            </option>
-          </select>
-          <select [(ngModel)]="selectVoice" (change)="changeLanguage()" aria-label="Voice">
-            <option *ngFor="let option of filteredVoiceOptions" [value]="option.label">
-              {{ option.label }} - {{ option.gender }}
-            </option>
-          </select>
-          <span class="configuration_line_text">Speed:<input type="range" min="0.5" max="2" step="0.1"
-             [(ngModel)]="playbackSpeed" (input)="changeSpeed($event)" aria-label="Playback speed">
-            {{playbackSpeed | number:'1.1-1'}}
-          </span>
-        </div>
-      </div>
-
-      <div class="context">
-      <div class="configuration_horizontal">
-          Context:&nbsp;
-            <select #selectComponent [(ngModel)]="selectContext" (change)="onChangeContext($event, selectComponent.value)"
-              aria-label="Context">
-            <option *ngFor="let context of contexts" [value]="context['id']">
-              {{ context['label'] }}
-            </option>
-            </select>
-          <button (click)="contextDelete(selectComponent.value)"
-            aria-label="Remove context"
-            matTooltip="Remove Context">
-            <span class="material-icons" aria-hidden="true">remove_circle</span>
-          </button>
-          <input #inputField type="text" [(ngModel)]="this.context.label" placeholder="Choose a new Label"
-            aria-label="Context label">
-        </div>
-        <textarea #context class="context_textarea" (keydown.enter)="contextSend($event)"
-          (keydown.esc)="showLanguageOptions=false" [(ngModel)]="this.context.text" placeholder="Type an context..."
-          aria-label="Context text"></textarea>
-        <textarea #context_remember class="context_textarea" (keydown.enter)="contextRememberSend($event)"
-          (keydown.esc)="showLanguageOptions=false" [(ngModel)]="this.context.remember" placeholder="Type something the AI has to remember ..."
-          aria-label="Context remember"></textarea>
-        <div class="configuration_horizontal context-url-line">
-          <label for="context_url">Context URL:</label>
-          <input id="context_url" type="text" [(ngModel)]="contextUrl" placeholder="https://example.com/article"
-            (keydown.enter)="contextUrlSend(); $event.preventDefault()">
-          <button (click)="contextUrlSend()"
-            aria-label="Load URL as context"
-            matTooltip="Load URL as context">
-            <span class="material-icons" aria-hidden="true">link</span>
-          </button>
-          <button (click)="contextUrlClear()"
-            aria-label="Clear URL context"
-            matTooltip="Clear URL context">
-            <span class="material-icons" aria-hidden="true">link_off</span>
-          </button>
-        </div>
-      </div>
-      <div class="configuration_line">
-        <div>Actual Language: <span class="configuration_line_text"><input type="text"
-              value="{{selectLanguageDesc}}" readonly aria-label="Actual language"> </span>
-          Actual Voice: <span class="configuration_line_text"><input type="text" value="{{selectVoice}}" readonly aria-label="Actual voice">
-          </span>
-          <br/>
-          <span  class="name_user">User: {{persistence.getUser()}}  <button (click)="login()"
-            aria-label="Login"
-            matTooltip="Login">
-            <span class="material-icons" aria-hidden="true">login</span>
-          </button>  Version: 20250427.1</span>
-        </div>
-      </div>
-    </div>
+    <app-settings *ngIf="showLanguageOptions" #configuration_window
+      [(swTalkResponse)]="swTalkResponse"
+      [(modeConversation)]="modeConversation"
+      [(swSaveConversation)]="swSaveConversation"
+      [(playbackSpeed)]="playbackSpeed"
+      [(selectLanguage)]="selectLanguage"
+      [(selectVoice)]="selectVoice"
+      [(contextUrl)]="contextUrl"
+      [context]="context"
+      [contexts]="contexts"
+      [languageOptions]="languageOptions"
+      [voiceOptions]="voiceOptions"
+      (close)="showLanguageOptions=false"
+      (message)="showSystemMessage($event)">
+    </app-settings>
     <div #summary_window >
-      <app-summary *ngIf=persistence.showSummary [selectLanguage]="this.selectLanguage"></app-summary>
+      <app-summary *ngIf="persistence.showSummary" [selectLanguage]="this.selectLanguage"></app-summary>
     </div>
     <div #rating_window >
       <app-rating-phrase  *ngIf="swRating" [ratingPhrase]="this.ratingPhrase" (valueReturned)="swRating=false"></app-rating-phrase>

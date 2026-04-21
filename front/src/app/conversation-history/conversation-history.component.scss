@@ -7,7 +7,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 20px);
+  height: calc(100vh - 100px); /* leave room for fixed input bar */
   margin: 10px 6px 10px 10px;
   background: var(--color-surface, #ffffff);
   border: 1px solid var(--color-border, #e2e8f0);
@@ -18,8 +18,8 @@
 }
 
 .history.collapsed {
-  width: 64px;
-  min-width: 64px;
+  width: 48px;
+  min-width: 48px;
 }
 
 .history.expanded {
@@ -38,8 +38,10 @@
 }
 
 .history.collapsed .history__header {
-  flex-direction: column;
+  justify-content: center;
   padding: 8px 4px;
+  border-bottom: none;
+  background: transparent;
 }
 
 .history__title {
@@ -51,7 +53,7 @@
   letter-spacing: 0.01em;
 }
 
-/* Toggle */
+/* Toggle + clear */
 .history__toggle,
 .history__clear {
   display: inline-flex;
@@ -62,8 +64,9 @@
   background: #ffffff;
   color: var(--color-primary, #6366f1);
   border-radius: 10px;
-  padding: 6px 8px;
+  padding: 6px 10px;
   cursor: pointer;
+  font: inherit;
   transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
 }
 
@@ -78,22 +81,12 @@
 .history__clear:hover {
   background: var(--color-primary, #6366f1);
   color: #ffffff;
+  border-color: var(--color-primary, #6366f1);
 }
 
-.history__toggle:focus-visible,
-.history__clear:focus-visible,
-.history__entry:focus-visible {
-  outline: 2px solid var(--color-primary, #6366f1);
-  outline-offset: 2px;
-}
-
-.history__clear {
-  min-height: 36px;
-}
-
-.history.collapsed .history__clear {
-  width: 36px;
-  padding: 0;
+.history__toggle .material-icons,
+.history__clear .material-icons {
+  color: inherit;
 }
 
 .history__clear-label {
@@ -107,7 +100,7 @@
   overflow-y: auto;
   list-style: none;
   margin: 0;
-  padding: 8px 6px;
+  padding: 8px 8px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -133,14 +126,11 @@
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
+  gap: 4px;
+  padding: 0;
   background: transparent;
   border: 1px solid transparent;
   border-radius: 10px;
-  cursor: pointer;
-  text-align: left;
-  color: var(--color-text, #0f172a);
   transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
@@ -154,28 +144,28 @@
   border-color: color-mix(in srgb, var(--color-primary, #6366f1) 30%, transparent);
 }
 
-.history.collapsed .history__entry {
-  justify-content: center;
-  padding: 6px;
+.history__open {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  color: var(--color-text, #0f172a);
+  font: inherit;
 }
 
-.history__avatar {
-  flex-shrink: 0;
-  width: 34px;
-  height: 34px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: linear-gradient(135deg,
-      var(--color-primary, #6366f1),
-      var(--color-accent, #06b6d4));
-  color: #ffffff;
-  font-weight: 600;
-  font-size: 0.78rem;
-  letter-spacing: 0.03em;
-  user-select: none;
-  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.15);
+.history__open:focus-visible,
+.history__remove:focus-visible,
+.history__toggle:focus-visible,
+.history__clear:focus-visible {
+  outline: 2px solid var(--color-primary, #6366f1);
+  outline-offset: 2px;
 }
 
 .history__meta {
@@ -201,21 +191,23 @@
   margin-top: 2px;
 }
 
-.history__remove button {
+.history__remove {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
+  margin-right: 4px;
   border: 1px solid transparent;
   border-radius: 8px;
   background: transparent;
   color: var(--color-text-muted, #64748b);
   cursor: pointer;
+  flex-shrink: 0;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-.history__remove button:hover {
+.history__remove:hover {
   background: color-mix(in srgb, var(--color-danger, #ef4444) 12%, transparent);
   color: var(--color-danger, #ef4444);
 }
@@ -232,7 +224,7 @@
   text-align: center;
 }
 
-/* Responsive: on small screens, collapsed stays collapsed */
+/* Responsive: on small screens, keep expanded narrower */
 @media (max-width: 640px) {
   .history.expanded {
     width: 220px;

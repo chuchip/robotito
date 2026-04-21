@@ -1,0 +1,168 @@
+<div class="settings" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+  <header class="settings__header">
+    <h2 id="settings-title" class="settings__title">Settings</h2>
+    <button type="button" class="settings__close"
+      (click)="onClose()"
+      aria-label="Close settings"
+      matTooltip="Close">
+      <span class="material-icons" aria-hidden="true">close</span>
+    </button>
+  </header>
+
+  <!-- Playback / general options -->
+  <section class="settings__section" aria-label="Playback and general options">
+    <div class="settings__row settings__row--wrap">
+      <label class="check-option">
+        <input type="checkbox" [ngModel]="swTalkResponse"
+          (ngModelChange)="swTalkResponse = $event; swTalkResponseChange.emit($event)"
+          matTooltip="Reproduce sound automatically">
+        <span>Speak aloud</span>
+      </label>
+
+      <label class="check-option">
+        <input type="checkbox" [ngModel]="modeConversation"
+          (ngModelChange)="modeConversation = $event; modeConversationChange.emit($event)"
+          matTooltip="Conversation mode">
+        <span>Conversation</span>
+      </label>
+
+      <label class="check-option">
+        <input type="checkbox" [ngModel]="swSaveConversation"
+          (ngModelChange)="swSaveConversation = $event; swSaveConversationChange.emit($event)"
+          matTooltip="Save conversation">
+        <span>Save</span>
+      </label>
+
+      <label class="field">
+        <span class="field__label">Max. length answers</span>
+        <input class="field__input field__input--narrow" #inputMaxLengthAnswer type="number"
+          [(ngModel)]="context.maxLengthAnswer"
+          (blur)="onMaxLengthAnswerBlur(inputMaxLengthAnswer.value)" min="0">
+      </label>
+    </div>
+
+    <div class="settings__row settings__row--wrap">
+      <label class="field">
+        <span class="field__label">Language</span>
+        <select class="field__input"
+          [ngModel]="selectLanguage"
+          (ngModelChange)="selectLanguage = $event; selectLanguageChange.emit($event)"
+          aria-label="Language">
+          <option *ngFor="let option of languageOptions" [value]="option.value">
+            {{ option.label }}
+          </option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span class="field__label">Voice</span>
+        <select class="field__input"
+          [ngModel]="selectVoice"
+          (ngModelChange)="selectVoice = $event; selectVoiceChange.emit($event)"
+          (change)="onLanguageChange()"
+          aria-label="Voice">
+          <option *ngFor="let option of filteredVoiceOptions" [value]="option.label">
+            {{ option.label }} - {{ option.gender }}
+          </option>
+        </select>
+      </label>
+
+      <label class="field field--speed">
+        <span class="field__label">Speed: {{ playbackSpeed | number:'1.1-1' }}x</span>
+        <input type="range" min="0.5" max="2" step="0.1"
+          [ngModel]="playbackSpeed"
+          (input)="onSpeedInput($event)"
+          aria-label="Playback speed">
+      </label>
+    </div>
+  </section>
+
+  <!-- Context management -->
+  <section class="settings__section settings__section--context" aria-label="Context">
+    <h3 class="settings__subtitle">Context</h3>
+
+    <div class="settings__row">
+      <label class="field field--grow">
+        <span class="field__label">Profile</span>
+        <select #selectComponent class="field__input"
+          [(ngModel)]="selectContext"
+          (change)="onContextChange($event, selectComponent.value)"
+          aria-label="Context">
+          <option *ngFor="let c of contexts" [value]="c['id']">
+            {{ c['label'] }}
+          </option>
+        </select>
+      </label>
+
+      <button type="button" class="icon-button icon-button--danger"
+        (click)="onContextDelete(selectComponent.value)"
+        aria-label="Remove context"
+        matTooltip="Remove context">
+        <span class="material-icons" aria-hidden="true">delete_outline</span>
+      </button>
+
+      <label class="field field--grow">
+        <span class="field__label">New label</span>
+        <input type="text" class="field__input"
+          [(ngModel)]="context.label"
+          placeholder="Choose a new label"
+          aria-label="Context label">
+      </label>
+    </div>
+
+    <textarea class="settings__textarea"
+      (keydown.enter)="onContextSend($event)"
+      (keydown.esc)="onClose()"
+      [(ngModel)]="context.text"
+      placeholder="Type a context..."
+      aria-label="Context text"></textarea>
+
+    <textarea class="settings__textarea"
+      (keydown.enter)="onContextRememberSend($event)"
+      (keydown.esc)="onClose()"
+      [(ngModel)]="context.remember"
+      placeholder="Type something the AI has to remember..."
+      aria-label="Context remember"></textarea>
+
+    <div class="settings__row settings__row--url">
+      <label class="field field--grow">
+        <span class="field__label" for="context_url">Context URL</span>
+        <input id="context_url" type="text" class="field__input"
+          [(ngModel)]="contextUrl"
+          (ngModelChange)="contextUrlChange.emit($event)"
+          placeholder="https://example.com/article"
+          (keydown.enter)="onContextUrlSend(); $event.preventDefault()">
+      </label>
+      <button type="button" class="icon-button"
+        (click)="onContextUrlSend()"
+        aria-label="Load URL as context"
+        matTooltip="Load URL as context">
+        <span class="material-icons" aria-hidden="true">link</span>
+      </button>
+      <button type="button" class="icon-button icon-button--danger"
+        (click)="onContextUrlClear()"
+        aria-label="Clear URL context"
+        matTooltip="Clear URL context">
+        <span class="material-icons" aria-hidden="true">link_off</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- Footer info -->
+  <footer class="settings__footer">
+    <div class="settings__info">
+      <span><strong>Language:</strong> {{ selectLanguageDesc }}</span>
+      <span><strong>Voice:</strong> {{ selectVoice }}</span>
+    </div>
+    <div class="settings__user">
+      <span>User: <strong>{{ persistence.getUser() }}</strong></span>
+      <button type="button" class="icon-button"
+        (click)="onLogin()"
+        aria-label="Logout and login again"
+        matTooltip="Login">
+        <span class="material-icons" aria-hidden="true">login</span>
+      </button>
+      <span class="settings__version">v20250427.1</span>
+    </div>
+  </footer>
+</div>

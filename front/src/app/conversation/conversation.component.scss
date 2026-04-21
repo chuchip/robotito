@@ -30,10 +30,6 @@
   transition: margin-left 0.3s ease;
 }
 
-.spacer {
-  flex: 1;
-}
-
 /* ------------------------------------------------------------------ */
 /* Conversation window                                                */
 /* ------------------------------------------------------------------ */
@@ -382,174 +378,6 @@ mat-checkbox .mat-checkbox-label {
 }
 
 /* ------------------------------------------------------------------ */
-/* Configuration dialog                                               */
-/* ------------------------------------------------------------------ */
-.context {
-  border-top: 1px solid var(--color-border);
-  margin-top: 8px;
-  padding-top: 8px;
-}
-
-.configuration_horizontal {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 4px;
-  flex-direction: row;
-  flex-wrap: wrap;
-}
-
-.configuration_horizontal label {
-  margin-left: 4px;
-  color: var(--color-text);
-  font-size: 0.9rem;
-}
-
-.configuration_horizontal select,
-.configuration_horizontal input[type="text"],
-.configuration_horizontal input[type="number"] {
-  height: 30px;
-  padding: 4px 8px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: #ffffff;
-  color: var(--color-text);
-  font-size: 0.9rem;
-  font-family: var(--font-family);
-}
-
-.configuration_horizontal select {
-  flex: 1;
-  max-width: 60%;
-}
-
-.configuration_horizontal input {
-  flex: 2;
-  max-width: 50%;
-}
-
-.context-url-line {
-  margin-top: 8px;
-}
-.context-url-line input {
-  max-width: 70%;
-}
-
-.configuration_horizontal button {
-  flex: 0;
-  min-width: 30px;
-  min-height: 30px;
-  padding: 4px 6px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: #ffffff;
-  color: var(--color-danger);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-
-.configuration_horizontal button:hover {
-  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
-}
-
-.configuration_horizontal button .material-icons {
-  color: inherit;
-}
-
-.context_textarea {
-  flex: 2;
-  font-size: 0.95rem;
-  margin-top: 8px;
-  width: 100%;
-  padding: 8px;
-  font-family: 'SFMono-Regular', Menlo, Consolas, 'Courier New', monospace;
-  height: 130px;
-  background: var(--color-surface-alt);
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  resize: vertical;
-}
-
-.context_textarea:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
-}
-
-.configuration {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: min(960px, 92vw);
-  max-height: 85vh;
-  overflow-y: auto;
-  background: #ffffff;
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-lg);
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  border-radius: var(--radius-lg);
-  padding: 16px 18px;
-  gap: 6px;
-}
-
-.configuration_line {
-  width: 100%;
-  display: flex;
-  justify-content: space-evenly;
-  flex-direction: row;
-  border-top: 1px solid var(--color-border);
-  padding-top: 10px;
-  margin-top: 6px;
-}
-
-.configuration_line:first-child {
-  border-top: none;
-  padding-top: 0;
-  margin-top: 0;
-}
-
-.configuration_line_text {
-  margin: 0 8px;
-  font-size: 0.9rem;
-  color: var(--color-text);
-}
-
-.configuration_line_text input[type="text"] {
-  padding: 4px 8px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-alt);
-  color: var(--color-text);
-}
-
-/* Generic centered window */
-.window {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 300px;
-  height: 200px;
-  background: #ffffff;
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-lg);
-  padding: 20px;
-  z-index: 1000;
-  border-radius: var(--radius-lg);
-}
-
-.max_words input {
-  width: 30px;
-}
-
-/* ------------------------------------------------------------------ */
 /* Legacy helpers kept for backward compatibility                     */
 /* ------------------------------------------------------------------ */
 .speaker-btn {
@@ -586,10 +414,5 @@ mat-checkbox .mat-checkbox-label {
 @media (max-width: 768px) {
   .line {
     max-width: 90%;
-  }
-
-  .configuration {
-    width: 96vw;
-    padding: 12px;
   }
 }

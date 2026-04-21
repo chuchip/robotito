@@ -25,12 +25,13 @@ import { RatingPhrase } from '../model/ratingPhrase';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { ConversationHistoryComponent } from '../conversation-history/conversation-history.component';
+import { SettingsComponent } from '../settings/settings.component';
 @Component({  
   selector: 'app-conversation',   
   imports: [CommonModule, MatTooltipModule, MatCheckboxModule, FormsModule,
     MatButtonModule, MatIconModule, SoundPlayingComponent, SoundRecordingComponent,
     MatSliderModule, LoadingComponent,SummaryComponent,RatingPhraseComponent,AvatarComponent, MatDialogModule, ConfirmDialogComponent,
-    ConversationHistoryComponent], 
+    ConversationHistoryComponent, SettingsComponent], 
   templateUrl: './conversation.component.html',
   styleUrls: ['./conversation.component.scss']
 })
@@ -66,9 +67,8 @@ export class ConversationComponent {
   
   @ViewChild('input') divInputElement!: ElementRef;
   @ViewChild('human_input') inputElement!: ElementRef;
-  @ViewChild('context') contextElement!: ElementRef;
   @ViewChild('conversation') conversationElement!: ElementRef;
-  @ViewChild('configuration_window') configurationWinElement!: ElementRef;
+  @ViewChild('configuration_window', { read: ElementRef }) configurationWinElement!: ElementRef;
   @ViewChild('summary_window') summaryWinElement!: ElementRef;
   @ViewChild('rating_window') ratingWinElement!: ElementRef;
 
@@ -87,12 +87,10 @@ export class ConversationComponent {
   error: any;
   modeConversation: boolean= false;
   swSaveConversation:boolean=true
-  swTalkResponse: Boolean= true;
+  swTalkResponse: boolean = true;
   audio: HTMLAudioElement | null = null;
-  selectContext:string = 'default';
   selectLanguage: string = 'a';
-  selectLanguageDesc:string="American English"
-  selectVoice: string = 'af_heart';  
+  selectVoice: string = 'af_heart';
   contextUrl: string = '';
   languageOptions:{label:string, value:string}[] = []
   voiceOptions:{language:string, label:string,gender:string}[] = []
@@ -114,9 +112,7 @@ export class ConversationComponent {
         this.voiceOptions=await this.back.getVoices()
         this.selectVoice=data.voice
         this.selectLanguage=data.language
-        this.selectLanguageDesc=this.getDescriptionLanguage(this.selectLanguage)
-        this.selectVoice=data.voice
-       
+
         await this.back.changeLanguage(this.selectLanguage,this.selectVoice);
         this.clearConversation()
         await this.list_context()
@@ -161,9 +157,6 @@ export class ConversationComponent {
       this.startRecording()
     }
    
-  }
-  changeSpeed(event: any) {
-    this.playbackSpeed =event.target.value;   
   }
   async startRecording()
   {
@@ -569,16 +562,6 @@ export class ConversationComponent {
     this.put_message(response)
   }
 
-  async onChangeContext(event:any,id :string) {    
-    const selectElement = event.target as HTMLSelectElement;
-
-    const selectedLabel = selectElement.options[selectElement.selectedIndex].text;
-    this.context.label=selectedLabel
-
-    this.setTextContext(selectedLabel)
-    this.back.contextSet(id)
-    setTimeout(() => this.contextElement.nativeElement.focus(),100)   
-  }
   setTextContextById(id:string)  {
     for (const c of  this.contexts)
     {
@@ -625,53 +608,6 @@ export class ConversationComponent {
     this.contexts=response.contexts
   }
 
-  async contextDelete(id:string)
-  {
-    if (this.context.label=='default')
-      return
-   
-    const response= await this.back.contextDelete(id);
-    this.list_context()
-    this.isLoading=false
-    this.put_message(response)
-    this.context.text=""
-    this.context.label=""
-    this.context.remember=""
-  }
-
-  async contextSend(event:any)    {
-    const textArea = event.target as HTMLTextAreaElement;
-    if (!textArea)
-      return;
-    this.context.text = textArea.value;
-  
-    if (this.context.text) {      
-      this.isLoading=true
-      const response=await this.back.contextSend(this.context);
-      await this.list_context()
-      this.selectContext=this.context.label
-      this.isLoading=false
-      this.showLanguageOptions=false
-      this.put_message(response)
-    }
-  }
-  async contextRememberSend(event:any)    {
-    const textArea = event.target as HTMLTextAreaElement;
-    if (!textArea)
-      return;
-    
-    this.context.remember = textArea.value;
-    this.isLoading=true
-    await this.back.contextSend(this.context); 
-    await this.list_context()
-    this.selectContext=this.context.label
-    this.isLoading=false 
-    this.responseBack="Changed text to remember"
-    setTimeout(() => {
-      this.responseBack = ''; 
-    }, 3000);
-    
-  }
   async loadContextUrl() {
     try {
       const response = await this.back.contextGetUrl();
@@ -681,24 +617,10 @@ export class ConversationComponent {
     }
   }
 
-  async contextUrlSend() {
-    const url = this.contextUrl.trim();
-    if (url === '') {
-      return;
-    }
-    this.isLoading = true;
-    const response = await this.back.contextSetUrl(url);
-    this.isLoading = false;
-    this.put_message(response);
-    await this.loadContextUrl();
-  }
-
-  async contextUrlClear() {
-    this.isLoading = true;
-    const response = await this.back.contextClearUrl();
-    this.contextUrl = '';
-    this.isLoading = false;
-    this.put_message(response);
+  /** Show a transient message in the top system banner (used by children). */
+  showSystemMessage(msg: string) {
+    this.responseBack = msg;
+    setTimeout(() => { this.responseBack = ''; }, 3000);
   }
 
   async toggleSidebar() {
@@ -778,29 +700,13 @@ export class ConversationComponent {
         this.focusInputElement();
       }
   }
-  async changeLanguage() {
-    if (this.selectVoice=='')
-      return;
-    this.isLoading=true
-    const response= await this.back.changeLanguage(this.selectLanguage,this.selectVoice);    
-    this.put_message(response)   
-    this.selectLanguageDesc=this.getDescriptionLanguage((this.selectLanguage))
-    this.isLoading=false
-  }
-  get filteredVoiceOptions() {
-    return this.voiceOptions.filter(option => option.language === this.selectLanguage);
-  }
-  getDescriptionLanguage(language:string):string
-  {
-    return this.languageOptions.find(desc => desc.value === language)?.label || "";
-  }
   @HostListener('document:click', ['$event'])
   clickOutside(event: Event) {
     if (this.clicksWindow==0){
       this.clicksWindow++;
       return
     }
-    if (this.showLanguageOptions   && !this.configurationWinElement.nativeElement.contains(event.target)) {
+    if (this.showLanguageOptions   && this.configurationWinElement && !this.configurationWinElement.nativeElement.contains(event.target)) {
       this.showLanguageOptions = false;
       this.clicksWindow=0
     }
@@ -865,13 +771,6 @@ export class ConversationComponent {
     const selection = window.getSelection();
     this.selectedText = selection ? selection.toString().trim() : '';
   }
-  login()
-  {
-    this.back.logoutUser().finally(() => {
-      this.persistence.logout();
-      this.router.navigate(['/login']);
-    });
-  }
   async sumary_conversation()
   {
     this.clicksWindow=0
@@ -934,11 +833,5 @@ export class ConversationComponent {
     this.ratingPhrase=this.ratingHistory[pos]
     this.clicksWindow=0
     this.swRating=true
-  }
-  onMaxLengthAnswerBlur(max_length:string)
-  {
-    if (max_length.trim()=='')
-      return
-    this.back.setMaxLengthAnswer(max_length)
   }
 }

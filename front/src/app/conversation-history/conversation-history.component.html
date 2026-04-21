@@ -6,60 +6,55 @@
       (click)="onToggle()"
       [attr.aria-expanded]="expanded"
       [attr.aria-label]="expanded ? 'Collapse conversation history' : 'Expand conversation history'"
-      [matTooltip]="expanded ? 'Collapse' : 'Expand conversations'"
+      [matTooltip]="expanded ? 'Collapse' : 'Show conversations'"
       matTooltipPosition="right">
       <span class="material-icons" aria-hidden="true">
-        {{ expanded ? 'chevron_left' : 'chevron_right' }}
+        {{ expanded ? 'chevron_left' : 'menu' }}
       </span>
     </button>
 
     <h2 class="history__title" *ngIf="expanded">Conversations</h2>
 
-    <button type="button" class="history__clear"
+    <button type="button" class="history__clear" *ngIf="expanded"
       (click)="onClear()"
       aria-label="Start a new conversation"
       matTooltip="New conversation"
       matTooltipPosition="right">
       <span class="material-icons" aria-hidden="true">add_comment</span>
-      <span class="history__clear-label" *ngIf="expanded">New chat</span>
+      <span class="history__clear-label">New chat</span>
     </button>
   </header>
 
-  <ul class="history__list" role="list">
+  <ul class="history__list" *ngIf="expanded" role="list">
     <li *ngFor="let line of conversations; trackBy: trackById"
         class="history__item"
         [class.history__item--active]="line.id === activeId"
         role="listitem">
 
-      <button type="button" class="history__entry"
-        (click)="onChoose(line)"
-        [attr.aria-label]="'Open conversation ' + line.name"
-        [matTooltip]="expanded ? (getFormattedDate(line.final_date) | date: 'dd/MMM HH:mm') : line.name"
-        matTooltipPosition="right">
-
-        <span class="history__avatar" aria-hidden="true">
-          {{ initials(line.name) }}
-        </span>
-
-        <span class="history__meta" *ngIf="expanded">
-          <span class="history__name">{{ line.name }}</span>
-          <span class="history__date">
-            {{ getFormattedDate(line.final_date) | date: 'dd/MMM HH:mm' }}
+      <div class="history__entry">
+        <button type="button" class="history__open"
+          (click)="onChoose(line)"
+          [attr.aria-label]="'Open conversation ' + line.name"
+          [matTooltip]="getFormattedDate(line.final_date) | date: 'dd/MMM HH:mm'"
+          matTooltipPosition="right">
+          <span class="history__meta">
+            <span class="history__name">{{ line.name }}</span>
+            <span class="history__date">
+              {{ getFormattedDate(line.final_date) | date: 'dd/MMM HH:mm' }}
+            </span>
           </span>
-        </span>
+        </button>
 
-        <span class="history__remove" *ngIf="expanded">
-          <button type="button"
-            (click)="onRemove($event, line.id)"
-            aria-label="Delete conversation"
-            matTooltip="Delete conversation">
-            <span class="material-icons" aria-hidden="true">delete_outline</span>
-          </button>
-        </span>
-      </button>
+        <button type="button" class="history__remove"
+          (click)="onRemove($event, line.id)"
+          aria-label="Delete conversation"
+          matTooltip="Delete conversation">
+          <span class="material-icons" aria-hidden="true">delete_outline</span>
+        </button>
+      </div>
     </li>
 
-    <li *ngIf="conversations.length === 0 && expanded" class="history__empty">
+    <li *ngIf="conversations.length === 0" class="history__empty">
       No conversations yet. Start chatting!
     </li>
   </ul>
