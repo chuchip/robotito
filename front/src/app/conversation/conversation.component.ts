@@ -26,12 +26,12 @@ import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { ConversationHistoryComponent } from '../conversation-history/conversation-history.component';
 import { SettingsComponent } from '../settings/settings.component';
-@Component({  
-  selector: 'app-conversation',   
+@Component({
+  selector: 'app-conversation',
   imports: [CommonModule, MatTooltipModule, MatCheckboxModule, FormsModule,
     MatButtonModule, MatIconModule, SoundPlayingComponent, SoundRecordingComponent,
-    MatSliderModule, LoadingComponent,SummaryComponent,RatingPhraseComponent,AvatarComponent, MatDialogModule, ConfirmDialogComponent,
-    ConversationHistoryComponent, SettingsComponent], 
+    MatSliderModule, LoadingComponent, SummaryComponent, RatingPhraseComponent, AvatarComponent, MatDialogModule,
+    ConversationHistoryComponent, SettingsComponent],
   templateUrl: './conversation.component.html',
   styleUrls: ['./conversation.component.scss']
 })
