@@ -24,11 +24,13 @@ import { Router } from '@angular/router';
 import { RatingPhrase } from '../model/ratingPhrase';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
+import { ConversationHistoryComponent } from '../conversation-history/conversation-history.component';
 @Component({  
   selector: 'app-conversation',   
   imports: [CommonModule, MatTooltipModule, MatCheckboxModule, FormsModule,
     MatButtonModule, MatIconModule, SoundPlayingComponent, SoundRecordingComponent,
-    MatSliderModule, LoadingComponent,SummaryComponent,RatingPhraseComponent,AvatarComponent, MatDialogModule, ConfirmDialogComponent], 
+    MatSliderModule, LoadingComponent,SummaryComponent,RatingPhraseComponent,AvatarComponent, MatDialogModule, ConfirmDialogComponent,
+    ConversationHistoryComponent], 
   templateUrl: './conversation.component.html',
   styleUrls: ['./conversation.component.scss']
 })

@@ -1,44 +1,47 @@
 
 <app-loading [isLoading]="this.isLoading "></app-loading>
 
-<app-sound-playing [isPlaying]=" this.isPlayingSound" 
-  [style.zIndex]="999" [style.opacity]="50" 
+<app-sound-playing [isPlaying]=" this.isPlayingSound"
+  [style.zIndex]="999" [style.opacity]="50"
  [style.position]="'absolute'" [style.left.px]="xPos" [style.top.px]="yPos" >
 </app-sound-playing>
 
 <app-sound-recording [isRecording]="this.sound.isRecording"   (valueReturned)="stopRecording($event=='stop'?false:true)"
-  [style.zIndex]="999" [style.opacity]="50" 
+  [style.zIndex]="999" [style.opacity]="50"
  [style.position]="'absolute'" [style.left.px]="xPos" [style.top.px]="yPos" >
 </app-sound-recording>
-<div class="system" *ngIf="responseBack!=''">{{responseBack}}</div>
-<div class="page">  
-  <div *ngIf="isSidebarOpen" class="sidebar">
-    <button class="button-option button-clear"  (click)="clearConversation()" matTooltip="Clear conversation">
-      <span class="material-icons">refresh</span>
-    </button>
-    <div *ngFor="let line of conversationHistory; let i = index">
-      <span class="sidebar_line" [matTooltipClass]="'custom-tooltip'"
-        matTooltip="{{getFormattedDate(line.final_date) | date: 'dd/MMM HH:mm'}}"
-        (click)="historyChoose(line.id,line.idContext)">
-        <button (click)="hystoryDelete($event, line.id)" matTooltip="Remove Conversation"> <span
-            class="material-icons">remove_circle</span></button>
-        {{ line.name}}
-      </span>
-    </div>
-  </div>
+<div class="system" *ngIf="responseBack!=''" role="status" aria-live="polite">{{responseBack}}</div>
+<div class="page">
+
+  <app-conversation-history
+    [conversations]="conversationHistory"
+    [expanded]="isSidebarOpen"
+    [activeId]="conversationId"
+    (toggle)="toggleSidebar()"
+    (choose)="historyChoose($event.id, $event.idContext)"
+    (remove)="hystoryDelete($event.event, $event.id)"
+    (clear)="clearConversation()">
+  </app-conversation-history>
 
   <div class="container">
     <!-- Body of the page when I will show the conversation  -->
-    <div #conversation class="conversation" (mouseup)="getSelectedText()" (keyup)="getSelectedText()">
+    <div #conversation class="conversation" (mouseup)="getSelectedText()" (keyup)="getSelectedText()"
+      role="log" aria-live="polite" aria-label="Conversation messages">
       <ng-container *ngFor="let line_chat of chatHistory; let i = index">
         <div [ngClass]="line_chat.type=='H'? 'line-human':'line-robot'" class="line" [class.hidden-text]="line_chat.type!='H' && !isRobotVisible">
         <div class="buttons-conversation">
-          <button (click)="speak_aloud_response($event,i,line_chat.type)"> <span class="material-icons">volume_up</span></button>
-          <span class="material-icons" style="color: blue">{{line_chat.type=='H'?"face":"smart_toy" }}</span>
+          <button (click)="speak_aloud_response($event,i,line_chat.type)"
+            [attr.aria-label]="'Play this message aloud'"
+            matTooltip="Play this message aloud">
+            <span class="material-icons" aria-hidden="true">volume_up</span>
+          </button>
+          <span class="material-icons line-avatar" aria-hidden="true">{{line_chat.type=='H'?"face":"smart_toy" }}</span>
         </div>
         <button *ngIf="line_chat.type=='H'" class="teacher-button"  [ngStyle]="{'background-color': getBackgroundColor(i)}"
-           (click)="showRating(i)">
-          <span style="font-size: 16px;">ℹ️</span>
+           (click)="showRating(i)"
+           aria-label="Show rating details for this message"
+           matTooltip="Rating details">
+          <span class="material-icons" aria-hidden="true">info</span>
         </button>
         <span   [ngClass]="line_chat.type=='H'? 'line-text-human':'line-text-robot'">
           <span [innerHTML]="toHtml(line_chat.msg,line_chat.type)"> </span>
@@ -48,133 +51,164 @@
       <div *ngIf="responseMessage!=''"  class="line line-robot" [class.hidden-text]="!isRobotVisible" >
         <span class="line-text-robot">
           <span [innerHTML]="toHtml(responseMessage,'R')"></span>
-        </span>      
+        </span>
     </div>
     <div class="spacer"></div>
     <!-- Input and controls -->
     <div #input class='input' >
       <app-avatar [talking]="(avatarTalking$ | async) || false" class="input-avatar"></app-avatar>
       <div class="vertical">
-        <button class="button-action" (click)="toggleSidebar()" matTooltip="Show Conversations list">
-          <span class="material-icons">{{ isSidebarOpen ? 'close' : 'menu' }}</span>
+        <button class="button-action" (click)="clicksWindow=0; showLanguageOptions=!showLanguageOptions"
+          aria-label="Show language and settings options"
+          matTooltip="Settings">
+            <span class="material-icons" aria-hidden="true">settings</span>
         </button>
-        <button class="button-action" (click)="clicksWindow=0; showLanguageOptions=!showLanguageOptions"   matTooltip="Show Language Options">
-            <span class="material-icons">settings</span>
-        </button>    
+        <button class="button-action" (click)="playRecorded()"
+          aria-label="Play last recorded sound"
+          matTooltip="Play recorded sound">
+           <span class="material-icons" aria-hidden="true">play_arrow</span>
+        </button>
       </div>
       <div class="vertical">
-        <button class="button-action" (click)="playRecorded()" matTooltip="Play recorded sound">
-           <span  class="material-icons">play_arrow</span></button>
-        <button class="button-action" (click)="speakAloud(human_input.value)" matTooltip="Speak Input text (F4)">
-          <span class="material-icons">volume_up</span>
+        <button class="button-action" (click)="speakAloud(human_input.value)"
+          aria-label="Speak input text"
+          matTooltip="Speak input text (F4)">
+          <span class="material-icons" aria-hidden="true">volume_up</span>
+        </button>
+        <button class="button-action" (click)="toggleRecording()"
+          [attr.aria-label]="this.sound.isRecording ? 'Stop recording' : 'Start recording'"
+          matTooltip="Record voice (F2)">
+          <span class="material-icons" aria-hidden="true">{{ this.sound.isRecording ? 'stop' : 'mic' }}</span>
         </button>
       </div>
 
       <span class="input_text">
         <textarea id="human_input" #human_input class="expandable-input"  [(ngModel)]="inputText"  (input)="adjustHeight(human_input)"
-          (keydown)="speakOnF4($event,human_input.value); human_input.focus(); "         
-          placeholder="Type and press Enter">
+          (keydown)="speakOnF4($event,human_input.value); human_input.focus(); "
+          placeholder="Type and press Enter"
+          aria-label="Message input">
         </textarea>
-        <button class="button-action" (click)="pressEnter(true)" matTooltip="Send Text">
-          <span class="material-icons">send</span>
+        <button class="button-action button-send" (click)="pressEnter(true)"
+          aria-label="Send message"
+          matTooltip="Send text">
+          <span class="material-icons" aria-hidden="true">send</span>
         </button>
-      </span>     
+      </span>
       <div class="vertical">
-        <button class="button-action" (click)="toggleRecording()" matTooltip="Record voice (F2)">
-          <span class="material-icons">{{ this.sound.isRecording ? 'stop' : 'mic' }}</span>
-        </button>      
-        <button class="button-action" (click)=" pressEsc()" matTooltip="Stop Talk (Esc)">
-          <span class="material-icons">cancel</span>
+        <button class="button-action" (click)=" pressEsc()"
+          aria-label="Stop talking"
+          matTooltip="Stop talk (Esc)">
+          <span class="material-icons" aria-hidden="true">cancel</span>
+        </button>
+        <button class="button-action" (click)=" sumary_conversation()"
+          aria-label="Show conversation summary"
+          matTooltip="Summary">
+          <span class="material-icons" aria-hidden="true">summarize</span>
         </button>
       </div>
       <div class="vertical">
-        <button class="button-action" (click)=" sumary_conversation()" matTooltip="Summary">
-          <span class="material-icons">summarize</span>
+        <button class="button-action" (click)="toggleRobotVisibility()"
+          [attr.aria-label]="isRobotVisible ? 'Hide robot messages' : 'Show robot messages'"
+          matTooltip="Toggle robot messages visibility">
+          <span class="material-icons" aria-hidden="true">{{ isRobotVisible ? 'visibility_off' : 'visibility' }}</span>
         </button>
-     
-        <button class="button-action" (click)="toggleRobotVisibility()" matTooltip="Toggle Robot Messages Visibility">
-          <span class="material-icons">{{ isRobotVisible ? 'visibility_off' : 'visibility' }}</span>
+        <button class="button-action" (click)="openNotes()"
+          aria-label="Open notes"
+          matTooltip="Notes">
+          <span class="material-icons" aria-hidden="true">note_alt</span>
         </button>
       </div>
-       <div class="vertical">
-        <button class="button-action" (click)="openNotes()" matTooltip="Notes">
-          <span class="material-icons">note_alt</span>
+      <div class="vertical">
+        <button class="button-action" (click)="openDictionary()"
+          aria-label="Open dictionary"
+          matTooltip="Dictionary">
+          <span class="material-icons" aria-hidden="true">library_books</span>
         </button>
-
-        <button class="button-action" (click)="openDictionary()" matTooltip="Dictionary">
-          <span class="material-icons">library_books</span>
-        </button>
-       </div>
+      </div>
     </div>
-        
+
     <div #configuration_window class="configuration" *ngIf="showLanguageOptions">
       <div class="configuration_line">
         <div class="configuration_horizontal">
-          <span class="check-option"><input type="checkbox" [(ngModel)]="swTalkResponse" 
+          <span class="check-option"><input type="checkbox" [(ngModel)]="swTalkResponse"
               matTooltip="Reproduce Sound Automatically"> Speak aloud</span>
           <span class="check-option"><input type="checkbox" [(ngModel)]="modeConversation"
               matTooltip="Mode Conversation">Conversation</span>
-          <span class="check-option"><input type="checkbox" [(ngModel)]="swSaveConversation" 
+          <span class="check-option"><input type="checkbox" [(ngModel)]="swSaveConversation"
                 matTooltip="Save Conversation">Save</span>
-          <span><label>Max. Length Answers:</label> 
-            <input class="max-length-answer" #inputMaxLengthAnswer type="number" [(ngModel)]="this.context.maxLengthAnswer" 
+          <span><label>Max. Length Answers:</label>
+            <input class="max-length-answer" #inputMaxLengthAnswer type="number" [(ngModel)]="this.context.maxLengthAnswer"
               (blur)="onMaxLengthAnswerBlur(inputMaxLengthAnswer.value)" min="0">
           </span>
-          <select [(ngModel)]="selectLanguage">
+          <select [(ngModel)]="selectLanguage" aria-label="Language">
             <option *ngFor="let option of languageOptions" [value]="option.value">
               {{ option.label }}
             </option>
           </select>
-          <select [(ngModel)]="selectVoice" (change)="changeLanguage()">
+          <select [(ngModel)]="selectVoice" (change)="changeLanguage()" aria-label="Voice">
             <option *ngFor="let option of filteredVoiceOptions" [value]="option.label">
               {{ option.label }} - {{ option.gender }}
             </option>
-          </select>     
+          </select>
           <span class="configuration_line_text">Speed:<input type="range" min="0.5" max="2" step="0.1"
-             [(ngModel)]="playbackSpeed" (input)="changeSpeed($event)">
+             [(ngModel)]="playbackSpeed" (input)="changeSpeed($event)" aria-label="Playback speed">
             {{playbackSpeed | number:'1.1-1'}}
           </span>
         </div>
       </div>
-         
+
       <div class="context">
       <div class="configuration_horizontal">
           Context:&nbsp;
-            <select #selectComponent [(ngModel)]="selectContext" (change)="onChangeContext($event, selectComponent.value)">
+            <select #selectComponent [(ngModel)]="selectContext" (change)="onChangeContext($event, selectComponent.value)"
+              aria-label="Context">
             <option *ngFor="let context of contexts" [value]="context['id']">
               {{ context['label'] }}
             </option>
             </select>
-          <button (click)="contextDelete(selectComponent.value)" matTooltip="Remove Context"> <span
-              class="material-icons">remove_circle</span></button>
-          <input #inputField type="text" [(ngModel)]="this.context.label" placeholder="Choose a new Label">
+          <button (click)="contextDelete(selectComponent.value)"
+            aria-label="Remove context"
+            matTooltip="Remove Context">
+            <span class="material-icons" aria-hidden="true">remove_circle</span>
+          </button>
+          <input #inputField type="text" [(ngModel)]="this.context.label" placeholder="Choose a new Label"
+            aria-label="Context label">
         </div>
         <textarea #context class="context_textarea" (keydown.enter)="contextSend($event)"
-          (keydown.esc)="showLanguageOptions=false" [(ngModel)]="this.context.text" placeholder="Type an context..."></textarea>
+          (keydown.esc)="showLanguageOptions=false" [(ngModel)]="this.context.text" placeholder="Type an context..."
+          aria-label="Context text"></textarea>
         <textarea #context_remember class="context_textarea" (keydown.enter)="contextRememberSend($event)"
-          (keydown.esc)="showLanguageOptions=false" [(ngModel)]="this.context.remember" placeholder="Type something the AI has to remember ..."></textarea>
+          (keydown.esc)="showLanguageOptions=false" [(ngModel)]="this.context.remember" placeholder="Type something the AI has to remember ..."
+          aria-label="Context remember"></textarea>
         <div class="configuration_horizontal context-url-line">
           <label for="context_url">Context URL:</label>
           <input id="context_url" type="text" [(ngModel)]="contextUrl" placeholder="https://example.com/article"
             (keydown.enter)="contextUrlSend(); $event.preventDefault()">
-          <button (click)="contextUrlSend()" matTooltip="Load URL as context">
-            <span class="material-icons">link</span>
+          <button (click)="contextUrlSend()"
+            aria-label="Load URL as context"
+            matTooltip="Load URL as context">
+            <span class="material-icons" aria-hidden="true">link</span>
           </button>
-          <button (click)="contextUrlClear()" matTooltip="Clear URL context">
-            <span class="material-icons">link_off</span>
+          <button (click)="contextUrlClear()"
+            aria-label="Clear URL context"
+            matTooltip="Clear URL context">
+            <span class="material-icons" aria-hidden="true">link_off</span>
           </button>
         </div>
       </div>
       <div class="configuration_line">
         <div>Actual Language: <span class="configuration_line_text"><input type="text"
-              value="{{selectLanguageDesc}}" readonly> </span>
-          Actual Voice: <span class="configuration_line_text"><input type="text" value="{{selectVoice}}" readonly>
+              value="{{selectLanguageDesc}}" readonly aria-label="Actual language"> </span>
+          Actual Voice: <span class="configuration_line_text"><input type="text" value="{{selectVoice}}" readonly aria-label="Actual voice">
           </span>
           <br/>
-          <span  class="name_user">User: {{persistence.getUser()}}  <button (click)="login()" matTooltip="Login"> <span
-            class="material-icons">login</span></button>  Version: 20250427.1</span>
+          <span  class="name_user">User: {{persistence.getUser()}}  <button (click)="login()"
+            aria-label="Login"
+            matTooltip="Login">
+            <span class="material-icons" aria-hidden="true">login</span>
+          </button>  Version: 20250427.1</span>
         </div>
-      </div>  
+      </div>
     </div>
     <div #summary_window >
       <app-summary *ngIf=persistence.showSummary [selectLanguage]="this.selectLanguage"></app-summary>
@@ -182,3 +216,5 @@
     <div #rating_window >
       <app-rating-phrase  *ngIf="swRating" [ratingPhrase]="this.ratingPhrase" (valueReturned)="swRating=false"></app-rating-phrase>
     </div>
+  </div>
+</div>
