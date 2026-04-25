@@ -20,6 +20,36 @@
      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
      color: white;
      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+     gap: 12px;
+ }
+
+ .view-tabs {
+     display: flex;
+     gap: 4px;
+     background: rgba(255, 255, 255, 0.15);
+     padding: 4px;
+     border-radius: 6px;
+ }
+
+ .tab-btn {
+     padding: 6px 14px;
+     background: transparent;
+     color: white;
+     border: none;
+     border-radius: 4px;
+     cursor: pointer;
+     font-size: 14px;
+     font-weight: 600;
+     transition: background 0.2s, color 0.2s;
+ }
+
+ .tab-btn:hover:not(.active) {
+     background: rgba(255, 255, 255, 0.2);
+ }
+
+ .tab-btn.active {
+     background: white;
+     color: #667eea;
  }
 
  .title {
@@ -334,4 +364,289 @@
  .status-message {
      font-size: 12px;
      color: #666;
+ }
+
+ /* ----------------------------------------------------------------
+    Review mode
+    ---------------------------------------------------------------- */
+ .review-body {
+     overflow-y: auto;
+     padding: 24px 16px;
+     gap: 0;
+ }
+
+ .review-setup,
+ .review-quiz,
+ .review-results {
+     max-width: 720px;
+     width: 100%;
+     margin: 0 auto;
+     display: flex;
+     flex-direction: column;
+     gap: 16px;
+ }
+
+ .review-title {
+     margin: 0;
+     font-size: 22px;
+     color: #333;
+ }
+
+ .review-description {
+     margin: 0;
+     color: #555;
+     font-size: 14px;
+     line-height: 1.5;
+ }
+
+ .review-options {
+     display: flex;
+     flex-direction: column;
+     gap: 12px;
+ }
+
+ .review-option {
+     display: grid;
+     grid-template-columns: auto 1fr;
+     grid-template-rows: auto auto;
+     row-gap: 4px;
+     column-gap: 12px;
+     align-items: center;
+     padding: 14px 16px;
+     background: white;
+     border: 2px solid #e0e0e0;
+     border-radius: 6px;
+     cursor: pointer;
+     transition: border-color 0.2s, box-shadow 0.2s;
+ }
+
+ .review-option:hover {
+     border-color: #b9c0f5;
+ }
+
+ .review-option.selected {
+     border-color: #667eea;
+     box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.15);
+ }
+
+ .review-option input[type="radio"] {
+     grid-row: 1 / span 2;
+     align-self: center;
+     margin: 0;
+ }
+
+ .review-option-title {
+     font-weight: 600;
+     color: #333;
+     font-size: 15px;
+ }
+
+ .review-option-sub {
+     color: #666;
+     font-size: 13px;
+ }
+
+ .primary-btn {
+     padding: 12px 18px;
+     background: #667eea;
+     color: white;
+     border: none;
+     border-radius: 4px;
+     cursor: pointer;
+     font-weight: 600;
+     font-size: 15px;
+     transition: background 0.2s;
+     align-self: flex-start;
+ }
+
+ .primary-btn:hover:not(:disabled) {
+     background: #5568d3;
+ }
+
+ .primary-btn:disabled {
+     background: #ccc;
+     cursor: not-allowed;
+ }
+
+ .link-btn {
+     background: transparent;
+     border: none;
+     color: #667eea;
+     cursor: pointer;
+     font-size: 14px;
+     padding: 6px 8px;
+ }
+
+ .link-btn:hover {
+     text-decoration: underline;
+ }
+
+ .review-quiz-header {
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+ }
+
+ .review-quiz-title {
+     font-size: 16px;
+     font-weight: 600;
+     color: #333;
+ }
+
+ .review-questions {
+     display: flex;
+     flex-direction: column;
+     gap: 10px;
+ }
+
+ .review-question-card {
+     display: grid;
+     grid-template-columns: 32px minmax(140px, 1fr) 2fr;
+     align-items: center;
+     gap: 12px;
+     padding: 12px;
+     background: white;
+     border: 1px solid #e0e0e0;
+     border-radius: 4px;
+ }
+
+ .review-question-number {
+     color: #888;
+     font-weight: 600;
+ }
+
+ .review-question-prompt {
+     display: flex;
+     align-items: center;
+     gap: 8px;
+ }
+
+ .review-question-word {
+     font-size: 16px;
+     font-weight: 600;
+     color: #333;
+ }
+
+ .review-listen-btn {
+     padding: 4px 6px;
+ }
+
+ .review-answer-input {
+     padding: 8px 10px;
+     border: 1px solid #ddd;
+     border-radius: 4px;
+     font-size: 14px;
+ }
+
+ .review-answer-input:focus {
+     outline: none;
+     border-color: #667eea;
+     box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.15);
+ }
+
+ .review-actions {
+     display: flex;
+     gap: 12px;
+     align-items: center;
+ }
+
+ .review-score {
+     display: flex;
+     align-items: baseline;
+     gap: 8px;
+     padding: 16px;
+     background: white;
+     border: 1px solid #e0e0e0;
+     border-radius: 4px;
+ }
+
+ .review-score-value {
+     font-size: 28px;
+     font-weight: 700;
+     color: #667eea;
+ }
+
+ .review-score-label {
+     color: #666;
+     font-size: 14px;
+ }
+
+ .review-results-list {
+     display: flex;
+     flex-direction: column;
+     gap: 10px;
+ }
+
+ .review-result-card {
+     padding: 12px;
+     background: white;
+     border-left: 4px solid #ccc;
+     border-radius: 4px;
+     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+ }
+
+ .review-result-card.correct {
+     border-left-color: #4caf50;
+ }
+
+ .review-result-card.incorrect {
+     border-left-color: #e53935;
+ }
+
+ .review-result-header {
+     display: flex;
+     align-items: center;
+     gap: 8px;
+     margin-bottom: 6px;
+ }
+
+ .review-result-status {
+     font-size: 22px;
+ }
+
+ .review-result-card.correct .review-result-status {
+     color: #4caf50;
+ }
+
+ .review-result-card.incorrect .review-result-status {
+     color: #e53935;
+ }
+
+ .review-result-word {
+     font-weight: 600;
+     font-size: 15px;
+     color: #333;
+ }
+
+ .review-result-row {
+     display: flex;
+     gap: 6px;
+     font-size: 14px;
+     color: #444;
+     margin-top: 2px;
+ }
+
+ .review-result-label {
+     color: #777;
+     min-width: 90px;
+ }
+
+ .review-result-feedback {
+     margin-top: 8px;
+     padding: 8px;
+     background: #fafafa;
+     border: 1px solid #eee;
+     border-radius: 4px;
+     font-size: 13px;
+     color: #555;
+     line-height: 1.4;
+ }
+
+ .spinning {
+     animation: spin 1s linear infinite;
+ }
+
+ @keyframes spin {
+     from { transform: rotate(0deg); }
+     to   { transform: rotate(360deg); }
  }

@@ -135,6 +135,7 @@ rating_phrase = ai_service.rating_phrase
 save_msg = ai_service.save_msg
 restore_history = ai_service.restore_history
 call_llm_translate = ai_service.call_llm_translate
+call_llm_review = ai_service.call_llm_review
 
 getTextFromAudio = audio_service.getTextFromAudio
 getAudioFromText = audio_service.getAudioFromText

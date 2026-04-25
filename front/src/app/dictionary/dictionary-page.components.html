@@ -1,85 +1,214 @@
 <div class="page">
     <div class="header">
         <span class="title">📚 Conversation Dictionary</span>
+        <nav class="view-tabs">
+            <button type="button" class="tab-btn" [class.active]="currentView === 'list'"
+                (click)="setView('list')">
+                Words
+            </button>
+            <button type="button" class="tab-btn" [class.active]="currentView === 'review'"
+                (click)="setView('review')">
+                Review
+            </button>
+        </nav>
         <button class="close-btn" (click)="closeWindow()">Close</button>
     </div>
 
-    <div class="search-add-wrapper">
-      <div class="search-section">
-          <input type="text" class="search-input" [(ngModel)]="searchTerm" placeholder="Search words..."
-              (keyup)="filterWords()">
-      </div>
-      <div class="add-word-section">
-          <input type="text" [(ngModel)]="newWord" placeholder="Enter a word to translate..." class="word-input"
-              (keydown.enter)="addWord()">
-          <button (click)="addWord()" class="add-btn" [disabled]="isAdding || !newWord.trim()">
-              {{ isAdding ? 'Adding...' : 'Add Word' }}
-          </button>
-      </div>
-    </div>
-
-    <div class="body">
-        <div *ngIf="filteredWords.length === 0" class="no-words-message">
-            No words added yet. Add a word to get started!
+    <ng-container *ngIf="currentView === 'list'">
+        <div class="search-add-wrapper">
+          <div class="search-section">
+              <input type="text" class="search-input" [(ngModel)]="searchTerm" placeholder="Search words..."
+                  (keyup)="filterWords()">
+          </div>
+          <div class="add-word-section">
+              <input type="text" [(ngModel)]="newWord" placeholder="Enter a word to translate..." class="word-input"
+                  (keydown.enter)="addWord()">
+              <button (click)="addWord()" class="add-btn" [disabled]="isAdding || !newWord.trim()">
+                  {{ isAdding ? 'Adding...' : 'Add Word' }}
+              </button>
+          </div>
         </div>
 
-        <div class="words-list">
-            <div *ngFor="let item of filteredWords" class="word-card" [class.editing]="editingId === item.id">
-                <div class="word-header">
-                    <strong class="word-text">{{ item.word }}</strong>
-                    <div class="word-actions">
-                        <button (click)="readAloud(item)" class="action-btn" title="Read aloud"
-                            [disabled]="readingAloudWordId === item.id || isAdding">
-                            <span *ngIf="readingAloudWordId === item.id"> {{ statusPlaying }}</span>
-                            <span *ngIf="readingAloudWordId !== item.id" class="material-icons">volume_up</span>
-                        </button>
-                        <button (click)="toggleEdit(item)" class="action-btn"
-                            [title]="editingId === item.id ? 'Save' : 'Edit'">
-                            <span class="material-icons">{{ editingId === item.id ? 'check' : 'edit' }}</span>
-                        </button>
-                        <button (click)="deleteWord(item.id!)" class="action-btn delete-btn" title="Delete">
-                            <span class="material-icons">delete</span>
-                        </button>
-                    </div>
-                </div>
+        <div class="body">
+            <div *ngIf="filteredWords.length === 0" class="no-words-message">
+                No words added yet. Add a word to get started!
+            </div>
 
-                <div *ngIf="editingId !== item.id" class="word-content">
-                    <div class="translation-row">
-                        <div class="translation-text">
-                            <strong>Translation:</strong> {{ item.translation }}
+            <div class="words-list">
+                <div *ngFor="let item of filteredWords" class="word-card" [class.editing]="editingId === item.id">
+                    <div class="word-header">
+                        <strong class="word-text">{{ item.word }}</strong>
+                        <div class="word-actions">
+                            <button (click)="readAloud(item)" class="action-btn" title="Read aloud"
+                                [disabled]="readingAloudWordId === item.id || isAdding">
+                                <span *ngIf="readingAloudWordId === item.id"> {{ statusPlaying }}</span>
+                                <span *ngIf="readingAloudWordId !== item.id" class="material-icons">volume_up</span>
+                            </button>
+                            <button (click)="toggleEdit(item)" class="action-btn"
+                                [title]="editingId === item.id ? 'Save' : 'Edit'">
+                                <span class="material-icons">{{ editingId === item.id ? 'check' : 'edit' }}</span>
+                            </button>
+                            <button (click)="deleteWord(item.id!)" class="action-btn delete-btn" title="Delete">
+                                <span class="material-icons">delete</span>
+                            </button>
                         </div>
-                        <button type="button" class="toggle-examples-btn" (click)="toggleExamples(item)">
-                            {{ isExamplesExpanded(item) ? 'Hide examples' : 'Show examples' }}
-                        </button>
                     </div>
-                    <div class="examples-panel" *ngIf="isExamplesExpanded(item)">
-                        <div class="example-table-header">
-                            <div class="example-table-cell example-table-cell-title">English</div>
-                            <div class="example-table-cell example-table-cell-title">Spanish</div>
-                        </div>
-                        <div *ngFor="let example of item.examples" class="example-item example-row">
-                            <div class="example-table-cell">{{ example.english_phrase }}</div>
-                            <div class="example-table-cell">{{ example.spanish_phrase }}</div>
-                        </div>
-                    </div>
-                </div>
 
-                <div *ngIf="editingId === item.id" class="word-edit">
-                    <div>
-                        <label>Translation:</label>
-                        <textarea [(ngModel)]="item.translation" class="edit-textarea"></textarea>
+                    <div *ngIf="editingId !== item.id" class="word-content">
+                        <div class="translation-row">
+                            <div class="translation-text">
+                                <strong>Translation:</strong> {{ item.translation }}
+                            </div>
+                            <button type="button" class="toggle-examples-btn" (click)="toggleExamples(item)">
+                                {{ isExamplesExpanded(item) ? 'Hide examples' : 'Show examples' }}
+                            </button>
+                        </div>
+                        <div class="examples-panel" *ngIf="isExamplesExpanded(item)">
+                            <div class="example-table-header">
+                                <div class="example-table-cell example-table-cell-title">English</div>
+                                <div class="example-table-cell example-table-cell-title">Spanish</div>
+                            </div>
+                            <div *ngFor="let example of item.examples" class="example-item example-row">
+                                <div class="example-table-cell">{{ example.english_phrase }}</div>
+                                <div class="example-table-cell">{{ example.spanish_phrase }}</div>
+                            </div>
+                        </div>
                     </div>
-                    <div *ngFor="let example of item.examples; let i = index">
-                        <label>English Example {{ i + 1 }}:</label>
-                        <textarea [(ngModel)]="example.english_phrase" class="edit-textarea"></textarea>
-                        <label>Spanish Example {{ i + 1 }}:</label>
-                        <textarea [(ngModel)]="example.spanish_phrase" class="edit-textarea"></textarea>
+
+                    <div *ngIf="editingId === item.id" class="word-edit">
+                        <div>
+                            <label>Translation:</label>
+                            <textarea [(ngModel)]="item.translation" class="edit-textarea"></textarea>
+                        </div>
+                        <div *ngFor="let example of item.examples; let i = index">
+                            <label>English Example {{ i + 1 }}:</label>
+                            <textarea [(ngModel)]="example.english_phrase" class="edit-textarea"></textarea>
+                            <label>Spanish Example {{ i + 1 }}:</label>
+                            <textarea [(ngModel)]="example.spanish_phrase" class="edit-textarea"></textarea>
+                        </div>
+                        <button (click)="toggleEdit(item)" class="save-btn">Save Changes</button>
                     </div>
-                    <button (click)="toggleEdit(item)" class="save-btn">Save Changes</button>
                 </div>
             </div>
         </div>
-    </div>
+    </ng-container>
+
+    <ng-container *ngIf="currentView === 'review'">
+        <div class="body review-body">
+            <!-- Setup -->
+            <div *ngIf="reviewStage === 'setup'" class="review-setup">
+                <h2 class="review-title">Review your words</h2>
+                <p class="review-description">
+                    Practice up to {{ QUIZ_SIZE }} words from this conversation's dictionary.
+                    Pick a direction and we'll quiz you.
+                </p>
+
+                <div *ngIf="!hasEnoughWordsForReview" class="no-words-message">
+                    No words added yet. Add some words on the "Words" tab first.
+                </div>
+
+                <div *ngIf="hasEnoughWordsForReview" class="review-options">
+                    <label class="review-option" [class.selected]="reviewDirection === 'en->es'">
+                        <input type="radio" name="reviewDirection" value="en->es"
+                            [(ngModel)]="reviewDirection">
+                        <span class="review-option-title">English → Spanish</span>
+                        <span class="review-option-sub">See an English word, type its Spanish translation.</span>
+                    </label>
+                    <label class="review-option" [class.selected]="reviewDirection === 'es->en'">
+                        <input type="radio" name="reviewDirection" value="es->en"
+                            [(ngModel)]="reviewDirection">
+                        <span class="review-option-title">Spanish → English</span>
+                        <span class="review-option-sub">See a Spanish word, type its English translation.</span>
+                    </label>
+
+                    <button type="button" class="primary-btn" (click)="startReview()">
+                        Start review ({{ reviewBatchSize }} words)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quiz -->
+            <div *ngIf="reviewStage === 'quiz'" class="review-quiz">
+                <div class="review-quiz-header">
+                    <span class="review-quiz-title">
+                        {{ questionPromptIsEnglish ? 'Translate to Spanish' : 'Translate to English' }}
+                    </span>
+                    <button type="button" class="link-btn" (click)="cancelReview()">Cancel</button>
+                </div>
+
+                <div class="review-questions">
+                    <div *ngFor="let q of reviewQuestions; let i = index" class="review-question-card">
+                        <div class="review-question-number">{{ i + 1 }}.</div>
+                        <div class="review-question-prompt">
+                            <span class="review-question-word">{{ q.word }}</span>
+                            <button *ngIf="questionPromptIsEnglish" type="button"
+                                class="action-btn review-listen-btn" title="Listen"
+                                [disabled]="readingQuestionIndex === i"
+                                (click)="playQuestionAudio(i)">
+                                <span *ngIf="readingQuestionIndex !== i" class="material-icons">volume_up</span>
+                                <span *ngIf="readingQuestionIndex === i" class="material-icons spinning">hourglass_empty</span>
+                            </button>
+                        </div>
+                        <input type="text" class="review-answer-input"
+                            [placeholder]="questionPromptIsEnglish ? 'Spanish translation...' : 'English translation...'"
+                            [(ngModel)]="q.userAnswer"
+                            [disabled]="isGrading">
+                    </div>
+                </div>
+
+                <div class="review-actions">
+                    <button type="button" class="primary-btn" (click)="submitReview()" [disabled]="isGrading">
+                        {{ isGrading ? 'Grading...' : 'Submit answers' }}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div *ngIf="reviewStage === 'results'" class="review-results">
+                <div class="review-score">
+                    <span class="review-score-value">{{ reviewScore }} / {{ reviewQuestions.length }}</span>
+                    <span class="review-score-label">correct</span>
+                </div>
+
+                <div class="review-results-list">
+                    <div *ngFor="let q of reviewQuestions; let i = index"
+                        class="review-result-card"
+                        [class.correct]="q.isCorrect"
+                        [class.incorrect]="!q.isCorrect">
+                        <div class="review-result-header">
+                            <span class="review-result-status material-icons">
+                                {{ q.isCorrect ? 'check_circle' : 'cancel' }}
+                            </span>
+                            <span class="review-result-word">{{ q.word }}</span>
+                            <button *ngIf="questionPromptIsEnglish" type="button"
+                                class="action-btn review-listen-btn" title="Listen"
+                                [disabled]="readingQuestionIndex === i"
+                                (click)="playQuestionAudio(i)">
+                                <span *ngIf="readingQuestionIndex !== i" class="material-icons">volume_up</span>
+                                <span *ngIf="readingQuestionIndex === i" class="material-icons spinning">hourglass_empty</span>
+                            </button>
+                        </div>
+                        <div class="review-result-row">
+                            <span class="review-result-label">Your answer:</span>
+                            <span class="review-result-value">{{ q.userAnswer || '—' }}</span>
+                        </div>
+                        <div class="review-result-row">
+                            <span class="review-result-label">Expected:</span>
+                            <span class="review-result-value">{{ q.expected }}</span>
+                        </div>
+                        <div *ngIf="q.feedback" class="review-result-feedback">
+                            {{ q.feedback }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="review-actions">
+                    <button type="button" class="primary-btn" (click)="retryReview()">Try another round</button>
+                    <button type="button" class="link-btn" (click)="setView('list')">Back to words</button>
+                </div>
+            </div>
+        </div>
+    </ng-container>
 
     <div class="footer">
         <span class="status-message">{{ statusMessage }}</span>

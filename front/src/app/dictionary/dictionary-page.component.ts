@@ -13,6 +13,18 @@ interface Word {
   createdDate?: string;
 }
 
+type DictionaryView = 'list' | 'review';
+type ReviewDirection = 'en->es' | 'es->en';
+type ReviewStage = 'setup' | 'quiz' | 'results';
+
+interface ReviewQuestion {
+  word: string;        // Word shown to the user (English or Spanish, depending on direction)
+  expected: string;    // Reference translation
+  userAnswer: string;  // User input
+  isCorrect?: boolean; // Set after grading
+  feedback?: string;   // Set after grading
+}
+
 @Component({
   selector: 'app-dictionary-page',
   imports: [CommonModule, FormsModule],
@@ -33,6 +45,16 @@ export class DictionaryPageComponent implements OnInit {
   selectedText: string = '';
   readingAloudWordId: string | null = null;
   expandedWordIds: Set<string> = new Set<string>();
+
+  // ----- Review mode state -----
+  currentView: DictionaryView = 'list';
+  reviewStage: ReviewStage = 'setup';
+  reviewDirection: ReviewDirection = 'en->es';
+  reviewQuestions: ReviewQuestion[] = [];
+  isGrading: boolean = false;
+  reviewScore: number = 0;
+  readingQuestionIndex: number | null = null;
+  readonly QUIZ_SIZE = 10;
 
   constructor(
     private route: ActivatedRoute,
@@ -204,6 +226,7 @@ export class DictionaryPageComponent implements OnInit {
       this.audio.currentTime = 0;
     }
     this.readingAloudWordId = null;
+    this.readingQuestionIndex = null;
     this.statusMessage = '';
   }
 
@@ -232,6 +255,124 @@ export class DictionaryPageComponent implements OnInit {
       console.error('Failed to read aloud:', error);
       this.statusMessage = 'Error playing audio';
       this.readingAloudWordId = null;
+    }
+  }
+
+  // ----------------------------------------------------------------
+  // Review mode
+  // ----------------------------------------------------------------
+
+  setView(view: DictionaryView) {
+    if (this.currentView === view) return;
+    this.currentView = view;
+    if (view === 'review') {
+      // Always start at the setup screen when switching into review.
+      this.reviewStage = 'setup';
+      this.reviewQuestions = [];
+      this.reviewScore = 0;
+    }
+  }
+
+  get hasEnoughWordsForReview(): boolean {
+    return this.words.length > 0;
+  }
+
+  get reviewBatchSize(): number {
+    return Math.min(this.QUIZ_SIZE, this.words.length);
+  }
+
+  get questionPromptIsEnglish(): boolean {
+    return this.reviewDirection === 'en->es';
+  }
+
+  startReview() {
+    if (!this.hasEnoughWordsForReview) {
+      this.statusMessage = 'Add some words first to review.';
+      return;
+    }
+
+    // Pick up to QUIZ_SIZE random words.
+    const pool = [...this.words];
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    const picked = pool.slice(0, Math.min(this.QUIZ_SIZE, pool.length));
+
+    this.reviewQuestions = picked.map(w => {
+      if (this.reviewDirection === 'en->es') {
+        return { word: w.word, expected: w.translation, userAnswer: '' };
+      }
+      return { word: w.translation, expected: w.word, userAnswer: '' };
+    });
+    this.reviewScore = 0;
+    this.reviewStage = 'quiz';
+  }
+
+  cancelReview() {
+    this.stopAudio();
+    this.reviewStage = 'setup';
+    this.reviewQuestions = [];
+    this.reviewScore = 0;
+  }
+
+  async submitReview() {
+    if (this.isGrading) return;
+    if (this.reviewQuestions.length === 0) return;
+
+    this.isGrading = true;
+    this.statusMessage = 'Grading your answers...';
+    try {
+      const payload = this.reviewQuestions.map(q => ({
+        word: q.word,
+        expected: q.expected,
+        user_answer: q.userAnswer.trim(),
+      }));
+      const result = await this.back.reviewWords(this.conversationId, payload, this.reviewDirection);
+      const items = (result && result.items) || [];
+      this.reviewQuestions = this.reviewQuestions.map((q, i) => ({
+        ...q,
+        isCorrect: !!(items[i] && items[i].is_correct),
+        feedback: (items[i] && items[i].feedback) || '',
+      }));
+      this.reviewScore = this.reviewQuestions.filter(q => q.isCorrect).length;
+      this.reviewStage = 'results';
+      this.statusMessage = '';
+    } catch (error) {
+      console.error('Failed to grade review:', error);
+      this.statusMessage = 'Error grading the review';
+    } finally {
+      this.isGrading = false;
+    }
+  }
+
+  retryReview() {
+    this.reviewStage = 'setup';
+    this.reviewQuestions = [];
+    this.reviewScore = 0;
+  }
+
+  async playQuestionAudio(index: number) {
+    const q = this.reviewQuestions[index];
+    if (!q) return;
+    try {
+      this.readingQuestionIndex = index;
+      this.statusMessage = 'Loading audio...';
+      const response = await this.back.text_to_sound(q.word, '');
+      if (this.audio) {
+        this.audio.pause();
+        this.audio.currentTime = 0;
+      }
+      this.statusMessage = 'Playing...';
+      this.audio = await this.back.playAudioFromResponse(response);
+      this.audio.onended = () => {
+        this.statusMessage = '';
+        this.readingQuestionIndex = null;
+      };
+    } catch (error) {
+      console.error('Failed to play question audio:', error);
+      this.statusMessage = 'Error playing audio';
+      this.readingQuestionIndex = null;
     }
   }
 }

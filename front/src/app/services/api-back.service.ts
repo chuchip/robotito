@@ -352,6 +352,18 @@ async getLastUser(): Promise<any> {
     }
   }
 
+  async reviewWords(conversationId: string, items: Array<{word: string, expected: string, user_answer: string}>, direction: 'en->es' | 'es->en'): Promise<any> {
+    try {
+      const result: any = await firstValueFrom(
+        this.http.post(`${this.backendUrl}/conversation/id/${conversationId}/words/review`, { items, direction })
+      );
+      return result;
+    } catch (error) {
+      console.error('reviewWords failed!:', error);
+      throw error;
+    }
+  }
+
   // Shared audio playback utility
   async playAudioFromResponse(audioBlob: Blob, playbackSpeed: number = 1): Promise<HTMLAudioElement> {
     const audioUrl = URL.createObjectURL(audioBlob);

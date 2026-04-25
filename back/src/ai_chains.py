@@ -5,7 +5,7 @@
 from langchain.prompts import PromptTemplate
 from langchain.output_parsers import PydanticOutputParser
 
-from ai_models import SumaryResume, AnalizePhrase, AnalizePhrases, TranslationResult
+from ai_models import SumaryResume, AnalizePhrase, AnalizePhrases, TranslationResult, ReviewResult
 
 
 _prompt_resume_str = """
@@ -54,6 +54,33 @@ Word: {word_input}
 
 Ensure your entire response is ONLY the JSON object, starting with {{ and ending with }}."""
 
+_prompt_review_str = """
+You are evaluating a vocabulary quiz. The user is being asked to translate words in the direction: {direction}
+("en->es" means the prompted word is in English and the user must give a Spanish translation;
+ "es->en" means the prompted word is in Spanish and the user must give an English translation).
+
+For each item, decide if the user's answer is an acceptable translation of the prompted word.
+
+Be lenient with:
+- Capitalization, accents (tildes), trailing punctuation, plural/singular forms.
+- Articles ("the", "a", "el", "la", "los", "las") at the start of the answer.
+- Multiple acceptable meanings: if the user's answer matches ANY common meaning of the word,
+  mark it as correct, even if it differs from the reference translation.
+- Synonyms and very close translations.
+
+Mark as incorrect when the answer is empty, unrelated, or clearly wrong.
+
+Reference data and user answers (JSON array, evaluate them in the same order):
+{items_input}
+
+Provide the results as a JSON object conforming to the following schema. Keep "feedback" short
+(one sentence). Write feedback in Spanish if direction is en->es, or in English if direction is es->en.
+Always include every item from the input in the output, in the same order.
+
+{format_instructions}
+
+Ensure your entire response is ONLY the JSON object, starting with {{ and ending with }}."""
+
 
 def _build_chain(template_str: str, input_variables: list, parser: PydanticOutputParser, llm):
     prompt = PromptTemplate(
@@ -84,5 +111,9 @@ def build_chains(llm_text) -> dict:
         "translation": _build_chain(
             _prompt_translation_str, ["word_input"],
             PydanticOutputParser(pydantic_object=TranslationResult), llm_text,
+        ),
+        "review": _build_chain(
+            _prompt_review_str, ["direction", "items_input"],
+            PydanticOutputParser(pydantic_object=ReviewResult), llm_text,
         ),
     }

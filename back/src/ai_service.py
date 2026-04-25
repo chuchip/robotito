@@ -4,12 +4,13 @@ Depends on `init()` being called from the application entry point with the
 configured LLM clients and chains before any other function is invoked.
 """
 import asyncio
+import json
 import logging
 from langchain.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage, AIMessage
 
 import memory
-from ai_models import TranslationResult, ExamplePhrase
+from ai_models import TranslationResult, ExamplePhrase, ReviewResult, ReviewItem
 
 
 _client_text = None
@@ -151,3 +152,32 @@ async def call_llm_translate(word: str):
                 )
             ],
         )
+
+
+async def call_llm_review(items: list, direction: str):
+    """Evaluate a list of vocabulary quiz answers using the LLM.
+
+    `items` is a list of dicts with keys: word, expected, user_answer.
+    `direction` is one of "en->es" or "es->en".
+    """
+    payload = json.dumps(items, ensure_ascii=False)
+    try:
+        return await asyncio.to_thread(
+            _chains['review'].invoke,
+            {"direction": direction, "items_input": payload},
+        )
+    except Exception as e:
+        _logger.error(f"Review error: {str(e)}")
+        # Fallback: do a simple case-insensitive comparison so the user still gets feedback.
+        fallback = []
+        for it in items:
+            expected = (it.get('expected') or '').strip().lower()
+            answer = (it.get('user_answer') or '').strip().lower()
+            is_correct = bool(answer) and answer in expected.split(',')[0].split('/')[0].strip().split()
+            fallback.append(ReviewItem(
+                word=it.get('word', ''),
+                user_answer=it.get('user_answer', ''),
+                is_correct=bool(answer) and answer == expected,
+                feedback="Could not reach the AI grader; showing a basic comparison.",
+            ))
+        return ReviewResult(items=fallback)
