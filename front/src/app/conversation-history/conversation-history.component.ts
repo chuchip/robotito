@@ -29,6 +29,7 @@ export class ConversationHistoryComponent {
   @Output() choose = new EventEmitter<{ id: string; idContext: string }>();
   @Output() remove = new EventEmitter<{ event: Event; id: string }>();
   @Output() clear = new EventEmitter<void>();
+  @Output() review = new EventEmitter<void>();
 
   onToggle() {
     this.toggle.emit();
@@ -45,6 +46,10 @@ export class ConversationHistoryComponent {
 
   onClear() {
     this.clear.emit();
+  }
+
+  onReview() {
+    this.review.emit();
   }
 
   getFormattedDate(dateString: string): Date {

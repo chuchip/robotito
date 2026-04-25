@@ -25,6 +25,29 @@
     </button>
   </header>
 
+  <!-- Tools / shortcuts. Sits between the header and the conversation list so
+       it stays visible regardless of how many conversations the user has. -->
+  <div class="history__tools" *ngIf="expanded">
+    <button type="button" class="history__tool"
+      (click)="onReview()"
+      aria-label="Review words from the dictionary"
+      matTooltip="Review words from the dictionary"
+      matTooltipPosition="right">
+      <span class="material-icons" aria-hidden="true">quiz</span>
+      <span class="history__tool-label">Review words</span>
+    </button>
+  </div>
+
+  <!-- Compact icon-only entry when the side panel is collapsed. -->
+  <button type="button" class="history__tool history__tool--collapsed"
+    *ngIf="!expanded"
+    (click)="onReview()"
+    aria-label="Review words from the dictionary"
+    matTooltip="Review words from the dictionary"
+    matTooltipPosition="right">
+    <span class="material-icons" aria-hidden="true">quiz</span>
+  </button>
+
   <ul class="history__list" *ngIf="expanded" role="list">
     <li *ngFor="let line of conversations; trackBy: trackById"
         class="history__item"

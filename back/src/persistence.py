@@ -319,7 +319,6 @@ async def get_words_by_user(user_id: str):
     A small RANDOM() tiebreaker is applied so the same 10 words are not always
     picked in the exact same order.
     """
-    await _ensure_review_columns()
     sql = """SELECT id, word, translation, examples_english, examples_spanish,
                     created_date, last_reviewed_at, last_review_correct
                FROM dictionary_words
@@ -363,7 +362,6 @@ async def update_word_review_status(user_id: str, word_id: str, is_correct: bool
     Only updates if the word actually belongs to the given user; this keeps the
     endpoint safe even if the client sends a foreign id.
     """
-    await _ensure_review_columns()
     now = datetime.now()
     sql = """UPDATE dictionary_words
                 SET last_reviewed_at = :now,
@@ -375,24 +373,6 @@ async def update_word_review_status(user_id: str, word_id: str, is_correct: bool
         "id": word_id,
         "user_id": user_id,
     })
-
-
-# Lazy schema migration: add the review tracking columns the first time we
-# touch them on a given process. Idempotent thanks to ADD COLUMN IF NOT EXISTS.
-_review_columns_ready = False
-
-
-async def _ensure_review_columns():
-    global _review_columns_ready
-    if _review_columns_ready:
-        return
-    await g.connection.execute(
-        "ALTER TABLE dictionary_words ADD COLUMN IF NOT EXISTS last_reviewed_at TIMESTAMP NULL"
-    )
-    await g.connection.execute(
-        "ALTER TABLE dictionary_words ADD COLUMN IF NOT EXISTS last_review_correct BOOLEAN NULL"
-    )
-    _review_columns_ready = True
 
 async def conversation_get_by_id(id):
     sql = """

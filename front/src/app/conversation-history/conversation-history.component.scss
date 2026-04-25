@@ -109,6 +109,56 @@
   scrollbar-color: var(--color-border, #e2e8f0) transparent;
 }
 
+/* Tools row sits between the header and the conversation list. */
+.history__tools {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 8px 0 8px;
+}
+
+.history__tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  background: #ffffff;
+  color: var(--color-primary, #6366f1);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 10px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 500;
+  text-align: left;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.history__tool:hover {
+  background: var(--color-primary, #6366f1);
+  color: #ffffff;
+  border-color: var(--color-primary, #6366f1);
+}
+
+.history__tool .material-icons {
+  color: inherit;
+  font-size: 18px;
+}
+
+.history__tool--collapsed {
+  width: 36px;
+  height: 36px;
+  margin: 4px auto 0 auto;
+  padding: 0;
+  justify-content: center;
+}
+
+.history__tool:focus-visible {
+  outline: 2px solid var(--color-primary, #6366f1);
+  outline-offset: 2px;
+}
+
 .history__list::-webkit-scrollbar {
   width: 6px;
 }
