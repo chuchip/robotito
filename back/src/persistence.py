@@ -310,6 +310,90 @@ async def delete_word(conversation_id: str, word_id: str):
     
     return word_id
 
+async def get_words_by_user(user_id: str):
+    """Return every word saved by the given user across all their conversations.
+
+    Words are ordered so the ones the user most needs to review come first:
+    1. Never reviewed (last_reviewed_at IS NULL) or last attempt failed.
+    2. Then the rest, oldest review first.
+    A small RANDOM() tiebreaker is applied so the same 10 words are not always
+    picked in the exact same order.
+    """
+    await _ensure_review_columns()
+    sql = """SELECT id, word, translation, examples_english, examples_spanish,
+                    created_date, last_reviewed_at, last_review_correct
+               FROM dictionary_words
+              WHERE user_id = :user_id
+              ORDER BY
+                  CASE
+                      WHEN last_reviewed_at IS NULL THEN 0
+                      WHEN last_review_correct = FALSE THEN 1
+                      ELSE 2
+                  END,
+                  last_reviewed_at ASC NULLS FIRST,
+                  RANDOM()"""
+    rows = await g.connection.fetch_all(sql, {"user_id": user_id})
+    if rows is None:
+        return []
+
+    result = []
+    for row in rows:
+        english_examples = row["examples_english"].split("\n") if row["examples_english"] else []
+        spanish_examples = row["examples_spanish"].split("\n") if row["examples_spanish"] else []
+        examples = [
+            {"english_phrase": en, "spanish_phrase": es}
+            for en, es in zip(english_examples, spanish_examples)
+        ]
+        result.append({
+            "id": row["id"],
+            "word": row["word"],
+            "translation": row["translation"],
+            "examples": examples,
+            "createdDate": row["created_date"],
+            "lastReviewedAt": row["last_reviewed_at"],
+            "lastReviewCorrect": row["last_review_correct"],
+        })
+
+    return result
+
+
+async def update_word_review_status(user_id: str, word_id: str, is_correct: bool):
+    """Record the outcome of a review attempt for a single word.
+
+    Only updates if the word actually belongs to the given user; this keeps the
+    endpoint safe even if the client sends a foreign id.
+    """
+    await _ensure_review_columns()
+    now = datetime.now()
+    sql = """UPDATE dictionary_words
+                SET last_reviewed_at = :now,
+                    last_review_correct = :is_correct
+              WHERE id = :id AND user_id = :user_id"""
+    await g.connection.execute(sql, {
+        "now": now,
+        "is_correct": bool(is_correct),
+        "id": word_id,
+        "user_id": user_id,
+    })
+
+
+# Lazy schema migration: add the review tracking columns the first time we
+# touch them on a given process. Idempotent thanks to ADD COLUMN IF NOT EXISTS.
+_review_columns_ready = False
+
+
+async def _ensure_review_columns():
+    global _review_columns_ready
+    if _review_columns_ready:
+        return
+    await g.connection.execute(
+        "ALTER TABLE dictionary_words ADD COLUMN IF NOT EXISTS last_reviewed_at TIMESTAMP NULL"
+    )
+    await g.connection.execute(
+        "ALTER TABLE dictionary_words ADD COLUMN IF NOT EXISTS last_review_correct BOOLEAN NULL"
+    )
+    _review_columns_ready = True
+
 async def conversation_get_by_id(id):
     sql = """
         select c.user_id,c.context_id,c.name,c.initial_time,c.final_date,c.url_source, l.type,l.msg

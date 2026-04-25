@@ -352,14 +352,24 @@ async getLastUser(): Promise<any> {
     }
   }
 
-  async reviewWords(conversationId: string, items: Array<{word: string, expected: string, user_answer: string}>, direction: 'en->es' | 'es->en'): Promise<any> {
+  async reviewWords(items: Array<{id?: string, word: string, expected: string, user_answer: string}>, direction: 'en->es' | 'es->en'): Promise<any> {
     try {
       const result: any = await firstValueFrom(
-        this.http.post(`${this.backendUrl}/conversation/id/${conversationId}/words/review`, { items, direction })
+        this.http.post(`${this.backendUrl}/words/review`, { items, direction })
       );
       return result;
     } catch (error) {
       console.error('reviewWords failed!:', error);
+      throw error;
+    }
+  }
+
+  async getUserWords(): Promise<any[]> {
+    try {
+      const result: any = await firstValueFrom(this.http.get(`${this.backendUrl}/words`));
+      return result.words ?? [];
+    } catch (error) {
+      console.error('getUserWords failed!:', error);
       throw error;
     }
   }

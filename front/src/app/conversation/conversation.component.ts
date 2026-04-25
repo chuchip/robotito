@@ -54,8 +54,17 @@ export class ConversationComponent {
   semaphoreStopAudio:number=0
   avatarTalking$: Observable<boolean> = new Observable();
   private readonly backendUrl = 'http://localhost:5000';
-  ttsArray:Blob[]=[]
+  ttsArray:Promise<Blob>[]=[]
   ttsStart=false
+  // ----- TTS dispatch throttling / cancellation -----
+  // Keep at most TTS_MAX_CONCURRENT requests in flight against the backend
+  // at the same time. Extra dispatches wait in ttsRequest() for a slot.
+  private readonly TTS_MAX_CONCURRENT = 3
+  private ttsActiveCount = 0
+  // Set to true by stopAudio() (ESC) so any queued TTS dispatch bails out
+  // before hitting the network. Reset at the start of each new sendData()
+  // / speak_aloud_response() turn.
+  private ttsAbort = false
   isSidebarOpen = false;
   isRobotVisible: boolean = true;
   
@@ -96,6 +105,7 @@ export class ConversationComponent {
   voiceOptions:{language:string, label:string,gender:string}[] = []
   notesWindow: Window | null = null;
   dictionaryWindow: Window | null = null;
+  reviewWindow: Window | null = null;
    
   constructor(private router: Router,public sound: SoundService,public back: ApiBackService,public persistence: PersistenceService,private avatarService: AvatarService, private dialog: MatDialog) {
     this.isLoading=true
@@ -240,6 +250,7 @@ export class ConversationComponent {
           swStart=false
         }
         this.ttsArray.length=0
+        this.ttsAbort=false
         while (true) {          
           const { done, value } = await reader.read();
           if (done) break;
@@ -251,16 +262,20 @@ export class ConversationComponent {
             txt+=this.responseMessage.substring(pIni,pFin)
             if (txt.length>200){            
               setTimeout(() => this.scrollToBottom(), 0)  
-              const cleanText=this.back.cleanText(txt)
-              const response=await this.back.text_to_sound(cleanText)      
-              this.ttsArray.push(response)
-              txt=""
-              if (swStart)
-              {
-                this.ttsStart=true                
-                swStart=false
-                this.ttsWait()         
+              if (this.swTalkResponse && !this.ttsAbort) {
+                const cleanText=this.back.cleanText(txt)
+                // Throttled dispatch: ttsRequest will wait for a free slot
+                // (max TTS_MAX_CONCURRENT in flight) before hitting the
+                // backend, and reject early if ESC was pressed.
+                this.ttsArray.push(this.ttsRequest(cleanText))
+                if (swStart)
+                {
+                  this.ttsStart=true                
+                  swStart=false
+                  this.ttsWait()         
+                }
               }
+              txt=""
             }
             pIni=pFin+1
           }          
@@ -268,9 +283,8 @@ export class ConversationComponent {
         if (this.responseMessage.length>pFin) {              
           txt+=this.responseMessage.substring(pIni)
           const cleanText=this.back.cleanText(txt)
-          if (cleanText.length>0) {        
-            const response=await this.back.text_to_sound(cleanText)      
-            this.ttsArray.push(response)
+          if (cleanText.length>0 && this.swTalkResponse && !this.ttsAbort) {        
+            this.ttsArray.push(this.ttsRequest(cleanText))
             if (swStart)
             {
               this.ttsStart=true
@@ -324,15 +338,16 @@ export class ConversationComponent {
     let swStart=true
     this.isPlayingSound=true
     this.ttsArray.length=0
+    this.ttsAbort=false
     
     while (pFin!=-1 && pFin<cleanText.length) {
     
       pFin=this.findNextPunctuation(cleanText,pIni)
       if (pFin!=-1) {
         txt+=cleanText.substring(pIni,pFin)
-        if (txt.length>150){                      
-          const response=await this.back.text_to_sound(txt,voice)      
-          this.ttsArray.push(response)
+        if (txt.length>150 && !this.ttsAbort){                      
+          // Throttled dispatch (max TTS_MAX_CONCURRENT in flight, ESC-aware).
+          this.ttsArray.push(this.ttsRequest(txt,voice))
           txt=""
           if (swStart)
           {
@@ -346,9 +361,8 @@ export class ConversationComponent {
     }
     if (this.responseMessage.length>pFin) {              
       txt+=cleanText.substring(pIni)
-      if (txt.length>0) {        
-        const response=await this.back.text_to_sound(txt,voice)      
-        this.ttsArray.push(response)
+      if (txt.length>0 && !this.ttsAbort) {        
+        this.ttsArray.push(this.ttsRequest(txt,voice))
         if (swStart)
         {
           this.ttsStart=true
@@ -363,6 +377,35 @@ export class ConversationComponent {
   async sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
+
+  /**
+   * Dispatch a single TTS request, respecting the concurrency cap and the
+   * abort flag. Returned Promise:
+   *   - resolves with the synthesised Blob, or
+   *   - rejects if ESC was pressed before the request actually fired.
+   *
+   * The Promise is the value pushed into ttsArray, so ttsWait() awaits it
+   * in the playback loop. Rejected Promises are caught there and skipped.
+   */
+  private async ttsRequest(text: string, voice: string = ''): Promise<Blob> {
+    // Wait for an open slot, but bail early if the user already pressed ESC.
+    while (this.ttsActiveCount >= this.TTS_MAX_CONCURRENT) {
+      if (this.ttsAbort) {
+        throw new Error('TTS aborted before dispatch')
+      }
+      await this.sleep(50)
+    }
+    if (this.ttsAbort) {
+      throw new Error('TTS aborted before dispatch')
+    }
+    this.ttsActiveCount++
+    try {
+      return await this.back.text_to_sound(text, voice)
+    } finally {
+      this.ttsActiveCount--
+    }
+  }
+
   async ttsWait()
   { 
     this.semaphoreStopAudio++
@@ -374,7 +417,10 @@ export class ConversationComponent {
    // console.log("in ttsWait---------------------------")    
     while (this.semaphoreStopAudio==1){
       this.isPlayingSound=true
-      const response=this.ttsArray[i];
+      // ttsArray now holds Promises that resolve to the synthesised Blob.
+      // Awaiting here blocks only the playback loop (not the LLM read loop)
+      // and is a no-op if the request already finished.
+      const responsePromise=this.ttsArray[i];
       while (this.audio!=null && i>0 && !this.audio.paused && this.semaphoreStopAudio==1)
       {                         
         await this.sleep(100)
@@ -384,6 +430,14 @@ export class ConversationComponent {
       {
         console.log("Stopped Audio")    
         break;
+      }
+      let response: Blob
+      try {
+        response = await responsePromise
+      } catch (err) {
+        console.error('TTS request failed, skipping chunk:', err)
+        i++
+        continue
       }
       await this.prepareAudio(response)
       i++     
@@ -403,13 +457,13 @@ export class ConversationComponent {
     console.log("out ttsWait. ")
   }
   findNextPunctuation(text: string, startIndex: number): number {
-    const p=text.indexOf('\n',startIndex)
-   // console.log("Find carriage return: ",p)
-    return p;
-    /*const substring = text.substring(startIndex);
-    const match = substring.match(/[.,:?!]/);
-  
-    return match ? startIndex + match.index! : -1;*/
+    // Split on real sentence/clause boundaries (., ?, !, :, ,) plus newlines
+    // so each TTS chunk is a natural piece of speech. The 200/150-char
+    // thresholds in sendData() / speak_aloud_response() still keep us from
+    // dispatching tiny chunks for every comma.
+    const substring = text.substring(startIndex);
+    const match = substring.match(/[.,:?!\n]/);
+    return match ? startIndex + match.index! : -1;
   }
 
   toHtml(txt: string,type:string=""){
@@ -499,6 +553,12 @@ export class ConversationComponent {
     }
     else
     {
+      // Cancel any queued TTS dispatch that hasn't hit the network yet.
+      // Requests already in flight will resolve in the background; their
+      // Blobs are simply ignored because the playback loop has been told to
+      // stop (semaphoreStopAudio = -1) and ttsArray is reset on the next
+      // sendData() / speak_aloud_response() turn.
+      this.ttsAbort = true
       if (this.semaphoreStopAudio>0)
         this.semaphoreStopAudio=-1
       if (this.audio  ) {
@@ -557,6 +617,10 @@ export class ConversationComponent {
     if (this.dictionaryWindow) {
       this.dictionaryWindow.close();
       this.dictionaryWindow = null;
+    }
+    if (this.reviewWindow) {
+      this.reviewWindow.close();
+      this.reviewWindow = null;
     }
     const response=await this.back.clearConversation();    
     this.put_message(response)
@@ -666,6 +730,9 @@ export class ConversationComponent {
     }
     if (this.dictionaryWindow && !this.dictionaryWindow.closed) {
       this.dictionaryWindow.location.href = `/dictionary/${this.conversationId}`;
+    }
+    if (this.reviewWindow && !this.reviewWindow.closed) {
+      this.reviewWindow.location.href = `/review`;
     }
     this.isLoading=false
   }
@@ -789,6 +856,12 @@ export class ConversationComponent {
     if (!this.conversationId) return;
     this.persistence.saveToLocalStorage();
     this.dictionaryWindow = window.open(`/dictionary/${this.conversationId}`, 'robotito_dictionary', 'width=800,height=700,resizable=yes');
+  }
+
+  openReview()
+  {
+    this.persistence.saveToLocalStorage();
+    this.reviewWindow = window.open(`/review`, 'robotito_review', 'width=800,height=750,resizable=yes');
   }
 
   getBackgroundColor(posHistory:number): string {

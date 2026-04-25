@@ -24,6 +24,33 @@
   </app-conversation-history>
 
   <div class="container">
+    <!-- Top menu -->
+    <nav class="top-menu" role="menubar" aria-label="Tools">
+      <button type="button" class="top-menu-item" role="menuitem"
+        (click)="openDictionary()"
+        [disabled]="!conversationId"
+        aria-label="Open dictionary"
+        matTooltip="Dictionary">
+        <span class="material-icons" aria-hidden="true">library_books</span>
+        <span class="top-menu-label">Dictionary</span>
+      </button>
+      <button type="button" class="top-menu-item" role="menuitem"
+        (click)="openReview()"
+        aria-label="Review words"
+        matTooltip="Review words from the dictionary">
+        <span class="material-icons" aria-hidden="true">quiz</span>
+        <span class="top-menu-label">Review words</span>
+      </button>
+      <button type="button" class="top-menu-item" role="menuitem"
+        (click)="openNotes()"
+        [disabled]="!conversationId"
+        aria-label="Open notes"
+        matTooltip="Notes">
+        <span class="material-icons" aria-hidden="true">note_alt</span>
+        <span class="top-menu-label">Notes</span>
+      </button>
+    </nav>
+
     <!-- Body of the page when I will show the conversation  -->
     <div #conversation class="conversation" (mouseup)="getSelectedText()" (keyup)="getSelectedText()"
       role="log" aria-live="polite" aria-label="Conversation messages">

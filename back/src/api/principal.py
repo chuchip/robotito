@@ -96,3 +96,83 @@ async def get_last_user():
   data=await db.get_user_data(mem.getUser())
   logging.info(f"Last user: {data}")
   return jsonify(data)
+
+
+@principal_bp.route('/words', methods=['GET'])
+async def get_user_words():
+  """Return every word saved by the current user across all their conversations."""
+  mem = memory.getMemory(request.headers.get("uuid"))
+  if mem is None or not mem.getUser():
+    return jsonify({'message': 'User not authenticated'}), 401
+  words = await db.get_words_by_user(mem.getUser())
+  return jsonify({'words': words})
+
+
+@principal_bp.route('/words/review', methods=['POST'])
+async def review_user_words():
+  """Evaluate the user's answers to a vocabulary quiz using the LLM."""
+  import robotito_ai as ai
+
+  mem = memory.getMemory(request.headers.get("uuid"))
+  if mem is None or not mem.getUser():
+    return jsonify({'message': 'User not authenticated'}), 401
+  user_id = mem.getUser()
+
+  data = await request.get_json() or {}
+  direction = data.get('direction', 'en->es')
+  items = data.get('items', [])
+
+  if direction not in ('en->es', 'es->en'):
+    return jsonify({'message': 'Invalid direction'}), 400
+  if not isinstance(items, list) or not items:
+    return jsonify({'message': 'No items to review'}), 400
+
+  payload_items = []
+  word_ids = []
+  for it in items:
+    if not isinstance(it, dict):
+      continue
+    payload_items.append({
+      'word': str(it.get('word', '')).strip(),
+      'expected': str(it.get('expected', '')).strip(),
+      'user_answer': str(it.get('user_answer', '')).strip(),
+    })
+    # Track the original word id alongside the LLM payload so we can update
+    # the per-word review status once we have the grader's verdict.
+    word_ids.append(str(it.get('id', '')).strip() or None)
+
+  try:
+    result = await ai.call_llm_review(payload_items, direction)
+    out_items = [item.dict() for item in result.items]
+    if len(out_items) != len(payload_items):
+      logger_.warning(
+        f"Review LLM returned {len(out_items)} items for {len(payload_items)} questions; padding."
+      )
+      aligned = []
+      for i, src in enumerate(payload_items):
+        if i < len(out_items):
+          aligned.append(out_items[i])
+        else:
+          aligned.append({
+            'word': src['word'],
+            'user_answer': src['user_answer'],
+            'is_correct': False,
+            'feedback': 'Not evaluated by the grader.',
+          })
+      out_items = aligned
+
+    # Persist the result for each word so the next review surfaces the words
+    # that were missed (and untouched ones) first.
+    for idx, graded in enumerate(out_items):
+      word_id = word_ids[idx] if idx < len(word_ids) else None
+      if not word_id:
+        continue
+      try:
+        await db.update_word_review_status(user_id, word_id, bool(graded.get('is_correct')))
+      except Exception as upd_err:
+        logger_.warning(f"Could not update review status for word {word_id}: {upd_err}")
+
+    return jsonify({'items': out_items, 'direction': direction})
+  except Exception as e:
+    logger_.error(f"Error reviewing words for user {user_id}: {str(e)}")
+    return jsonify({'message': 'Internal server error'}), 500

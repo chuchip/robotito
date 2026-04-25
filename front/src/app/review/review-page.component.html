@@ -1,0 +1,129 @@
+<div class="page">
+    <div class="header">
+        <span class="title">📝 Review words</span>
+        <button class="close-btn" (click)="closeWindow()">Close</button>
+    </div>
+
+    <div class="body">
+        <div *ngIf="isLoading" class="info-message">Loading words...</div>
+        <div *ngIf="!isLoading && loadError" class="info-message error">{{ loadError }}</div>
+
+        <ng-container *ngIf="!isLoading && !loadError">
+            <!-- Setup -->
+            <div *ngIf="reviewStage === 'setup'" class="review-setup">
+                <h2 class="review-title">Review your words</h2>
+                <p class="review-description">
+                    Practice up to {{ QUIZ_SIZE }} words from your dictionary
+                    (across all conversations). Pick a direction and we'll quiz you.
+                </p>
+
+                <div *ngIf="!hasEnoughWordsForReview" class="info-message">
+                    No words saved yet. Open a conversation, open the dictionary and add some words first.
+                </div>
+
+                <div *ngIf="hasEnoughWordsForReview" class="review-options">
+                    <label class="review-option" [class.selected]="reviewDirection === 'en->es'">
+                        <input type="radio" name="reviewDirection" value="en->es"
+                            [(ngModel)]="reviewDirection">
+                        <span class="review-option-title">English → Spanish</span>
+                        <span class="review-option-sub">See an English word, type its Spanish translation.</span>
+                    </label>
+                    <label class="review-option" [class.selected]="reviewDirection === 'es->en'">
+                        <input type="radio" name="reviewDirection" value="es->en"
+                            [(ngModel)]="reviewDirection">
+                        <span class="review-option-title">Spanish → English</span>
+                        <span class="review-option-sub">See a Spanish word, type its English translation.</span>
+                    </label>
+
+                    <button type="button" class="primary-btn" (click)="startReview()">
+                        Start review ({{ reviewBatchSize }} words)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quiz -->
+            <div *ngIf="reviewStage === 'quiz'" class="review-quiz">
+                <div class="review-quiz-header">
+                    <span class="review-quiz-title">
+                        {{ questionPromptIsEnglish ? 'Translate to Spanish' : 'Translate to English' }}
+                    </span>
+                    <button type="button" class="link-btn" (click)="cancelReview()">Cancel</button>
+                </div>
+
+                <div class="review-questions">
+                    <div *ngFor="let q of reviewQuestions; let i = index" class="review-question-card">
+                        <div class="review-question-number">{{ i + 1 }}.</div>
+                        <div class="review-question-prompt">
+                            <span class="review-question-word">{{ q.word }}</span>
+                            <button *ngIf="questionPromptIsEnglish" type="button"
+                                class="action-btn review-listen-btn" title="Listen"
+                                [disabled]="readingQuestionIndex === i"
+                                (click)="playQuestionAudio(i)">
+                                <span *ngIf="readingQuestionIndex !== i" class="material-icons">volume_up</span>
+                                <span *ngIf="readingQuestionIndex === i" class="material-icons spinning">hourglass_empty</span>
+                            </button>
+                        </div>
+                        <input type="text" class="review-answer-input"
+                            [placeholder]="questionPromptIsEnglish ? 'Spanish translation...' : 'English translation...'"
+                            [(ngModel)]="q.userAnswer"
+                            [disabled]="isGrading">
+                    </div>
+                </div>
+
+                <div class="review-actions">
+                    <button type="button" class="primary-btn" (click)="submitReview()" [disabled]="isGrading">
+                        {{ isGrading ? 'Grading...' : 'Submit answers' }}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div *ngIf="reviewStage === 'results'" class="review-results">
+                <div class="review-score">
+                    <span class="review-score-value">{{ reviewScore }} / {{ reviewQuestions.length }}</span>
+                    <span class="review-score-label">correct</span>
+                </div>
+
+                <div class="review-results-list">
+                    <div *ngFor="let q of reviewQuestions; let i = index"
+                        class="review-result-card"
+                        [class.correct]="q.isCorrect"
+                        [class.incorrect]="!q.isCorrect">
+                        <div class="review-result-header">
+                            <span class="review-result-status material-icons">
+                                {{ q.isCorrect ? 'check_circle' : 'cancel' }}
+                            </span>
+                            <span class="review-result-word">{{ q.word }}</span>
+                            <button *ngIf="questionPromptIsEnglish" type="button"
+                                class="action-btn review-listen-btn" title="Listen"
+                                [disabled]="readingQuestionIndex === i"
+                                (click)="playQuestionAudio(i)">
+                                <span *ngIf="readingQuestionIndex !== i" class="material-icons">volume_up</span>
+                                <span *ngIf="readingQuestionIndex === i" class="material-icons spinning">hourglass_empty</span>
+                            </button>
+                        </div>
+                        <div class="review-result-row">
+                            <span class="review-result-label">Your answer:</span>
+                            <span class="review-result-value">{{ q.userAnswer || '—' }}</span>
+                        </div>
+                        <div class="review-result-row">
+                            <span class="review-result-label">Expected:</span>
+                            <span class="review-result-value">{{ q.expected }}</span>
+                        </div>
+                        <div *ngIf="q.feedback" class="review-result-feedback">
+                            {{ q.feedback }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="review-actions">
+                    <button type="button" class="primary-btn" (click)="retryReview()">Try another round</button>
+                </div>
+            </div>
+        </ng-container>
+    </div>
+
+    <div class="footer">
+        <span class="status-message">{{ statusMessage }}</span>
+    </div>
+</div>

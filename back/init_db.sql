@@ -47,5 +47,10 @@ CREATE TABLE IF NOT EXISTS conversation_notes (
     last_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Per-word review tracking. Newer columns are added with IF NOT EXISTS so existing
+-- deployments pick them up on the next restart without dropping data.
+ALTER TABLE dictionary_words ADD COLUMN IF NOT EXISTS last_reviewed_at TIMESTAMP NULL;
+ALTER TABLE dictionary_words ADD COLUMN IF NOT EXISTS last_review_correct BOOLEAN NULL;
+
 INSERT INTO users ( user_id,name,password,language,voice,role,max_length_answer) VALUES ('default','Guest','secret','b','bm_fable','admin',150);
 INSERT INTO context ( user_id,label,context, remember)  VALUES ('default','default','You are my friend Robotito','')

@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine,  Column, Integer, Text, DateTime, func, ForeignKey
+from sqlalchemy import create_engine,  Column, Integer, Text, DateTime, Boolean, func, ForeignKey
 from sqlalchemy.orm import declarative_base, relationship
 
 from robotito_ai import db,app
@@ -79,6 +79,8 @@ class DictionaryWord(Base):
     examples = Column(Text)
     created_date = Column(DateTime, default=func.now())
     last_update = Column(DateTime, default=func.now())
+    last_reviewed_at = Column(DateTime, nullable=True)
+    last_review_correct = Column(Boolean, nullable=True)
     conversation = relationship("Conversation")
     user = relationship("User")
 
