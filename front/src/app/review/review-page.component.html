@@ -69,24 +69,6 @@
                                 [(ngModel)]="q.userAnswer"
                                 [disabled]="isGrading">
                         </div>
-                        <div *ngIf="questionPromptIsEnglish && q.examples && q.examples.length > 0"
-                            class="review-question-examples-toggle">
-                            <button type="button" class="toggle-examples-btn"
-                                (click)="toggleExamples(i)">
-                                {{ isExamplesExpanded(i) ? 'Hide examples' : 'Show examples' }}
-                            </button>
-                        </div>
-                        <div class="examples-panel"
-                            *ngIf="questionPromptIsEnglish && isExamplesExpanded(i) && q.examples && q.examples.length > 0">
-                            <div class="example-table-header">
-                                <div class="example-table-cell example-table-cell-title">English</div>
-                                <div class="example-table-cell example-table-cell-title">Spanish</div>
-                            </div>
-                            <div *ngFor="let example of q.examples" class="example-item example-row">
-                                <div class="example-table-cell">{{ example.english_phrase }}</div>
-                                <div class="example-table-cell">{{ example.spanish_phrase }}</div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -132,6 +114,24 @@
                         </div>
                         <div *ngIf="q.feedback" class="review-result-feedback">
                             {{ q.feedback }}
+                        </div>
+                        <div *ngIf="questionPromptIsEnglish && q.examples && q.examples.length > 0"
+                            class="review-question-examples-toggle">
+                            <button type="button" class="toggle-examples-btn"
+                                (click)="toggleExamples(i)">
+                                {{ isExamplesExpanded(i) ? 'Hide examples' : 'Show examples' }}
+                            </button>
+                        </div>
+                        <div class="examples-panel"
+                            *ngIf="questionPromptIsEnglish && isExamplesExpanded(i) && q.examples && q.examples.length > 0">
+                            <div class="example-table-header">
+                                <div class="example-table-cell example-table-cell-title">English</div>
+                                <div class="example-table-cell example-table-cell-title">Spanish</div>
+                            </div>
+                            <div *ngFor="let example of q.examples" class="example-item example-row">
+                                <div class="example-table-cell">{{ example.english_phrase }}</div>
+                                <div class="example-table-cell">{{ example.spanish_phrase }}</div>
+                            </div>
                         </div>
                     </div>
                 </div>

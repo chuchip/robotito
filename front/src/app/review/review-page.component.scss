@@ -182,9 +182,10 @@
 }
 
 .review-question-card {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: 32px minmax(140px, 1fr) 2fr;
+    align-items: center;
+    gap: 12px;
     padding: 12px;
     background: white;
     border: 1px solid #e0e0e0;
@@ -192,15 +193,13 @@
 }
 
 .review-question-row {
-    display: grid;
-    grid-template-columns: 32px minmax(140px, 1fr) 2fr;
-    align-items: center;
-    gap: 12px;
+    display: contents;
 }
 
 .review-question-examples-toggle {
     display: flex;
     justify-content: flex-end;
+    margin-top: 8px;
 }
 
 .toggle-examples-btn {
@@ -219,6 +218,7 @@
 }
 
 .examples-panel {
+    margin-top: 8px;
     padding: 10px;
     background: #fbfbfb;
     border: 1px solid #e3e3e3;
