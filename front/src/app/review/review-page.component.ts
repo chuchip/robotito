@@ -47,6 +47,7 @@ export class ReviewPageComponent implements OnInit {
   audio: HTMLAudioElement | null = null;
   readingQuestionIndex: number | null = null;
   expandedExampleIndices: Set<number> = new Set<number>();
+  selectedText: string = '';
 
   constructor(
     private back: ApiBackService,
@@ -203,11 +204,45 @@ export class ReviewPageComponent implements OnInit {
     window.close();
   }
 
+  getSelectedText() {
+    const selection = window.getSelection();
+    this.selectedText = selection ? selection.toString().trim() : '';
+  }
+
+  async speakSelectedText(text: string) {
+    try {
+      const response = await this.back.text_to_sound(text, '');
+      this.statusMessage = 'Playing...';
+
+      if (this.audio) {
+        this.audio.pause();
+        this.audio.currentTime = 0;
+      }
+
+      this.audio = await this.back.playAudioFromResponse(response);
+      this.readingQuestionIndex = null;
+      this.audio.onended = () => {
+        this.statusMessage = '';
+      };
+    } catch (error) {
+      console.error('Failed to read aloud:', error);
+      this.statusMessage = 'Error playing audio';
+      this.readingQuestionIndex = null;
+    }
+  }
+
   @HostListener('document:keydown', ['$event'])
   handleKeydown(event: KeyboardEvent) {
     if (event.key === 'Escape') {
       event.preventDefault();
       this.stopAudio();
+    }
+    if (event.key === 'F4') {
+      event.preventDefault();
+      this.getSelectedText();
+      if (this.selectedText.trim() !== '') {
+        this.speakSelectedText(this.selectedText);
+      }
     }
   }
 }
