@@ -20,6 +20,7 @@ interface ReviewQuestion {
   word: string;       // Word shown to the user (English or Spanish, depending on direction)
   expected: string;   // Reference translation
   userAnswer: string; // User input
+  examples: Array<{ english_phrase: string, spanish_phrase: string }>;
   isCorrect?: boolean;
   feedback?: string;
 }
@@ -45,6 +46,7 @@ export class ReviewPageComponent implements OnInit {
 
   audio: HTMLAudioElement | null = null;
   readingQuestionIndex: number | null = null;
+  expandedExampleIndices: Set<number> = new Set<number>();
 
   constructor(
     private back: ApiBackService,
@@ -75,6 +77,18 @@ export class ReviewPageComponent implements OnInit {
     return this.reviewDirection === 'en->es';
   }
 
+  toggleExamples(index: number) {
+    if (this.expandedExampleIndices.has(index)) {
+      this.expandedExampleIndices.delete(index);
+    } else {
+      this.expandedExampleIndices.add(index);
+    }
+  }
+
+  isExamplesExpanded(index: number): boolean {
+    return this.expandedExampleIndices.has(index);
+  }
+
   startReview() {
     if (!this.hasEnoughWordsForReview) {
       this.statusMessage = 'Add some words first to review.';
@@ -87,11 +101,12 @@ export class ReviewPageComponent implements OnInit {
 
     this.reviewQuestions = picked.map(w => {
       if (this.reviewDirection === 'en->es') {
-        return { id: w.id, word: w.word, expected: w.translation, userAnswer: '' };
+        return { id: w.id, word: w.word, expected: w.translation, userAnswer: '', examples: w.examples || [] };
       }
-      return { id: w.id, word: w.translation, expected: w.word, userAnswer: '' };
+      return { id: w.id, word: w.translation, expected: w.word, userAnswer: '', examples: w.examples || [] };
     });
     this.reviewScore = 0;
+    this.expandedExampleIndices.clear();
     this.reviewStage = 'quiz';
   }
 
@@ -100,6 +115,7 @@ export class ReviewPageComponent implements OnInit {
     this.reviewStage = 'setup';
     this.reviewQuestions = [];
     this.reviewScore = 0;
+    this.expandedExampleIndices.clear();
   }
 
   async submitReview() {
@@ -137,6 +153,7 @@ export class ReviewPageComponent implements OnInit {
     this.reviewStage = 'setup';
     this.reviewQuestions = [];
     this.reviewScore = 0;
+    this.expandedExampleIndices.clear();
     // Refresh from the server so words just graded are re-ordered by their
     // new last_reviewed_at / last_review_correct values.
     try {

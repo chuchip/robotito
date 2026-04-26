@@ -52,21 +52,41 @@
 
                 <div class="review-questions">
                     <div *ngFor="let q of reviewQuestions; let i = index" class="review-question-card">
-                        <div class="review-question-number">{{ i + 1 }}.</div>
-                        <div class="review-question-prompt">
-                            <span class="review-question-word">{{ q.word }}</span>
-                            <button *ngIf="questionPromptIsEnglish" type="button"
-                                class="action-btn review-listen-btn" title="Listen"
-                                [disabled]="readingQuestionIndex === i"
-                                (click)="playQuestionAudio(i)">
-                                <span *ngIf="readingQuestionIndex !== i" class="material-icons">volume_up</span>
-                                <span *ngIf="readingQuestionIndex === i" class="material-icons spinning">hourglass_empty</span>
+                        <div class="review-question-row">
+                            <div class="review-question-number">{{ i + 1 }}.</div>
+                            <div class="review-question-prompt">
+                                <span class="review-question-word">{{ q.word }}</span>
+                                <button *ngIf="questionPromptIsEnglish" type="button"
+                                    class="action-btn review-listen-btn" title="Listen"
+                                    [disabled]="readingQuestionIndex === i"
+                                    (click)="playQuestionAudio(i)">
+                                    <span *ngIf="readingQuestionIndex !== i" class="material-icons">volume_up</span>
+                                    <span *ngIf="readingQuestionIndex === i" class="material-icons spinning">hourglass_empty</span>
+                                </button>
+                            </div>
+                            <input type="text" class="review-answer-input"
+                                [placeholder]="questionPromptIsEnglish ? 'Spanish translation...' : 'English translation...'"
+                                [(ngModel)]="q.userAnswer"
+                                [disabled]="isGrading">
+                        </div>
+                        <div *ngIf="questionPromptIsEnglish && q.examples && q.examples.length > 0"
+                            class="review-question-examples-toggle">
+                            <button type="button" class="toggle-examples-btn"
+                                (click)="toggleExamples(i)">
+                                {{ isExamplesExpanded(i) ? 'Hide examples' : 'Show examples' }}
                             </button>
                         </div>
-                        <input type="text" class="review-answer-input"
-                            [placeholder]="questionPromptIsEnglish ? 'Spanish translation...' : 'English translation...'"
-                            [(ngModel)]="q.userAnswer"
-                            [disabled]="isGrading">
+                        <div class="examples-panel"
+                            *ngIf="questionPromptIsEnglish && isExamplesExpanded(i) && q.examples && q.examples.length > 0">
+                            <div class="example-table-header">
+                                <div class="example-table-cell example-table-cell-title">English</div>
+                                <div class="example-table-cell example-table-cell-title">Spanish</div>
+                            </div>
+                            <div *ngFor="let example of q.examples" class="example-item example-row">
+                                <div class="example-table-cell">{{ example.english_phrase }}</div>
+                                <div class="example-table-cell">{{ example.spanish_phrase }}</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
