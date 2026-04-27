@@ -24,20 +24,25 @@
         </div>
 
         <div class="words-list">
-            <div *ngFor="let item of filteredWords" class="word-card" [class.editing]="editingId === item.id">
+            <div *ngFor="let item of filteredWords" class="word-card"
+                [class.editing]="editingId === item.id"
+                [class.repeated]="item.repeated">
                 <div class="word-header">
-                    <strong class="word-text">{{ item.word }}</strong>
+                    <strong class="word-text">
+                        {{ item.word }}
+                        <span *ngIf="item.repeated" class="repeated-badge" title="Already saved in another conversation">Repeated</span>
+                    </strong>
                     <div class="word-actions">
                         <button (click)="readAloud(item)" class="action-btn" title="Read aloud"
                             [disabled]="readingAloudWordId === item.id || isAdding">
                             <span *ngIf="readingAloudWordId === item.id"> {{ statusPlaying }}</span>
                             <span *ngIf="readingAloudWordId !== item.id" class="material-icons">volume_up</span>
                         </button>
-                        <button (click)="toggleEdit(item)" class="action-btn"
+                        <button *ngIf="!item.repeated" (click)="toggleEdit(item)" class="action-btn"
                             [title]="editingId === item.id ? 'Save' : 'Edit'">
                             <span class="material-icons">{{ editingId === item.id ? 'check' : 'edit' }}</span>
                         </button>
-                        <button (click)="deleteWord(item.id!)" class="action-btn delete-btn" title="Delete">
+                        <button *ngIf="!item.repeated" (click)="deleteWord(item.id!)" class="action-btn delete-btn" title="Delete">
                             <span class="material-icons">delete</span>
                         </button>
                     </div>

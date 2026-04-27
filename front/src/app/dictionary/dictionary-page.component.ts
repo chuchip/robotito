@@ -11,6 +11,7 @@ interface Word {
   translation: string;
   examples: Array<{ english_phrase: string, spanish_phrase: string }>;
   createdDate?: string;
+  repeated?: boolean;
 }
 
 @Component({
@@ -78,8 +79,13 @@ export class DictionaryPageComponent implements OnInit {
       this.words.push(word);
       this.filterWords();
       this.newWord = '';
-      this.statusMessage = 'Word added!';
-      setTimeout(() => this.statusMessage = '', 2000);
+      if (word && word.repeated) {
+        this.statusMessage = 'Word already in your dictionary (not saved again)';
+        setTimeout(() => this.statusMessage = '', 3000);
+      } else {
+        this.statusMessage = 'Word added!';
+        setTimeout(() => this.statusMessage = '', 2000);
+      }
 
       setTimeout(() => {
         const wordsList = document.querySelector('.words-list') as HTMLElement | null;

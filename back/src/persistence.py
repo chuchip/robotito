@@ -209,6 +209,37 @@ async def get_words(conversation_id: str):
     
     return result
 
+async def find_user_word(user_id: str, word: str):
+    """Return the first dictionary entry matching `word` for `user_id` across any
+    of their conversations, or None if it doesn't exist. Comparison is
+    case-insensitive and ignores surrounding whitespace.
+    """
+    sql = """SELECT id, conversation_id, word, translation, examples_english, examples_spanish, created_date
+             FROM dictionary_words
+             WHERE user_id = :user_id AND LOWER(TRIM(word)) = LOWER(TRIM(:word))
+             ORDER BY created_date ASC
+             LIMIT 1"""
+    row = await g.connection.fetch_one(sql, {"user_id": user_id, "word": word})
+    if row is None:
+        return None
+
+    english_examples = row["examples_english"].split("\n") if row["examples_english"] else []
+    spanish_examples = row["examples_spanish"].split("\n") if row["examples_spanish"] else []
+    examples = [
+        {"english_phrase": en.strip(), "spanish_phrase": es.strip()}
+        for en, es in zip(english_examples, spanish_examples)
+        if en.strip() or es.strip()
+    ]
+
+    return {
+        "id": row["id"],
+        "conversation_id": row["conversation_id"],
+        "word": row["word"],
+        "translation": row["translation"],
+        "examples": examples,
+        "createdDate": row["created_date"],
+    }
+
 async def add_word(conversation_id: str, user_id: str, word: str, translation: str, examples):
     # examples can be a list of dicts/ExamplePhrase objects or a single dict
     word_id = str(uuid.uuid4())

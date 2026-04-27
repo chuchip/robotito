@@ -147,6 +147,26 @@
      border-color: #667eea;
  }
 
+ .word-card.repeated {
+     background: #fffbe6;
+     border-color: #f0c200;
+ }
+
+ .repeated-badge {
+     display: inline-block;
+     margin-left: 8px;
+     padding: 2px 8px;
+     font-size: 11px;
+     font-weight: 700;
+     text-transform: uppercase;
+     letter-spacing: 0.04em;
+     color: #8a6d00;
+     background: #fff3a8;
+     border: 1px solid #f0c200;
+     border-radius: 10px;
+     vertical-align: middle;
+ }
+
  .word-header {
      display: flex;
      justify-content: space-between;

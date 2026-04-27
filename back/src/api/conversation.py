@@ -146,7 +146,16 @@ async def conversation_add_word(id):
     
     if not user_id:
       return jsonify({'message': 'User not authenticated'}), 401
-    
+
+    # If the user already has this word in any of their conversations, return
+    # the existing entry marked as 'repeated' instead of translating and
+    # saving a new copy.
+    existing = await db.find_user_word(user_id, word)
+    if existing is not None:
+      logging.info(f"Word '{word}' already saved by user {user_id}; returning existing entry")
+      existing["repeated"] = True
+      return jsonify(existing), 200
+
     # Call LLM to get translation
     try:
       translation_result = await ai.call_llm_translate(word)
