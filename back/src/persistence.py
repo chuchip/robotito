@@ -34,7 +34,7 @@ def get_DTO_context(row):
     return {"label": row['label'], "text": row['context'], "remember": row['remember'],"last_time": row['last_time'],"id":row['id']}
 
 async def get_user_data(user:str):
-    row = await g.connection.fetch_one(
+    row = await g.connection.fetch_sole(
         "SELECT user,language,voice,role, max_length_answer FROM users  where user_id = :user",
         {"user": user},
     )
@@ -52,7 +52,7 @@ async def get_all_context(user):
 
 async def get_context_by_label(user,label):
     sql=f"select label,context,remember,last_time,id from context where label=:label and user_id=:user"    
-    row=await g.connection.fetch_one(sql,{"label":label,"user":user})
+    row=await g.connection.fetch_sole(sql,{"label":label,"user":user})
     
     if row is None:
         return None
@@ -63,7 +63,7 @@ async def save_context(user_id,label,context,remember):
     if data is  None:
         logging.info(f"Insert context: {label}")
         sql=f"INSERT INTO context (label,user_id,context,remember) VALUES (:label, :user_id, :context,:remember) returning id"        
-        cursor = await g.connection.fetch_one(sql, {"label": label,"user_id":user_id,"context": context,"remember":remember})
+        cursor = await g.connection.fetch_sole(sql, {"label": label,"user_id":user_id,"context": context,"remember":remember})
         id = cursor['id']
     else:
         logging.info(f"Update context: {label}")
@@ -100,7 +100,7 @@ async def delete_context_by_id(id):
     
 async def get_context_by_id(id):
     sql=f"select label, context, remember, last_time,id from context where id=:id " 
-    row=await g.connection.fetch_one(sql,{"id":int(id)})    
+    row=await g.connection.fetch_sole(sql,{"id":int(id)})    
     if row is None:
         return None
     
@@ -157,7 +157,7 @@ async def clearConversationUrl(conversation_id):
 # Notes
 async def get_notes(conversation_id: str):
     sql = "SELECT notes FROM conversation_notes WHERE conversation_id = :conversation_id"
-    row = await g.connection.fetch_one(sql, {"conversation_id": conversation_id})
+    row = await g.connection.fetch_sole(sql, {"conversation_id": conversation_id})
     if row is None:
         return None
     return row["notes"]
@@ -165,7 +165,7 @@ async def get_notes(conversation_id: str):
 async def save_notes(conversation_id: str, notes: str):
     # Check if conversation exists
     sql_check = "SELECT id FROM conversation WHERE id = :id"
-    row = await g.connection.fetch_one(sql_check, {"id": conversation_id})
+    row = await g.connection.fetch_sole(sql_check, {"id": conversation_id})
     if row is None:
         raise ValueError(f"Conversation {conversation_id} does not exist")
     
@@ -219,7 +219,7 @@ async def find_user_word(user_id: str, word: str):
              WHERE user_id = :user_id AND LOWER(TRIM(word)) = LOWER(TRIM(:word))
              ORDER BY created_date ASC
              LIMIT 1"""
-    row = await g.connection.fetch_one(sql, {"user_id": user_id, "word": word})
+    row = await g.connection.fetch_sole(sql, {"user_id": user_id, "word": word})
     if row is None:
         return None
 
@@ -450,7 +450,7 @@ async def save_session(user_id, uuid):
         return
     expires_at = datetime.now() + timedelta(days=SESSION_TTL_DAYS)
     sql = "select user_id from user_session where uuid = :uuid"
-    row = await g.connection.fetch_one(sql, {"uuid": uuid})
+    row = await g.connection.fetch_sole(sql, {"uuid": uuid})
     if row is None:
         sql = "insert into user_session (user_id, uuid, expires_at) values (:user_id, :uuid, :expires_at)"
         await g.connection.execute(sql, {"user_id": user_id, "uuid": uuid, "expires_at": expires_at})
@@ -466,7 +466,7 @@ async def get_session(uuid):
     if session is not None:
         return session
     sql = "select user_id, uuid, expires_at from user_session where uuid = :uuid"
-    row = await g.connection.fetch_one(sql, {"uuid": uuid})
+    row = await g.connection.fetch_sole(sql, {"uuid": uuid})
     if row is None:
         return None
     expires_at = row['expires_at']
@@ -490,7 +490,7 @@ async def delete_session(authorization):
 
 
 async def checkUser(user_id, password):
-    row = await g.connection.fetch_one(
+    row = await g.connection.fetch_sole(
         "SELECT user_id, password FROM users where user_id = :user_id",
         {"user_id": user_id},
     )

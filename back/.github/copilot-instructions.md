@@ -43,7 +43,7 @@ Audio (STT/TTS) → sound_google.py or sound_openai.py → File output to audio/
 
 ### 1. Async-First Architecture
 - All endpoint handlers are `async def`
-- Database calls use `await g.connection.fetch_one()` or `await g.connection.execute()`
+- Database calls use `await g.connection.fetch_sole()` or `await g.connection.execute()`
 - Never use blocking I/O in routes—use `aiofiles` for file operations
 - **Example**: `src/api/audio.py` line ~75 uses `f = await request.files` not `request.files`
 

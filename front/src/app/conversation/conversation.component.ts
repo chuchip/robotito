@@ -41,7 +41,7 @@ import { SettingsComponent } from '../settings/settings.component';
  */
 export class ConversationComponent {
   selectedText: string = '';
-  human_voice='bf_emma'
+  human_voice='af_heart'
   isLoading=false;
   pressEscape=false
   xPos = 0
