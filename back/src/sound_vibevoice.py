@@ -64,23 +64,38 @@ def _load_model() -> None:
     _logger.info(f"Loading VibeVoice from {model_path} on {_device} ...")
     _processor = VibeVoiceStreamingProcessor.from_pretrained(model_path)
 
+    # PyTorch 2.6+ + recent Accelerate raise
+    #   "Cannot copy out of meta tensor; no data!"
+    # if the model is loaded with the default low_cpu_mem_usage=True path
+    # because Accelerate puts params on the `meta` device and then tries to
+    # move them with plain `.to()`. Forcing low_cpu_mem_usage=False makes
+    # transformers materialize tensors directly on the target device and
+    # avoids the meta path entirely.
+    common_kwargs = dict(
+        torch_dtype=load_dtype,
+        low_cpu_mem_usage=False,
+    )
+
     try:
         _model = VibeVoiceStreamingForConditionalGenerationInference.from_pretrained(
             model_path,
-            torch_dtype=load_dtype,
             attn_implementation=attn_impl,
             **kwargs,
+            **common_kwargs,
         )
     except Exception as exc:
         if attn_impl == "flash_attention_2":
             _logger.warning(
                 f"flash_attention_2 unavailable ({exc}); falling back to sdpa."
             )
+            fallback_device_map = "cuda" if _device == "cuda" else (
+                "cpu" if _device == "cpu" else None
+            )
             _model = VibeVoiceStreamingForConditionalGenerationInference.from_pretrained(
                 model_path,
-                torch_dtype=load_dtype,
                 attn_implementation="sdpa",
-                device_map="cuda" if _device == "cuda" else "cpu",
+                device_map=fallback_device_map,
+                **common_kwargs,
             )
         else:
             raise
