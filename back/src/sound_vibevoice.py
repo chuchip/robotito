@@ -178,6 +178,39 @@ def list_voices() -> list[str]:
     return list(_voice_mapper.keys())
 
 
+def list_voice_presets(language_prefix: str = "en-") -> list[dict]:
+    """Return UI-friendly descriptors of every voice preset on disk.
+
+    VibeVoice ships its voices as ``<lang>-<Name>_<gender>.pt`` (for example
+    ``en-Carter_man.pt``). We surface the bare filename (without extension) as
+    the dropdown label, parse the trailing ``_man`` / ``_woman`` suffix into a
+    gender string, and skip voices whose filename doesn't start with the
+    requested language prefix so non-English experimental presets don't leak
+    into the UI.
+    """
+    global _voice_mapper
+    if _voice_mapper is None:
+        _voice_mapper = _build_voice_mapper()
+
+    out: list[dict] = []
+    for key in _voice_mapper.keys():
+        if language_prefix and not key.startswith(language_prefix.lower()):
+            continue
+        if key.endswith("_man"):
+            gender = "Male"
+        elif key.endswith("_woman"):
+            gender = "Female"
+        else:
+            gender = ""
+        out.append({
+            "language": "en-US",
+            "label": key,
+            "gender": gender,
+        })
+    out.sort(key=lambda v: v["label"])
+    return out
+
+
 def synthesize_to_webm(text: str, speaker_name: str, uuid: str) -> str:
     """Generate speech, transcode to webm/opus, return the output path."""
     import torch

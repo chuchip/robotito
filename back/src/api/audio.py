@@ -59,13 +59,9 @@ _VOICES_BY_ENGINE = {
         {"language": "es-ES", "label": "em_santa",   "gender": "Male"},
     ],
     "vibevoice": [
-        # Default English voices that ship with VibeVoice-Realtime-0.5B (no
-        # experimental download required). All are American English.
-        {"language": "en-US", "label": "alice",   "gender": "Female"},
-        {"language": "en-US", "label": "carter",  "gender": "Male"},
-        {"language": "en-US", "label": "frank",   "gender": "Male"},
-        {"language": "en-US", "label": "maya",    "gender": "Female"},
-        {"language": "en-US", "label": "wayne",   "gender": "Male"},
+        # Populated dynamically from disk by `_voices_for_engine` — the empty
+        # entry here just keeps the engine present in the catalog dict so
+        # callers iterating it don't miss vibevoice when no voices are found.
     ],
     "gemini": [
         {"language": "en-US", "label": "en-US-Standard-A", "gender": "Male"},
@@ -106,11 +102,35 @@ def _enabled_engines() -> list[str]:
     return audio_service.get_enabled_engines()
 
 
+def _voices_for_engine(engine: str) -> list[dict]:
+    """Return the voice catalog for an engine.
+
+    For most engines this is just a static lookup. VibeVoice voices live on
+    disk as ``.pt`` files whose names depend on which presets the operator
+    downloaded, so we query the actual filesystem instead of trusting a
+    hand-maintained list. Filenames not matching the ``en-*`` prefix are
+    filtered out so non-English experimental presets don't appear in the UI.
+    """
+    if engine == "vibevoice":
+        try:
+            import sound_vibevoice
+            return sound_vibevoice.list_voice_presets(language_prefix="en-")
+        except Exception as exc:
+            logger_.warning(f"Could not enumerate VibeVoice voices: {exc}")
+            return []
+    return _VOICES_BY_ENGINE.get(engine, [])
+
+
 def _options_with_engine_tag(table: dict, key: str) -> list[dict]:
-    """Flatten {engine: [...]} -> [...] and tag each entry with its engine."""
+    """Flatten {engine: [...]} -> [...] and tag each entry with its engine.
+
+    For voices we route through `_voices_for_engine` so VibeVoice's catalog
+    is computed dynamically.
+    """
     out = []
     for engine in _enabled_engines():
-        for entry in table.get(engine, []):
+        entries = _voices_for_engine(engine) if key == 'voice' else table.get(engine, [])
+        for entry in entries:
             out.append({**entry, "engine": engine})
     return out
 
@@ -139,7 +159,7 @@ async def get_languages():
 async def get_all_voices():
     engine = request.args.get('engine')
     if engine:
-        return jsonify(_VOICES_BY_ENGINE.get(engine, []))
+        return jsonify(_voices_for_engine(engine))
     return jsonify(_options_with_engine_tag(_VOICES_BY_ENGINE, 'voice'))
 
 
@@ -147,11 +167,11 @@ async def get_all_voices():
 async def get_voices(language):
     engine = request.args.get('engine')
     if engine:
-        voices = [v for v in _VOICES_BY_ENGINE.get(engine, []) if v['language'] == language]
+        voices = [v for v in _voices_for_engine(engine) if v['language'] == language]
         return jsonify(voices)
     voices = []
     for eng in _enabled_engines():
-        for v in _VOICES_BY_ENGINE.get(eng, []):
+        for v in _voices_for_engine(eng):
             if v['language'] == language:
                 voices.append({**v, "engine": eng})
     return jsonify(voices)
