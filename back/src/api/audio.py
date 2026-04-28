@@ -24,16 +24,10 @@ _LANGUAGES_BY_ENGINE = {
         {"label": "Spanish",          "value": "es-ES"},
     ],
     "vibevoice": [
-        # The realtime model is officially English-only; the multilingual
-        # voices below are experimental (see VibeVoice docs).
+        # Realtime-0.5B ships with English-only voices. The multilingual
+        # speakers from `demo/download_experimental_voices.sh` are explicitly
+        # marked experimental upstream and are not exposed here.
         {"label": "American English", "value": "en-US"},
-        {"label": "Spanish (experimental)",     "value": "es-ES"},
-        {"label": "French (experimental)",      "value": "fr-FR"},
-        {"label": "German (experimental)",      "value": "de-DE"},
-        {"label": "Italian (experimental)",     "value": "it-IT"},
-        {"label": "Portuguese (experimental)",  "value": "pt-PT"},
-        {"label": "Japanese (experimental)",    "value": "ja-JP"},
-        {"label": "Korean (experimental)",      "value": "ko-KR"},
     ],
     "gemini": [
         {"label": "American English", "value": "en-US"},
@@ -65,21 +59,13 @@ _VOICES_BY_ENGINE = {
         {"language": "es-ES", "label": "em_santa",   "gender": "Male"},
     ],
     "vibevoice": [
-        # Default English voices that ship with VibeVoice-Realtime-0.5B.
+        # Default English voices that ship with VibeVoice-Realtime-0.5B (no
+        # experimental download required). All are American English.
         {"language": "en-US", "label": "alice",   "gender": "Female"},
         {"language": "en-US", "label": "carter",  "gender": "Male"},
         {"language": "en-US", "label": "frank",   "gender": "Male"},
         {"language": "en-US", "label": "maya",    "gender": "Female"},
         {"language": "en-US", "label": "wayne",   "gender": "Male"},
-        # Experimental multilingual voices (download via
-        # demo/download_experimental_voices.sh in the VibeVoice repo).
-        {"language": "es-ES", "label": "es-spk1", "gender": ""},
-        {"language": "fr-FR", "label": "fr-spk1", "gender": ""},
-        {"language": "de-DE", "label": "de-spk1", "gender": ""},
-        {"language": "it-IT", "label": "it-spk1", "gender": ""},
-        {"language": "pt-PT", "label": "pt-spk1", "gender": ""},
-        {"language": "ja-JP", "label": "ja-spk1", "gender": ""},
-        {"language": "ko-KR", "label": "ko-spk1", "gender": ""},
     ],
     "gemini": [
         {"language": "en-US", "label": "en-US-Standard-A", "gender": "Male"},
