@@ -42,13 +42,27 @@
     </div>
 
     <div class="settings__row settings__row--wrap">
+      <label class="field" *ngIf="engineOptions.length > 1">
+        <span class="field__label">TTS engine</span>
+        <select class="field__input"
+          [ngModel]="selectEngine"
+          (ngModelChange)="selectEngine = $event; selectEngineChange.emit($event)"
+          (change)="onEngineChange()"
+          aria-label="TTS engine">
+          <option *ngFor="let option of engineOptions" [value]="option.value">
+            {{ option.label }}
+          </option>
+        </select>
+      </label>
+
       <label class="field">
         <span class="field__label">Language</span>
         <select class="field__input"
           [ngModel]="selectLanguage"
           (ngModelChange)="selectLanguage = $event; selectLanguageChange.emit($event)"
+          (change)="onLanguageChange()"
           aria-label="Language">
-          <option *ngFor="let option of languageOptions" [value]="option.value">
+          <option *ngFor="let option of filteredLanguageOptions" [value]="option.value">
             {{ option.label }}
           </option>
         </select>
@@ -151,6 +165,7 @@
   <!-- Footer info -->
   <footer class="settings__footer">
     <div class="settings__info">
+      <span><strong>Engine:</strong> {{ selectEngineDesc }}</span>
       <span><strong>Language:</strong> {{ selectLanguageDesc }}</span>
       <span><strong>Voice:</strong> {{ selectVoice }}</span>
     </div>

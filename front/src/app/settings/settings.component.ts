@@ -7,8 +7,9 @@ import { contextDTO } from '../model/context.dto';
 import { ApiBackService } from '../services/api-back.service';
 import { PersistenceService } from '../services/persistence.service';
 
-export interface LanguageOption { label: string; value: string; }
-export interface VoiceOption { language: string; label: string; gender: string; }
+export interface LanguageOption { label: string; value: string; engine?: string; }
+export interface VoiceOption { language: string; label: string; gender: string; engine?: string; }
+export interface EngineOption { value: string; label: string; }
 
 /**
  * Modal window with application settings.
@@ -50,6 +51,9 @@ export class SettingsComponent {
   @Input() selectVoice = '';
   @Output() selectVoiceChange = new EventEmitter<string>();
 
+  @Input() selectEngine = '';
+  @Output() selectEngineChange = new EventEmitter<string>();
+
   @Input() contextUrl = '';
   @Output() contextUrlChange = new EventEmitter<string>();
 
@@ -58,6 +62,7 @@ export class SettingsComponent {
   @Input() contexts: contextDTO[] = [];
   @Input() languageOptions: LanguageOption[] = [];
   @Input() voiceOptions: VoiceOption[] = [];
+  @Input() engineOptions: EngineOption[] = [];
 
   /* ---------- parent-facing events (only 2) ---------- */
   @Output() close = new EventEmitter<void>();
@@ -73,12 +78,28 @@ export class SettingsComponent {
   ) {}
 
   /* ---------- derived values ---------- */
+  get filteredLanguageOptions(): LanguageOption[] {
+    // If options are tagged by engine (multi-engine setup) filter to the
+    // currently selected engine; otherwise show them all.
+    const tagged = this.languageOptions.some(l => !!l.engine);
+    if (!tagged || !this.selectEngine) return this.languageOptions;
+    return this.languageOptions.filter(l => l.engine === this.selectEngine);
+  }
+
   get filteredVoiceOptions(): VoiceOption[] {
-    return this.voiceOptions.filter(v => v.language === this.selectLanguage);
+    const tagged = this.voiceOptions.some(v => !!v.engine);
+    return this.voiceOptions.filter(v =>
+      v.language === this.selectLanguage &&
+      (!tagged || !this.selectEngine || v.engine === this.selectEngine)
+    );
   }
 
   get selectLanguageDesc(): string {
     return this.languageOptions.find(l => l.value === this.selectLanguage)?.label ?? '';
+  }
+
+  get selectEngineDesc(): string {
+    return this.engineOptions.find(e => e.value === this.selectEngine)?.label ?? this.selectEngine;
   }
 
   /* ---------- UI handlers ---------- */
@@ -88,9 +109,31 @@ export class SettingsComponent {
     this.playbackSpeedChange.emit(value);
   }
 
+  async onEngineChange() {
+    // After switching engine, the language/voice lists shrink; fall back to
+    // the first valid option for the new engine before persisting the change.
+    const langs = this.filteredLanguageOptions;
+    if (langs.length && !langs.find(l => l.value === this.selectLanguage)) {
+      this.selectLanguage = langs[0].value;
+      this.selectLanguageChange.emit(this.selectLanguage);
+    }
+    const voices = this.filteredVoiceOptions;
+    if (voices.length && !voices.find(v => v.label === this.selectVoice)) {
+      this.selectVoice = voices[0].label;
+      this.selectVoiceChange.emit(this.selectVoice);
+    }
+    if (!this.selectVoice) return;
+    const response = await this.back.changeLanguage(
+      this.selectLanguage, this.selectVoice, this.selectEngine,
+    );
+    this.putMessage(response);
+  }
+
   async onLanguageChange() {
     if (!this.selectVoice) return;
-    const response = await this.back.changeLanguage(this.selectLanguage, this.selectVoice);
+    const response = await this.back.changeLanguage(
+      this.selectLanguage, this.selectVoice, this.selectEngine || undefined,
+    );
     this.putMessage(response);
   }
 

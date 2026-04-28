@@ -1,8 +1,9 @@
 ChatBot made with Angular and Python 
-It uses the library kokoro (https://huggingface.co/hexgrad/Kokoro-82M) and 
+It supports two local TTS engines, kokoro (https://huggingface.co/hexgrad/Kokoro-82M) and
+VibeVoice-Realtime (https://github.com/microsoft/VibeVoice), plus
 whisper-large-v3-turbo (https://huggingface.co/openai/whisper-large-v3-turbo)
 
-It has been tested in Ubuntu 24.04 with Python 3.9.21. 
+It has been tested in Ubuntu 24.04 with Python 3.12. 
 
 ### Executing with docker
  docker run -it -p5000:5000  --gpus all -e GOOGLE_API_KEY=$GOOGLE_API_KEY cuda-python39-image
@@ -38,6 +39,24 @@ You can create one in  https://ai.google.dev/gemini-api/docs/api-key
 Create this environment variable: 
 
 > GOOGLE_API_KEY="<YOUR_KEY">
+
+### TTS engine selection
+
+`TTS` selects the *default* engine. Valid values: `kokoro`, `vibevoice`, `gemini`, `openai`.
+
+Set `TTS_ENGINES` (comma-separated) to enable additional engines that the user can pick from the
+front-end settings panel. Example for Kokoro + VibeVoice with Kokoro as the default:
+
+> export TTS=kokoro
+> export TTS_ENGINES=kokoro,vibevoice
+
+VibeVoice extras (only needed when `vibevoice` is enabled):
+
+> pip install "vibevoice @ git+https://github.com/microsoft/VibeVoice.git#egg=vibevoice[streamingtts]"
+> # then download voice presets in the VibeVoice repo:
+> bash demo/download_experimental_voices.sh
+> # optional: point the backend at a custom voices dir
+> export VIBEVOICE_VOICES_DIR=/path/to/streaming_model/voices
 
 ### Start back
 Execute: 

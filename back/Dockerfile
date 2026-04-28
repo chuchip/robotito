@@ -28,7 +28,7 @@ COPY ./.cache/huggingface/ /root/.cache/huggingface/
 COPY robotito/back/environment.yml .
 
 # Create and update the Conda environment
-RUN mamba create -n robotito python=3.9 -y && \
+RUN mamba create -n robotito python=3.12 -y && \
     mamba env update --name robotito --file environment.yml && \
     conda clean -tipy
 

@@ -135,11 +135,13 @@
       [(playbackSpeed)]="playbackSpeed"
       [(selectLanguage)]="selectLanguage"
       [(selectVoice)]="selectVoice"
+      [(selectEngine)]="selectEngine"
       [(contextUrl)]="contextUrl"
       [context]="context"
       [contexts]="contexts"
       [languageOptions]="languageOptions"
       [voiceOptions]="voiceOptions"
+      [engineOptions]="engineOptions"
       (close)="showLanguageOptions=false"
       (message)="showSystemMessage($event)">
     </app-settings>

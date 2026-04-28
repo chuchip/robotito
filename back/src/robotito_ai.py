@@ -98,15 +98,33 @@ speechToText = None
 textToSpeech = None
 local_whisper = None
 
+# `TTS` selects the default engine. `TTS_ENGINES` (optional, comma-separated)
+# enables additional engines that the user can pick from the front. The
+# default engine is always implicitly enabled. Valid values: kokoro, vibevoice,
+# gemini, openai. Cloud engines (gemini/openai) require their client to be
+# initialized below; local engines (kokoro/vibevoice) load on first use.
 tts = (os.getenv("TTS") or "gemini").lower()
-if tts == "kokoro":
-    tts = "kokoro"
-elif tts == "gemini":
-    tts = "gemini"
-    textToSpeech = texttospeech.TextToSpeechClient()
+_engines_env = os.getenv("TTS_ENGINES")
+if _engines_env:
+    tts_engines = [e.strip().lower() for e in _engines_env.split(",") if e.strip()]
 else:
-    tts = "openai"
+    tts_engines = [tts]
+if tts not in tts_engines:
+    tts_engines.insert(0, tts)
+
+# Initialize the cloud TTS clients only for engines that need them.
+if "gemini" in tts_engines:
+    textToSpeech = texttospeech.TextToSpeechClient()
+if "openai" in tts_engines and textToSpeech is None:
     textToSpeech = OpenAI()
+elif "openai" in tts_engines:
+    # Both gemini and openai requested: keep the gemini client as the
+    # `textToSpeech` re-export and lazily create the OpenAI client where used.
+    pass
+
+# Normalize the default to a known value if the user typo'd something.
+if tts not in {"kokoro", "vibevoice", "gemini", "openai"}:
+    tts = "gemini"
 
 stt = (os.getenv("STT") or "gemini").lower()
 if stt == "openai":
@@ -125,7 +143,7 @@ else:
 # ---------------------------------------------------------------------------
 chains = ai_chains.build_chains(llm_text)
 ai_service.init(client_text, llm_text, model_api, chains, max_history, logger_)
-audio_service.init(stt, tts, local_whisper, logger_)
+audio_service.init(stt, tts, local_whisper, logger_, enabled_tts=tts_engines)
 
 # Re-export for backward compatibility with ``import robotito_ai as ai``.
 call_llm = ai_service.call_llm
@@ -140,12 +158,14 @@ call_llm_review = ai_service.call_llm_review
 getTextFromAudio = audio_service.getTextFromAudio
 getAudioFromText = audio_service.getAudioFromText
 set_language = audio_service.set_language
+set_engine = audio_service.set_engine
 
 
 logger_.info("--------------------------------")
 logger_.info("Initializing Robotito ...")
 logger_.info(
-    f"Model API: {model_api}  STT: {stt} TTS: {tts} . "
+    f"Model API: {model_api}  STT: {stt} TTS default: {tts} "
+    f"TTS engines: {tts_engines} . "
     f"Max Lenght Answers: {max_length_answers} Max History: {max_history}"
 )
 logger_.info("--------------------------------")

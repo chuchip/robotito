@@ -39,6 +39,9 @@ class AudioData:
         self.kpipeline = None
         self.voice_name="af_heart"
         self.configGoogle=None
+        # Per-session TTS engine override. None = use the server-wide default
+        # configured via the TTS env var.
+        self.tts_engine=None
 def get_max_length_answer():
   max_length_answers = os.getenv("MAX_LENGHT_ANSWERS")
   if max_length_answers is None:

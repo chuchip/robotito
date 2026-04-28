@@ -5,9 +5,10 @@ import { provideHttpClient,withInterceptors } from '@angular/common/http';
 import { routes } from './app.routes';
 import { PersistenceService } from './services/persistence.service';
 import { SoundService } from './services/sound.service';
+import { StreamingTtsService } from './services/streaming-tts.service';
 import { authInterceptor } from './interceptors/auth-interceptor.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [provideZoneChangeDetection({ eventCoalescing: true }), provideRouter(routes), provideHttpClient(withInterceptors([authInterceptor])), 
-    ApiBackService,PersistenceService,SoundService ]
+    ApiBackService,PersistenceService,SoundService,StreamingTtsService ]
 };

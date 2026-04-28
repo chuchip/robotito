@@ -26,6 +26,32 @@ export class ApiBackService {
       this.http.post(`${this.backendUrl}/audio/tts`, body, { responseType: 'blob' })
     );
   }
+
+  /**
+   * Open a chunked PCM16 audio stream from the backend (vibevoice only).
+   *
+   * The backend response body is raw little-endian int16 PCM at 24 kHz mono.
+   * Returns the response so callers can read its body via `getReader()` and
+   * push samples into a Web Audio scheduler as soon as they arrive.
+   */
+  async text_to_sound_streaming(
+    inputText: string,
+    voice: string = '',
+    engine: string = 'vibevoice',
+    signal?: AbortSignal,
+  ): Promise<Response> {
+    const body = JSON.stringify({
+      text: inputText,
+      voice_name: voice,
+      tts_engine: engine,
+    });
+    return await fetch(`${this.backendUrl}/audio/tts/stream`, {
+      method: 'POST',
+      body,
+      headers: this.getAuthHeaders(),
+      signal,
+    });
+  }
   async sendQuestion(text:string):  Promise<Response>
   {
     // Still uses fetch() because HttpClient buffers the full response body;
@@ -69,9 +95,14 @@ async getVoicesLanguage(language:string): Promise<any> {
   const url = `${this.backendUrl}/audio/voices/${language}`;  
   return  await firstValueFrom(this.http.get(url));
 }
-async changeLanguage(language: string, voice: string): Promise<any> {
+async getEngines(): Promise<{default: string, engines: {value: string, label: string}[]}> {
+  const url = `${this.backendUrl}/audio/engines`;
+  return await firstValueFrom(this.http.get<any>(url));
+}
+async changeLanguage(language: string, voice: string, engine?: string): Promise<any> {
     const url = `${this.backendUrl}/audio/language`;
-    const body = { language, voice };
+    const body: any = { language, voice };
+    if (engine !== undefined) body.tts_engine = engine;
     return  await firstValueFrom(this.http.post(url, body));
 }
 

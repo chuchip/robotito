@@ -7,6 +7,7 @@ import { SummaryComponent } from '../summary/summary.component';
 import { AvatarComponent } from '../avatar/avatar.component';
 import { ApiBackService } from '../services/api-back.service';
 import { SoundService } from '../services/sound.service';
+import { StreamingTtsService } from '../services/streaming-tts.service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -54,7 +55,7 @@ export class ConversationComponent {
   semaphoreStopAudio:number=0
   avatarTalking$: Observable<boolean> = new Observable();
   private readonly backendUrl = 'http://localhost:5000';
-  ttsArray:Promise<Blob>[]=[]
+  ttsArray:Promise<Blob | null>[]=[]
   ttsStart=false
   // ----- TTS dispatch throttling / cancellation -----
   // Keep at most TTS_MAX_CONCURRENT requests in flight against the backend
@@ -100,14 +101,16 @@ export class ConversationComponent {
   audio: HTMLAudioElement | null = null;
   selectLanguage: string = 'a';
   selectVoice: string = 'af_heart';
+  selectEngine: string = '';
   contextUrl: string = '';
-  languageOptions:{label:string, value:string}[] = []
-  voiceOptions:{language:string, label:string,gender:string}[] = []
+  languageOptions:{label:string, value:string, engine?:string}[] = []
+  voiceOptions:{language:string, label:string, gender:string, engine?:string}[] = []
+  engineOptions:{value:string, label:string}[] = []
   notesWindow: Window | null = null;
   dictionaryWindow: Window | null = null;
   reviewWindow: Window | null = null;
    
-  constructor(private router: Router,public sound: SoundService,public back: ApiBackService,public persistence: PersistenceService,private avatarService: AvatarService, private dialog: MatDialog) {
+  constructor(private router: Router,public sound: SoundService,public back: ApiBackService,public persistence: PersistenceService,private avatarService: AvatarService, private dialog: MatDialog, private streamingTts: StreamingTtsService) {
     this.isLoading=true
     this.avatarTalking$ = this.avatarService.talking$;
     if (persistence.getAuthorization()=='')
@@ -118,12 +121,15 @@ export class ConversationComponent {
 
     this.back.getLastUser()
       .then(async (data:any) => {   
+        const enginesInfo = await this.back.getEngines()
+        this.engineOptions = enginesInfo.engines
+        this.selectEngine = enginesInfo.default
         this.languageOptions=await this.back.getLanguages()
         this.voiceOptions=await this.back.getVoices()
         this.selectVoice=data.voice
         this.selectLanguage=data.language
 
-        await this.back.changeLanguage(this.selectLanguage,this.selectVoice);
+        await this.back.changeLanguage(this.selectLanguage,this.selectVoice,this.selectEngine);
         this.clearConversation()
         await this.list_context()
         await this.getConversationsHistory()        
@@ -381,13 +387,17 @@ export class ConversationComponent {
   /**
    * Dispatch a single TTS request, respecting the concurrency cap and the
    * abort flag. Returned Promise:
-   *   - resolves with the synthesised Blob, or
+   *   - resolves with a synthesised Blob (non-streaming engines),
+   *   - resolves with `null` once the streaming player has accepted the chunk
+   *     (vibevoice — audio is already playing by then), or
    *   - rejects if ESC was pressed before the request actually fired.
    *
-   * The Promise is the value pushed into ttsArray, so ttsWait() awaits it
-   * in the playback loop. Rejected Promises are caught there and skipped.
+   * The Promise is the value pushed into ttsArray, so ttsWait() awaits it in
+   * the playback loop. A `null` resolution tells ttsWait that no further
+   * playback action is required for this chunk because the StreamingTtsService
+   * is handling it. Rejected Promises are caught there and skipped.
    */
-  private async ttsRequest(text: string, voice: string = ''): Promise<Blob> {
+  private async ttsRequest(text: string, voice: string = ''): Promise<Blob | null> {
     // Wait for an open slot, but bail early if the user already pressed ESC.
     while (this.ttsActiveCount >= this.TTS_MAX_CONCURRENT) {
       if (this.ttsAbort) {
@@ -400,6 +410,20 @@ export class ConversationComponent {
     }
     this.ttsActiveCount++
     try {
+      if (this.selectEngine === 'vibevoice') {
+        // Streaming path: open the chunked PCM stream and hand it to the
+        // gapless scheduler. enqueueStream() guarantees the audio for this
+        // request only starts after the previously enqueued request finishes,
+        // so concurrent dispatches still play in order.
+        const response = await this.back.text_to_sound_streaming(
+          text, voice, this.selectEngine,
+        )
+        // Drive the avatar mouth from streaming activity.
+        this.avatarService.setTalking(true)
+        this.isPlayingSound = true
+        await this.streamingTts.enqueueStream(response)
+        return null
+      }
       return await this.back.text_to_sound(text, voice)
     } finally {
       this.ttsActiveCount--
@@ -431,7 +455,7 @@ export class ConversationComponent {
         console.log("Stopped Audio")    
         break;
       }
-      let response: Blob
+      let response: Blob | null
       try {
         response = await responsePromise
       } catch (err) {
@@ -439,8 +463,23 @@ export class ConversationComponent {
         i++
         continue
       }
-      await this.prepareAudio(response)
-      i++     
+      if (response === null) {
+        // Streaming path: audio for this chunk has already been queued (and
+        // is likely already playing) by StreamingTtsService. We just need to
+        // wait for it to drain before moving on so the next iteration's
+        // pacing logic sees the right state.
+        await this.streamingTts.whenDrained()
+        // Stop the avatar mouth animation when this chunk's audio finishes,
+        // unless another streaming chunk is still queued behind it.
+        if (!this.streamingTts.isPlaying) {
+          this.avatarService.setTalking(false)
+          this.isPlayingSound = false
+        }
+        i++
+      } else {
+        await this.prepareAudio(response)
+        i++
+      }
       while (this.ttsStart && this.ttsArray.length<=i && this.semaphoreStopAudio==1)
       {
         await this.sleep(200)
@@ -486,6 +525,24 @@ export class ConversationComponent {
       voice=this.selectVoice
     }
     if (inputText.trim()!='') {      
+      // Vibevoice path: stream PCM straight into the gapless player. We don't
+      // cache here because the streaming player owns playback; if the user
+      // clicks the same word twice we just stream it again (still fast).
+      if (this.selectEngine === 'vibevoice') {
+        try {
+          const response = await this.back.text_to_sound_streaming(
+            this.back.cleanText(inputText), voice, this.selectEngine,
+          )
+          this.avatarService.setTalking(true)
+          this.isPlayingSound = true
+          await this.streamingTts.enqueueStream(response)
+          await this.streamingTts.whenDrained()
+        } finally {
+          this.avatarService.setTalking(false)
+          this.isPlayingSound = false
+        }
+        return
+      }
       if (this.textSpeakAloud!=inputText ) {
         this.textSpeakAloud=inputText
         this.responseTextToSound= await this.back.text_to_sound(this.back.cleanText(inputText),voice);
@@ -559,6 +616,8 @@ export class ConversationComponent {
       // stop (semaphoreStopAudio = -1) and ttsArray is reset on the next
       // sendData() / speak_aloud_response() turn.
       this.ttsAbort = true
+      // Vibevoice streaming path: cut all queued/playing PCM immediately.
+      this.streamingTts.stop()
       if (this.semaphoreStopAudio>0)
         this.semaphoreStopAudio=-1
       if (this.audio  ) {
