@@ -320,8 +320,12 @@ export class ConversationComponent {
       }
       if (this.swSaveConversation) 
       {
-        this.back.saveConversation(this.conversationId, "H",this.inputText);      
-        this.back.saveConversation(this.conversationId, "R",this.responseMessage);
+        // Save sequentially (await each call) so the human line is committed
+        // strictly before the robot line. Firing them in parallel was racing
+        // them on time_msg, which together with the backend's ORDER BY
+        // time_msg made loaded conversations appear in the wrong order.
+        await this.back.saveConversation(this.conversationId, "H",this.inputText);
+        await this.back.saveConversation(this.conversationId, "R",this.responseMessage);
       }  
       this.chatHistory.push({line:this.numberLine,type: "R",msg: msg,msgClean:this.responseMessage})
       this.responseMessage="";

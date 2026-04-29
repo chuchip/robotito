@@ -408,9 +408,13 @@ async def update_word_review_status(user_id: str, word_id: str, is_correct: bool
     })
 
 async def conversation_get_by_id(id):
+    # Order by time_msg with the row's physical insertion identifier (ctid)
+    # as a tiebreaker. Without ctid, two lines saved within the same
+    # CURRENT_TIMESTAMP tick (e.g. an "H" / "R" pair from the same turn)
+    # came back in arbitrary order.
     sql = """
         select c.user_id,c.context_id,c.name,c.initial_time,c.final_date,c.url_source, l.type,l.msg
-         from conversation as c, conversation_lines as l where c.id = :id and c.id=l.conversation_id order by l.time_msg
+         from conversation as c, conversation_lines as l where c.id = :id and c.id=l.conversation_id order by l.time_msg, l.ctid
     """
 
     data=await g.connection.fetch_all(sql,{"id":id})
