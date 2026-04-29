@@ -818,7 +818,11 @@ export class ConversationComponent {
       event.preventDefault(); 
       // this.textSpeakAloud=""
       if (this.selectedText.trim()!='')
-        this.speakAloud(this.selectedText);
+        if (event.shiftKey) {
+          this.speakAloud(this.selectedText,this.human_voice); 
+        } else {
+          this.speakAloud(this.selectedText);
+        }
     }    
     if (event.key === 'Escape') {
       this.pressEsc()
