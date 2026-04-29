@@ -52,5 +52,8 @@ CREATE TABLE IF NOT EXISTS conversation_notes (
 ALTER TABLE dictionary_words ADD COLUMN IF NOT EXISTS last_reviewed_at TIMESTAMP NULL;
 ALTER TABLE dictionary_words ADD COLUMN IF NOT EXISTS last_review_correct BOOLEAN NULL;
 
-INSERT INTO users ( user_id,name,password,language,voice,role,max_length_answer) VALUES ('default','Guest','secret','b','bm_fable','admin',150);
+-- Secondary voice used for "alternative voice" playback (Shift+F4 / human lines).
+ALTER TABLE users ADD COLUMN IF NOT EXISTS human_voice text NULL;
+
+INSERT INTO users ( user_id,name,password,language,voice,role,max_length_answer,human_voice) VALUES ('default','Guest','secret','b','bm_fable','admin',150,'af_heart');
 INSERT INTO context ( user_id,label,context, remember)  VALUES ('default','default','You are my friend Robotito','')

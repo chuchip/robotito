@@ -10,6 +10,32 @@
   [style.zIndex]="999" [style.opacity]="50"
  [style.position]="'absolute'" [style.left.px]="xPos" [style.top.px]="yPos" >
 </app-sound-recording>
+
+<!-- Floating contextual menu shown when the user selects text in the
+     conversation. preventDefault on mousedown keeps the browser selection
+     alive so speakSelected() always has a value to speak. -->
+<div *ngIf="showSelectionMenu" #selection_menu class="selection-menu"
+  [style.left.px]="selectionMenuX" [style.top.px]="selectionMenuY"
+  (mousedown)="$event.preventDefault()"
+  role="menu" aria-label="Selection actions">
+  <button type="button" class="selection-menu-btn" role="menuitem"
+    (click)="speakSelected(false)"
+    matTooltip="Speak aloud (F4)"
+    aria-label="Speak aloud">
+    <span class="material-icons" aria-hidden="true">volume_up</span>
+    <span>Speak aloud</span>
+    <span class="shortcut">F4</span>
+  </button>
+  <button type="button" class="selection-menu-btn" role="menuitem"
+    (click)="speakSelected(true)"
+    matTooltip="Speak aloud with alternative voice (Shift+F4)"
+    aria-label="Speak aloud with alternative voice">
+    <span class="material-icons" aria-hidden="true">record_voice_over</span>
+    <span>Alternative voice</span>
+    <span class="shortcut">Shift+F4</span>
+  </button>
+</div>
+
 <div class="system" *ngIf="responseBack!=''" role="status" aria-live="polite">{{responseBack}}</div>
 <div class="page">
 
@@ -135,6 +161,7 @@
       [(playbackSpeed)]="playbackSpeed"
       [(selectLanguage)]="selectLanguage"
       [(selectVoice)]="selectVoice"
+      [(selectHumanVoice)]="human_voice"
       [(contextUrl)]="contextUrl"
       [context]="context"
       [contexts]="contexts"

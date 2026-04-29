@@ -75,6 +75,12 @@ async changeLanguage(language: string, voice: string): Promise<any> {
     return  await firstValueFrom(this.http.post(url, body));
 }
 
+async changeHumanVoice(voice: string): Promise<any> {
+    const url = `${this.backendUrl}/audio/human_voice`;
+    const body = { voice };
+    return await firstValueFrom(this.http.post(url, body));
+}
+
 async clearConversation(): Promise<any> {
   try {
     return await firstValueFrom(this.http.get(`${this.backendUrl}/clear`));

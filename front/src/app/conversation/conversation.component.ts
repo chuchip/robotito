@@ -41,7 +41,7 @@ import { SettingsComponent } from '../settings/settings.component';
  */
 export class ConversationComponent {
   selectedText: string = '';
-  human_voice='af_heart'
+  human_voice='af_heart'  // default secondary voice; overwritten by getLastUser()
   isLoading=false;
   pressEscape=false
   xPos = 0
@@ -80,6 +80,14 @@ export class ConversationComponent {
   @ViewChild('configuration_window', { read: ElementRef }) configurationWinElement!: ElementRef;
   @ViewChild('summary_window') summaryWinElement!: ElementRef;
   @ViewChild('rating_window') ratingWinElement!: ElementRef;
+  @ViewChild('selection_menu', { read: ElementRef }) selectionMenuElement!: ElementRef;
+
+  // Floating contextual menu that appears next to a text selection in the
+  // conversation. Offers "speak aloud" (F4) and "speak aloud with alternative
+  // voice" (Shift+F4) without forcing the user to remember the shortcut.
+  showSelectionMenu: boolean = false;
+  selectionMenuX: number = 0;
+  selectionMenuY: number = 0;
 
   
   responseBack: string=""
@@ -122,6 +130,9 @@ export class ConversationComponent {
         this.voiceOptions=await this.back.getVoices()
         this.selectVoice=data.voice
         this.selectLanguage=data.language
+        if (data.human_voice) {
+          this.human_voice = data.human_voice
+        }
 
         await this.back.changeLanguage(this.selectLanguage,this.selectVoice);
         this.clearConversation()
@@ -785,6 +796,18 @@ export class ConversationComponent {
         this.swRating=false
         this.clicksWindow=0
     }
+    // Hide the floating selection menu if the user clicked away from it and
+    // the browser selection is no longer present (clicking inside the menu
+    // is preserved because the buttons use mousedown.preventDefault()).
+    if (this.showSelectionMenu && this.selectionMenuElement &&
+        !this.selectionMenuElement.nativeElement.contains(event.target)) {
+      const sel = window.getSelection();
+      const stillSelected = sel ? sel.toString().trim() : '';
+      if (stillSelected === '') {
+        this.showSelectionMenu = false;
+        this.selectedText = '';
+      }
+    }
     
   }
   async pressEnter(swSendData:boolean) {
@@ -829,6 +852,7 @@ export class ConversationComponent {
     }
   }
   pressEsc() {
+    this.showSelectionMenu = false
     this.stopRecordingEsc()
     this.stopAudio()
   }
@@ -840,7 +864,50 @@ export class ConversationComponent {
   
   getSelectedText() {
     const selection = window.getSelection();
-    this.selectedText = selection ? selection.toString().trim() : '';
+    const text = selection ? selection.toString().trim() : '';
+    this.selectedText = text;
+    if (text !== '' && selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      if (rect.width > 0 || rect.height > 0) {
+        // Approximate menu height; flip above the selection if it would
+        // overflow the viewport bottom.
+        const menuHeight = 40;
+        const margin = 6;
+        if (rect.bottom + menuHeight + margin > window.innerHeight) {
+          this.selectionMenuY = Math.max(margin, rect.top - menuHeight - margin);
+        } else {
+          this.selectionMenuY = rect.bottom + margin;
+        }
+        // Clamp horizontally so the menu stays inside the viewport.
+        const approxMenuWidth = 320;
+        this.selectionMenuX = Math.min(
+          Math.max(margin, rect.left),
+          Math.max(margin, window.innerWidth - approxMenuWidth - margin)
+        );
+        this.showSelectionMenu = true;
+        return;
+      }
+    }
+    this.showSelectionMenu = false;
+  }
+
+  /**
+   * Triggered from the floating selection menu. `alt` chooses the alternative
+   * (human) voice — the same effect as Shift+F4.
+   */
+  speakSelected(alt: boolean) {
+    const text = this.selectedText.trim();
+    if (text === '') {
+      this.showSelectionMenu = false;
+      return;
+    }
+    if (alt) {
+      this.speakAloud(text, this.human_voice);
+    } else {
+      this.speakAloud(text);
+    }
+    this.showSelectionMenu = false;
   }
   async sumary_conversation()
   {

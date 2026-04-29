@@ -35,12 +35,14 @@ def get_DTO_context(row):
 
 async def get_user_data(user:str):
     row = await g.connection.fetch_sole(
-        "SELECT user,language,voice,role, max_length_answer FROM users  where user_id = :user",
+        "SELECT user,language,voice,human_voice,role, max_length_answer FROM users  where user_id = :user",
         {"user": user},
     )
     if row is None:
         return None
-    result = {"user": row["user"], "language": row['language'], "voice": row['voice'],"role":row['role'],"max_length_answer":row['max_length_answer']}
+    result = {"user": row["user"], "language": row['language'], "voice": row['voice'],
+              "human_voice": row['human_voice'],
+              "role":row['role'],"max_length_answer":row['max_length_answer']}
     return result
 
 async def get_all_context(user):
@@ -437,6 +439,13 @@ async def update_language(user,language,voice):
     sql="update users set language = :language, voice=:voice where user_id = :user "
     await g.connection.execute(sql,{"language":language,"voice": voice,"user":user})    
     logging.info("Save language preferences")    
+
+async def update_human_voice(user, voice):
+    """Persist the secondary ("alternative") voice used for Shift+F4 playback
+    and human-line playback. Stored separately from the primary voice."""
+    sql = "update users set human_voice = :voice where user_id = :user"
+    await g.connection.execute(sql, {"voice": voice, "user": user})
+    logging.info(f"Save human voice preference: {voice}")
     
 async def update_max_lenght(user,max_length):
     sql="update users set max_length_answer = :max_length_answer where user_id = :user_id "

@@ -50,6 +50,15 @@ export class SettingsComponent {
   @Input() selectVoice = '';
   @Output() selectVoiceChange = new EventEmitter<string>();
 
+  /**
+   * Secondary ("alternative") voice used for Shift+F4 playback and the
+   * floating selection menu's alternative-voice button. Stored separately
+   * from the primary voice so the user can pair an AI voice with a
+   * different voice for their own lines.
+   */
+  @Input() selectHumanVoice = '';
+  @Output() selectHumanVoiceChange = new EventEmitter<string>();
+
   @Input() contextUrl = '';
   @Output() contextUrlChange = new EventEmitter<string>();
 
@@ -66,6 +75,13 @@ export class SettingsComponent {
   /* ---------- local state ---------- */
   selectContext = '';
 
+  /**
+   * Whether the "Voice & language" subsection is expanded. Collapsed by
+   * default so the settings panel stays compact; the user explicitly opens
+   * it with the toggle button when they want to change voices.
+   */
+  voicesExpanded = false;
+
   constructor(
     private back: ApiBackService,
     private router: Router,
@@ -77,11 +93,37 @@ export class SettingsComponent {
     return this.voiceOptions.filter(v => v.language === this.selectLanguage);
   }
 
+  /**
+   * Voices grouped by language (label) for the secondary-voice dropdown.
+   * The user typically wants the alternative voice to be in a *different*
+   * language/character than the primary, so this list is NOT filtered by
+   * `selectLanguage` — it shows all voices, organised by language.
+   */
+  get voiceOptionsByLanguage(): { language: string; languageLabel: string; voices: VoiceOption[] }[] {
+    const groups = new Map<string, { languageLabel: string; voices: VoiceOption[] }>();
+    for (const v of this.voiceOptions) {
+      const langLabel = this.languageOptions.find(l => l.value === v.language)?.label ?? v.language;
+      if (!groups.has(v.language)) {
+        groups.set(v.language, { languageLabel: langLabel, voices: [] });
+      }
+      groups.get(v.language)!.voices.push(v);
+    }
+    return Array.from(groups.entries()).map(([language, g]) => ({
+      language,
+      languageLabel: g.languageLabel,
+      voices: g.voices,
+    }));
+  }
+
   get selectLanguageDesc(): string {
     return this.languageOptions.find(l => l.value === this.selectLanguage)?.label ?? '';
   }
 
   /* ---------- UI handlers ---------- */
+  toggleVoices() {
+    this.voicesExpanded = !this.voicesExpanded;
+  }
+
   onSpeedInput(event: Event) {
     const value = +(event.target as HTMLInputElement).value;
     this.playbackSpeed = value;
@@ -91,6 +133,12 @@ export class SettingsComponent {
   async onLanguageChange() {
     if (!this.selectVoice) return;
     const response = await this.back.changeLanguage(this.selectLanguage, this.selectVoice);
+    this.putMessage(response);
+  }
+
+  async onHumanVoiceChange() {
+    if (!this.selectHumanVoice) return;
+    const response = await this.back.changeHumanVoice(this.selectHumanVoice);
     this.putMessage(response);
   }
 

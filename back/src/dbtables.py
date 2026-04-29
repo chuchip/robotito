@@ -13,6 +13,7 @@ class User(Base):
     password = Column(Text)
     language = Column(Text)
     voice = Column(Text)
+    human_voice = Column(Text)
     role = Column(Text)
     max_length_answer = Column(Integer)
     last_date = Column(DateTime, default=func.now())

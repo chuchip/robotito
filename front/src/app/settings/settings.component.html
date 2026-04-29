@@ -42,6 +42,21 @@
     </div>
 
     <div class="settings__row settings__row--wrap">
+      <button type="button" class="settings__section-toggle"
+        [class.is-open]="voicesExpanded"
+        (click)="toggleVoices()"
+        [attr.aria-expanded]="voicesExpanded"
+        aria-controls="voices-section"
+        matTooltip="Show/hide voice and language settings">
+        <span class="material-icons" aria-hidden="true">
+          {{ voicesExpanded ? 'expand_more' : 'chevron_right' }}
+        </span>
+        <span>Voice &amp; language</span>
+        <span class="settings__section-toggle__hint">{{ selectLanguageDesc }} · {{ selectVoice }}</span>
+      </button>
+    </div>
+
+    <div *ngIf="voicesExpanded" id="voices-section" class="settings__row settings__row--wrap">
       <label class="field">
         <span class="field__label">Language</span>
         <select class="field__input"
@@ -64,6 +79,21 @@
           <option *ngFor="let option of filteredVoiceOptions" [value]="option.label">
             {{ option.label }} - {{ option.gender }}
           </option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span class="field__label">Alternative voice (Shift+F4)</span>
+        <select class="field__input"
+          [ngModel]="selectHumanVoice"
+          (ngModelChange)="selectHumanVoice = $event; selectHumanVoiceChange.emit($event)"
+          (change)="onHumanVoiceChange()"
+          aria-label="Alternative voice">
+          <optgroup *ngFor="let group of voiceOptionsByLanguage" [label]="group.languageLabel">
+            <option *ngFor="let option of group.voices" [value]="option.label">
+              {{ option.label }} - {{ option.gender }}
+            </option>
+          </optgroup>
         </select>
       </label>
 
@@ -153,6 +183,7 @@
     <div class="settings__info">
       <span><strong>Language:</strong> {{ selectLanguageDesc }}</span>
       <span><strong>Voice:</strong> {{ selectVoice }}</span>
+      <span *ngIf="selectHumanVoice"><strong>Alt:</strong> {{ selectHumanVoice }}</span>
     </div>
     <div class="settings__user">
       <span>User: <strong>{{ persistence.getUser() }}</strong></span>

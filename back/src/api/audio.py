@@ -154,3 +154,18 @@ async def set_language():
  
   await persistence.update_language(user,languageInput,audioData.voice_name)
   return jsonify({'message': f'Voice changed to {audioData.voice_name} and language to {audioData.language}!'})
+
+@audio_bp.route('/human_voice', methods=['POST'])
+async def set_human_voice():
+  """Persist the user's secondary / "alternative" voice. Used for Shift+F4
+  playback and the floating "alternative voice" button. Stored separately
+  from the primary voice so the user can mix two different voices/languages
+  for AI vs. their own lines."""
+  data = await request.get_json()
+  uuid = request.headers.get("uuid")
+  user = memory.getMemory(uuid).getUser()
+  voice = data.get('voice')
+  if not voice:
+    return jsonify({'message': 'Missing voice'}), 400
+  await persistence.update_human_voice(user, voice)
+  return jsonify({'message': f'Alternative voice changed to {voice}!'})

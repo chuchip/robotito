@@ -86,6 +86,47 @@
   letter-spacing: 0.04em;
 }
 
+/* Collapsible subsection toggle (e.g. "Voice & language") */
+.settings__section-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 6px;
+  background: var(--color-surface-alt, #f1f5f9);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 999px;
+  color: var(--color-text, #0f172a);
+  font-family: var(--font-family);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.settings__section-toggle:hover {
+  background: color-mix(in srgb, var(--color-primary, #6366f1) 8%, var(--color-surface-alt, #f1f5f9));
+  border-color: color-mix(in srgb, var(--color-primary, #6366f1) 30%, var(--color-border, #e2e8f0));
+}
+
+.settings__section-toggle .material-icons {
+  font-size: 18px;
+  color: var(--color-primary, #6366f1);
+}
+
+.settings__section-toggle__hint {
+  margin-left: 4px;
+  padding-left: 8px;
+  border-left: 1px solid var(--color-border, #e2e8f0);
+  color: var(--color-text-muted, #64748b);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.78rem;
+}
+
 /* Rows */
 .settings__row {
   display: flex;
