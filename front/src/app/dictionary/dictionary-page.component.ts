@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { ApiBackService } from '../services/api-back.service';
 import { PersistenceService } from '../services/persistence.service';
+import { SelectionMenuComponent } from '../selection-menu/selection-menu.component';
 
 interface Word {
   id?: string;
@@ -16,7 +17,7 @@ interface Word {
 
 @Component({
   selector: 'app-dictionary-page',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SelectionMenuComponent],
   templateUrl: './dictionary-page.components.html',
   styleUrls: [ './dictionary-page.components.scss' ]
 })
@@ -35,6 +36,11 @@ export class DictionaryPageComponent implements OnInit {
   readingAloudWordId: string | null = null;
   expandedWordIds: Set<string> = new Set<string>();
 
+  /** Voice used for the alternative-voice action (Shift+F4 / menu button).
+   *  Loaded from the user's persisted preferences; falls back to 'af_heart'
+   *  when the user has not set one yet. */
+  humanVoice: string = 'af_heart';
+
   constructor(
     private route: ActivatedRoute,
     private back: ApiBackService,
@@ -46,6 +52,16 @@ export class DictionaryPageComponent implements OnInit {
     this.conversationId = this.route.snapshot.paramMap.get('id') || '';
     if (this.conversationId) {
       await this.loadWords();
+    }
+    // Pull the user's stored alternative voice so Shift+F4 / the menu's
+    // "Alternative voice" button uses the same voice as the main app.
+    try {
+      const data = await this.back.getLastUser();
+      if (data && data.human_voice) {
+        this.humanVoice = data.human_voice;
+      }
+    } catch {
+      // Ignore — stay with the default.
     }
   }
 
@@ -199,7 +215,11 @@ export class DictionaryPageComponent implements OnInit {
       event.preventDefault();
       this.getSelectedText();
       if (this.selectedText.trim() !== '') {
-        this.speakSelectedText(this.selectedText);
+        // Consistent convention with the rest of the app: F4 = primary
+        // voice (let the backend pick the user's selectVoice), Shift+F4 =
+        // alternative (human) voice.
+        const voice = event.shiftKey ? this.humanVoice : '';
+        this.speakSelectedText(this.selectedText, voice);
       }
     }
   }
@@ -218,9 +238,15 @@ export class DictionaryPageComponent implements OnInit {
     this.selectedText = selection ? selection.toString().trim() : '';
   }
 
-  async speakSelectedText(text: string) {
+  /** Called by the floating <app-selection-menu>. */
+  onSelectionMenuSpeak(payload: { text: string; alt: boolean }) {
+    const voice = payload.alt ? this.humanVoice : '';
+    this.speakSelectedText(payload.text, voice);
+  }
+
+  async speakSelectedText(text: string, voice: string = '') {
     try {
-      const response = await this.back.text_to_sound(text, '');
+      const response = await this.back.text_to_sound(text, voice);
       this.statusMessage = 'Playing...';
 
       // Stop previous audio if playing

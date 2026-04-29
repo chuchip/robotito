@@ -26,12 +26,13 @@ import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { ConversationHistoryComponent } from '../conversation-history/conversation-history.component';
 import { SettingsComponent } from '../settings/settings.component';
+import { SelectionMenuComponent } from '../selection-menu/selection-menu.component';
 @Component({
   selector: 'app-conversation',
   imports: [CommonModule, MatTooltipModule, MatCheckboxModule, FormsModule,
     MatButtonModule, MatIconModule, SoundPlayingComponent, SoundRecordingComponent,
     MatSliderModule, LoadingComponent, SummaryComponent, RatingPhraseComponent, AvatarComponent, MatDialogModule,
-    ConversationHistoryComponent, SettingsComponent],
+    ConversationHistoryComponent, SettingsComponent, SelectionMenuComponent],
   templateUrl: './conversation.component.html',
   styleUrls: ['./conversation.component.scss']
 })
@@ -81,14 +82,6 @@ export class ConversationComponent {
   @ViewChild('configuration_window', { read: ElementRef }) configurationWinElement!: ElementRef;
   @ViewChild('summary_window') summaryWinElement!: ElementRef;
   @ViewChild('rating_window') ratingWinElement!: ElementRef;
-  @ViewChild('selection_menu', { read: ElementRef }) selectionMenuElement!: ElementRef;
-
-  // Floating contextual menu that appears next to a text selection in the
-  // conversation. Offers "speak aloud" (F4) and "speak aloud with alternative
-  // voice" (Shift+F4) without forcing the user to remember the shortcut.
-  showSelectionMenu: boolean = false;
-  selectionMenuX: number = 0;
-  selectionMenuY: number = 0;
 
   
   responseBack: string=""
@@ -779,11 +772,20 @@ export class ConversationComponent {
     return new Date(dateString);
   }
 
-  speakOnF4(event: KeyboardEvent, text: string) {      
-      if (event.key === 'F4') {        
+  speakOnF4(event: KeyboardEvent, text: string) {
+      if (event.key === 'F4') {
+        // Reset the text+voice cache so the textarea always re-fetches; the
+        // text changes as the user types, but reusing the cache could
+        // otherwise replay stale audio for the same content.
         this.textSpeakAloud=""
-        event.preventDefault(); // Prevent default behavior if needed        
-        this.speakAloud(text,this.human_voice);
+        event.preventDefault();
+        // Consistent convention across the app: F4 = primary voice,
+        // Shift+F4 = alternative (human) voice.
+        if (event.shiftKey) {
+          this.speakAloud(text, this.human_voice);
+        } else {
+          this.speakAloud(text);
+        }
         this.focusInputElement();
       }
   }
@@ -804,18 +806,6 @@ export class ConversationComponent {
     if (this.swRating  && !this.ratingWinElement.nativeElement.contains(event.target)) {
         this.swRating=false
         this.clicksWindow=0
-    }
-    // Hide the floating selection menu if the user clicked away from it and
-    // the browser selection is no longer present (clicking inside the menu
-    // is preserved because the buttons use mousedown.preventDefault()).
-    if (this.showSelectionMenu && this.selectionMenuElement &&
-        !this.selectionMenuElement.nativeElement.contains(event.target)) {
-      const sel = window.getSelection();
-      const stillSelected = sel ? sel.toString().trim() : '';
-      if (stillSelected === '') {
-        this.showSelectionMenu = false;
-        this.selectedText = '';
-      }
     }
     
   }
@@ -861,7 +851,6 @@ export class ConversationComponent {
     }
   }
   pressEsc() {
-    this.showSelectionMenu = false
     this.stopRecordingEsc()
     this.stopAudio()
   }
@@ -873,50 +862,22 @@ export class ConversationComponent {
   
   getSelectedText() {
     const selection = window.getSelection();
-    const text = selection ? selection.toString().trim() : '';
-    this.selectedText = text;
-    if (text !== '' && selection && selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
-      if (rect.width > 0 || rect.height > 0) {
-        // Approximate menu height; flip above the selection if it would
-        // overflow the viewport bottom.
-        const menuHeight = 40;
-        const margin = 6;
-        if (rect.bottom + menuHeight + margin > window.innerHeight) {
-          this.selectionMenuY = Math.max(margin, rect.top - menuHeight - margin);
-        } else {
-          this.selectionMenuY = rect.bottom + margin;
-        }
-        // Clamp horizontally so the menu stays inside the viewport.
-        const approxMenuWidth = 320;
-        this.selectionMenuX = Math.min(
-          Math.max(margin, rect.left),
-          Math.max(margin, window.innerWidth - approxMenuWidth - margin)
-        );
-        this.showSelectionMenu = true;
-        return;
-      }
-    }
-    this.showSelectionMenu = false;
+    this.selectedText = selection ? selection.toString().trim() : '';
   }
 
   /**
-   * Triggered from the floating selection menu. `alt` chooses the alternative
-   * (human) voice — the same effect as Shift+F4.
+   * Triggered by the floating <app-selection-menu>. `alt` is true when the
+   * user clicked the alternative-voice option (or pressed Shift+F4).
    */
-  speakSelected(alt: boolean) {
-    const text = this.selectedText.trim();
-    if (text === '') {
-      this.showSelectionMenu = false;
-      return;
-    }
-    if (alt) {
+  onSelectionMenuSpeak(payload: { text: string; alt: boolean }) {
+    const text = payload.text.trim();
+    if (text === '') return;
+    this.selectedText = text;
+    if (payload.alt) {
       this.speakAloud(text, this.human_voice);
     } else {
       this.speakAloud(text);
     }
-    this.showSelectionMenu = false;
   }
   async sumary_conversation()
   {

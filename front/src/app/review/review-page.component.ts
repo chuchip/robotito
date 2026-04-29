@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiBackService } from '../services/api-back.service';
 import { PersistenceService } from '../services/persistence.service';
+import { SelectionMenuComponent } from '../selection-menu/selection-menu.component';
 
 interface Word {
   id?: string;
@@ -27,7 +28,7 @@ interface ReviewQuestion {
 
 @Component({
   selector: 'app-review-page',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SelectionMenuComponent],
   templateUrl: './review-page.component.html',
   styleUrls: ['./review-page.component.scss']
 })
@@ -49,6 +50,10 @@ export class ReviewPageComponent implements OnInit {
   expandedExampleIndices: Set<number> = new Set<number>();
   selectedText: string = '';
 
+  /** Voice used for the alternative-voice action (Shift+F4 / menu button).
+   *  Loaded from the user's persisted preferences; falls back to 'af_heart'. */
+  humanVoice: string = 'af_heart';
+
   constructor(
     private back: ApiBackService,
     private persistence: PersistenceService
@@ -63,6 +68,16 @@ export class ReviewPageComponent implements OnInit {
       this.loadError = 'Could not load your words.';
     } finally {
       this.isLoading = false;
+    }
+    // Pull the user's stored alternative voice so Shift+F4 / the menu's
+    // "Alternative voice" button uses the same voice as the main app.
+    try {
+      const data = await this.back.getLastUser();
+      if (data && data.human_voice) {
+        this.humanVoice = data.human_voice;
+      }
+    } catch {
+      // Ignore — stay with the default.
     }
   }
 
@@ -209,9 +224,15 @@ export class ReviewPageComponent implements OnInit {
     this.selectedText = selection ? selection.toString().trim() : '';
   }
 
-  async speakSelectedText(text: string) {
+  /** Called by the floating <app-selection-menu>. */
+  onSelectionMenuSpeak(payload: { text: string; alt: boolean }) {
+    const voice = payload.alt ? this.humanVoice : '';
+    this.speakSelectedText(payload.text, voice);
+  }
+
+  async speakSelectedText(text: string, voice: string = '') {
     try {
-      const response = await this.back.text_to_sound(text, '');
+      const response = await this.back.text_to_sound(text, voice);
       this.statusMessage = 'Playing...';
 
       if (this.audio) {
@@ -241,7 +262,9 @@ export class ReviewPageComponent implements OnInit {
       event.preventDefault();
       this.getSelectedText();
       if (this.selectedText.trim() !== '') {
-        this.speakSelectedText(this.selectedText);
+        // F4 = primary voice (backend default), Shift+F4 = alternative.
+        const voice = event.shiftKey ? this.humanVoice : '';
+        this.speakSelectedText(this.selectedText, voice);
       }
     }
   }

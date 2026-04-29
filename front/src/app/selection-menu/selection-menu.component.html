@@ -1,0 +1,21 @@
+<div *ngIf="showMenu" class="selection-menu"
+  [style.left.px]="menuX" [style.top.px]="menuY"
+  (mousedown)="$event.preventDefault()"
+  role="menu" aria-label="Selection actions">
+  <button type="button" class="selection-menu-btn" role="menuitem"
+    (click)="onSpeak(false)"
+    matTooltip="Speak aloud (F4)"
+    aria-label="Speak aloud">
+    <span class="material-icons" aria-hidden="true">volume_up</span>
+    <span>Speak aloud</span>
+    <span class="shortcut">F4</span>
+  </button>
+  <button type="button" class="selection-menu-btn" role="menuitem"
+    (click)="onSpeak(true)"
+    matTooltip="Speak aloud with alternative voice (Shift+F4)"
+    aria-label="Speak aloud with alternative voice">
+    <span class="material-icons" aria-hidden="true">record_voice_over</span>
+    <span>Alternative voice</span>
+    <span class="shortcut">Shift+F4</span>
+  </button>
+</div>
