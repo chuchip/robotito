@@ -47,6 +47,7 @@ export class ConversationComponent {
   xPos = 0
   yPos =0
   textSpeakAloud=""
+  voiceSpeakAloud=""  // voice used for the cached `responseTextToSound`; part of the cache key
   responseTextToSound: Blob | null = null;
   audioUrl = '';
   playbackSpeed=1
@@ -501,8 +502,12 @@ export class ConversationComponent {
       voice=this.selectVoice
     }
     if (inputText.trim()!='') {      
-      if (this.textSpeakAloud!=inputText ) {
+      // Cache key is (text, voice). Replaying with the same text but a
+      // different voice (e.g. F4 then Shift+F4) was wrongly hitting the
+      // cache and replaying the previous voice's audio.
+      if (this.textSpeakAloud!=inputText || this.voiceSpeakAloud!=voice) {
         this.textSpeakAloud=inputText
+        this.voiceSpeakAloud=voice
         this.responseTextToSound= await this.back.text_to_sound(this.back.cleanText(inputText),voice);
         console.log("1 speakAloud . playing sound false")
         this.isPlayingSound=false
