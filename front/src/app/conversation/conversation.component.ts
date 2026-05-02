@@ -328,12 +328,12 @@ export class ConversationComponent {
       setTimeout(() => this.scrollToBottom(), 0)
     }
   }
-  async speak_aloud_response(event:MouseEvent,i:number,type_line:string){
+  async speak_aloud_response(event:MouseEvent,i:number,type_line:string, all_text:boolean=false){
     var voice=this.selectVoice
     if (type_line =="H") {
       voice=this.human_voice
     } 
-    if (this.selectedText.trim()!='')
+    if (this.selectedText.trim()!='' && !all_text)
     {
       this.speakAloud(this.selectedText,voice);
       return;

@@ -175,8 +175,7 @@ export class DictionaryPageComponent implements OnInit {
       
       // Combine word with all English examples
       const englishExamples = word.examples
-        .map(ex => ex.english_phrase)
-        .filter(ex => ex && ex.trim())
+        .map((ex,i) => `${i+1}: ${ex.english_phrase}  \n `)        
         .join('. ');
       
       const textToSpeak = englishExamples ? `${word.word}. ". Examples: " ${englishExamples}` : word.word;

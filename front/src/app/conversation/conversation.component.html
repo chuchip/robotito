@@ -37,7 +37,7 @@
       <ng-container *ngFor="let line_chat of chatHistory; let i = index">
         <div [ngClass]="line_chat.type=='H'? 'line-human':'line-robot'" class="line" [class.hidden-text]="line_chat.type!='H' && !isRobotVisible">
         <div class="buttons-conversation">
-          <button (click)="speak_aloud_response($event,i,line_chat.type)"
+          <button (click)="speak_aloud_response($event,i,line_chat.type,true)"
             [attr.aria-label]="'Play this message aloud'"
             matTooltip="Play this message aloud">
             <span class="material-icons" aria-hidden="true">volume_up</span>

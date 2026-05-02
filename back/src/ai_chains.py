@@ -45,8 +45,8 @@ Provide the results as a JSON object conforming to the following schema.
 Ensure your entire response is ONLY the JSON object, starting with {{ and ending with }}."""
 
 _prompt_translation_str = """
-Translate the following English word to Spanish. If a word have more than one meaning, return no more than 5 of them them separate by comma. 
-Provide on examples in both English and Spanish for each word meaning.
+Translate the following from English word to Spanish. If a word has more than one meaning, list up to five of them, separated by commas. Indicate in brackets, for each translation, whether it is an adjective, a noun, a verb, etc.
+Provide examples in both English and Spanish for each meaning of the word.
 
 Word: {word_input}
 
