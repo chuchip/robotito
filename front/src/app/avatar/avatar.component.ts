@@ -28,14 +28,16 @@ export class AvatarComponent implements AfterViewInit, OnDestroy {
   private readonly eyeRY = 540;
 
   // Mouth Q-curve control-point Y values: [outerY, innerY]
-  private curOY = 712;
-  private curIY = 708;
+  private curOY = 720;
+  private curIY = 715;
 
-  private readonly mouthRest: [number, number] = [712, 708];
+  private readonly mouthRest: [number, number] = [740, 715];
   private readonly mouthShapes: [number, number][] = [
-    [735, 730],
-    [750, 745],
-    [765, 758],
+    [720, 726],
+    [742, 735],
+    [785, 747],
+    [765, 677],
+    [745, 670],
   ];
 
   ngAfterViewInit(): void {
@@ -59,19 +61,19 @@ export class AvatarComponent implements AfterViewInit, OnDestroy {
       } else {
         tOY = this.mouthRest[0]; tIY = this.mouthRest[1];
       }
-      this.curOY += (tOY - this.curOY) * 0.3;
-      this.curIY += (tIY - this.curIY) * 0.3;
+      this.curOY += (tOY - this.curOY) * 0.25;
+      this.curIY += (tIY - this.curIY) * 0.25;
 
       const outer = this.mouthOuter.nativeElement;
       const inner = this.mouthInner.nativeElement;
 
       // Outer mouth path
       outer.setAttribute('d', `M 340 690 Q 390 ${this.curOY} 440 690`);
-      outer.setAttribute('fill', this.curOY > 725 ? 'rgb(25,47,72)' : 'none');
+      outer.setAttribute('fill', this.curOY > 730 ? 'rgb(25,47,72)' : 'none');
 
       // Inner mouth path
-      inner.setAttribute('d', `M 345 692 Q 390 ${this.curIY} 435 692`);
-      inner.setAttribute('fill', this.curIY > 720 ? '#0086B6' : 'none');
+      inner.setAttribute('d', `M 345 691 Q 390 ${this.curIY} 435 691`);
+      inner.setAttribute('fill', this.curIY > 725 ? 'rgb(139,0,0)' : 'none');
     }, 100);
   }
 
