@@ -15,8 +15,8 @@ export class AvatarComponent implements AfterViewInit, OnDestroy {
   @ViewChild('pupilR') pupilR!: ElementRef<SVGEllipseElement>;
   @ViewChild('lidL') lidL!: ElementRef<SVGEllipseElement>;
   @ViewChild('lidR') lidR!: ElementRef<SVGEllipseElement>;
-  @ViewChild('mouthOuter') mouthOuter!: ElementRef<SVGPathElement>;
-  @ViewChild('mouthInner') mouthInner!: ElementRef<SVGPathElement>;
+  @ViewChild('mouthOuter') mouthOuter!: ElementRef<SVGEllipseElement>;
+  @ViewChild('mouthInner') mouthInner!: ElementRef<SVGEllipseElement>;
 
   private mouthInterval: any;
   private eyeInterval: any;
@@ -27,14 +27,16 @@ export class AvatarComponent implements AfterViewInit, OnDestroy {
   private readonly eyeRX = 525;
   private readonly eyeRY = 540;
 
-  private curOY = 720;
-  private curIY = 715;
+  private curORx = 50;
+  private curORy = 4;
+  private curIRx = 40;
+  private curIRy = 2;
 
-  private readonly mouthRest = [720, 715];
+  private readonly mouthRest = [50, 4, 40, 2];
   private readonly mouthShapes = [
-    [732, 726],
-    [742, 735],
-    [755, 747],
+    [30, 18, 22, 12],
+    [38, 28, 30, 20],
+    [32, 35, 24, 27],
   ];
 
   ngAfterViewInit(): void {
@@ -51,25 +53,25 @@ export class AvatarComponent implements AfterViewInit, OnDestroy {
 
   private startMouthAnimation(): void {
     this.mouthInterval = setInterval(() => {
-      let tOY: number, tIY: number;
+      let tORx: number, tORy: number, tIRx: number, tIRy: number;
       if (this.talking) {
         const m = this.mouthShapes[Math.floor(Math.random() * this.mouthShapes.length)];
-        tOY = m[0]; tIY = m[1];
+        tORx = m[0]; tORy = m[1]; tIRx = m[2]; tIRy = m[3];
       } else {
-        tOY = this.mouthRest[0]; tIY = this.mouthRest[1];
+        tORx = this.mouthRest[0]; tORy = this.mouthRest[1];
+        tIRx = this.mouthRest[2]; tIRy = this.mouthRest[3];
       }
-      this.curOY += (tOY - this.curOY) * 0.25;
-      this.curIY += (tIY - this.curIY) * 0.25;
-
-      const fillOuter = this.curOY > 730 ? 'rgb(25,47,72)' : 'none';
-      const fillInner = this.curIY > 725 ? 'rgb(63,9,144)' : 'none';
+      this.curORx += (tORx - this.curORx) * 0.3;
+      this.curORy += (tORy - this.curORy) * 0.3;
+      this.curIRx += (tIRx - this.curIRx) * 0.3;
+      this.curIRy += (tIRy - this.curIRy) * 0.3;
 
       const outer = this.mouthOuter.nativeElement;
       const inner = this.mouthInner.nativeElement;
-      outer.setAttribute('d', `M 340 690 Q 390 ${this.curOY} 440 690`);
-      outer.setAttribute('fill', fillOuter);
-      inner.setAttribute('d', `M 345 691 Q 390 ${this.curIY} 435 691`);
-      inner.setAttribute('fill', fillInner);
+      outer.setAttribute('rx', String(this.curORx));
+      outer.setAttribute('ry', String(this.curORy));
+      inner.setAttribute('rx', String(this.curIRx));
+      inner.setAttribute('ry', String(this.curIRy));
     }, 100);
   }
 
