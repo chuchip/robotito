@@ -1,3 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body { background: #1a1a2e; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; font-family: sans-serif; color: white; }
+.avatar-container { width: 300px; height: 450px; }
+.avatar-container svg { width: 100%; height: 100%; }
+.controls { margin-top: 20px; display: flex; gap: 10px; }
+button { padding: 12px 24px; font-size: 16px; cursor: pointer; border-radius: 8px; border: none; font-weight: bold; }
+.talk-btn { background: #4CAF50; color: white; }
+.talk-btn:active { background: #388E3C; }
+</style>
+</head>
+<body>
+<h2>Robot Animated Mouth Preview</h2>
 <div class="avatar-container">
 <svg xmlns="http://www.w3.org/2000/svg" width="836" height="1254" viewBox="0 0 836 1254">
 <g>
@@ -17,18 +32,96 @@
 <ellipse cx="282" cy="540" rx="35" ry="38" fill="white"/>
 <ellipse cx="525" cy="540" rx="35" ry="38" fill="white"/>
 <!-- Iris -->
-<ellipse #irisL cx="282" cy="540" rx="26" ry="28" fill="rgb(63,109,144)"/>
-<ellipse #irisR cx="525" cy="540" rx="26" ry="28" fill="rgb(63,109,144)"/>
+<ellipse id="irisL" cx="282" cy="540" rx="26" ry="28" fill="rgb(63,109,144)"/>
+<ellipse id="irisR" cx="525" cy="540" rx="26" ry="28" fill="rgb(63,109,144)"/>
 <!-- Pupils -->
-<ellipse #pupilL cx="282" cy="540" rx="12" ry="13" fill="rgb(25,47,72)"/>
-<ellipse #pupilR cx="525" cy="540" rx="12" ry="13" fill="rgb(25,47,72)"/>
+<ellipse id="pupilL" cx="282" cy="540" rx="12" ry="13" fill="rgb(25,47,72)"/>
+<ellipse id="pupilR" cx="525" cy="540" rx="12" ry="13" fill="rgb(25,47,72)"/>
 <!-- Eyelids for blink -->
-<ellipse #lidL cx="282" cy="540" rx="36" ry="0" fill="rgb(179,187,202)"/>
-<ellipse #lidR cx="525" cy="540" rx="36" ry="0" fill="rgb(179,187,202)"/>
+<ellipse id="lidL" cx="282" cy="540" rx="36" ry="0" fill="rgb(179,187,202)"/>
+<ellipse id="lidR" cx="525" cy="540" rx="36" ry="0" fill="rgb(179,187,202)"/>
 <!-- Cover original mouth -->
 <rect x="300" y="645" width="185" height="90" fill="white"/>
 <!-- Animated mouth - smile/oval path -->
-<path #mouthOuter d="M 340 690 Q 390 720 440 690" stroke="rgb(25,47,72)" stroke-width="5" fill="none" stroke-linecap="round"/>
-<path #mouthInner d="M 345 691 Q 390 715 435 691" stroke="rgb(63,109,144)" stroke-width="3" fill="none" stroke-linecap="round"/>
+<path id="mouthOuter" d="M 340 690 Q 390 720 440 690" stroke="rgb(25,47,72)" stroke-width="5" fill="none" stroke-linecap="round"/>
+<path id="mouthInner" d="M 345 691 Q 390 715 435 691" stroke="rgb(63,109,144)" stroke-width="3" fill="none" stroke-linecap="round"/>
 </svg>
 </div>
+<div class="controls">
+  <button class="talk-btn" onmousedown="startTalk()" onmouseup="stopTalk()">Hold to Talk</button>
+  <button class="talk-btn" onclick="toggleTalk()">Toggle Talk</button>
+</div>
+<p id="status">Status: Silent</p>
+<script>
+var outer = document.getElementById("mouthOuter");
+var inner = document.getElementById("mouthInner");
+var irisL = document.getElementById("irisL");
+var irisR = document.getElementById("irisR");
+var pupilL = document.getElementById("pupilL");
+var pupilR = document.getElementById("pupilR");
+var lidL = document.getElementById("lidL");
+var lidR = document.getElementById("lidR");
+var talking = false;
+
+// Mouth shapes: [outerCurveY, innerCurveY]
+// smile at rest, curve opens moderately when talking
+var mouthRest = [740, 715]; // gentle smile
+var mouthShapes = [
+  [720, 726],  // barely open
+  [742, 735],  // small open
+  [785, 747],  // medium open
+  [765, 677],  // medium open
+  [745, 670],  // medium open
+];
+var eyeLX=282, eyeLY=540, eyeRX=525, eyeRY=540;
+
+function startTalk() { talking=true; document.getElementById("status").textContent="Status: TALKING"; }
+function stopTalk() { talking=false; document.getElementById("status").textContent="Status: Silent"; }
+function toggleTalk() { talking=!talking; document.getElementById("status").textContent=talking?"Status: TALKING":"Status: Silent"; }
+
+// Mouth
+var curOY=720, curIY=715;
+setInterval(function(){
+  var tOY, tIY;
+  if (talking) {
+    var m = mouthShapes[Math.floor(Math.random()*mouthShapes.length)];
+    tOY = m[0]; tIY = m[1];
+  } else {
+    tOY = mouthRest[0]; tIY = mouthRest[1];
+  }
+  curOY += (tOY - curOY) * 0.25;
+  curIY += (tIY - curIY) * 0.25;
+  var fillOuter = curOY > 730 ? "rgb(25,47,72)" : "none";
+  var fillInner = curIY > 725 ? "rgb(139,0,0)" : "none";
+  outer.setAttribute("d", "M 340 690 Q 390 " + curOY + " 440 690");
+  outer.setAttribute("fill", fillOuter);
+  inner.setAttribute("d", "M 345 691 Q 390 " + curIY + " 435 691");
+  inner.setAttribute("fill", fillInner);
+}, 100);
+
+// Eye look direction
+setInterval(function(){
+  var lx = (Math.random()-0.5) * 14;
+  var ly = (Math.random()-0.5) * 10;
+  irisL.setAttribute("cx", eyeLX + lx);
+  irisL.setAttribute("cy", eyeLY + ly);
+  pupilL.setAttribute("cx", eyeLX + lx);
+  pupilL.setAttribute("cy", eyeLY + ly);
+  irisR.setAttribute("cx", eyeRX + lx);
+  irisR.setAttribute("cy", eyeRY + ly);
+  pupilR.setAttribute("cx", eyeRX + lx);
+  pupilR.setAttribute("cy", eyeRY + ly);
+}, 2000);
+
+// Blink
+setInterval(function(){
+  lidL.setAttribute("ry","40");
+  lidR.setAttribute("ry","40");
+  setTimeout(function(){
+    lidL.setAttribute("ry","0");
+    lidR.setAttribute("ry","0");
+  }, 150);
+}, 3500);
+</script>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Avatar Preview - robotito_face2</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      background: #1a1a2e;
+      font-family: sans-serif;
+      gap: 20px;
+      padding: 20px;
+    }
+    h2 { color: #eee; margin: 0; }
+    p { color: #aaa; font-size: 13px; margin: 4px 0; }
+
+    .demo-row { display: flex; gap: 40px; align-items: flex-start; }
+    .demo-box { text-align: center; }
+
+    .avatar {
+      position: relative;
+      width: 250px;
+      height: 375px;
+      margin: 0 auto;
+    }
+    .avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    /* Eyes */
+    .eye-left, .eye-right {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      overflow: hidden;
+    }
+    .eye-left { top: 41.5%; left: 35%; }
+    .eye-right { top: 41.5%; right: 37%; }
+
+    .pupil {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 8px;
+      height: 8px;
+      background: radial-gradient(circle, rgba(255,255,255,0.9), rgba(0,180,255,0.7));
+      border-radius: 50%;
+      animation: pupil-look 5s ease-in-out infinite;
+    }
+    .eye-right .pupil { animation-delay: 0.3s; }
+
+    /* Eyelid - white when closed */
+    .eyelid {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: #ffffff;
+      border-radius: 50%;
+      transform: scaleY(0);
+      transform-origin: top center;
+      animation: blink 5s ease-in-out infinite;
+    }
+    .eye-right .eyelid { animation-delay: 0.1s; }
+
+    /* Mouth - half moon */
+    .mouth {
+      position: absolute;
+      bottom: 45.5%;
+      left: 47%;
+      transform: translateX(-50%);
+      width: 48px;
+      height: 19px;
+      background: #0086B6;
+      border-radius: 0 0 48px 48px;
+      overflow: hidden;
+    }
+
+    /* Teeth */
+    .teeth {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 5px;
+      background: repeating-linear-gradient(
+        90deg,
+        white 0px, white 6px,
+        rgba(200,200,200,0.5) 6px, rgba(200,200,200,0.5) 7px
+      );
+    }
+
+    /* Tongue */
+    .tongue {
+      position: absolute;
+      bottom: -3px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 16px;
+      height: 11px;
+      background: #e84a5f;
+      border-radius: 50%;
+    }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes blink {
+      0%, 92%, 100% { transform: scaleY(0); }
+      94%, 96% { transform: scaleY(1); }
+    }
+
+    @keyframes pupil-look {
+      0%, 100% { transform: translate(-50%, -50%); }
+      15% { transform: translate(-65%, -55%); }
+      35% { transform: translate(-35%, -50%); }
+      55% { transform: translate(-55%, -45%); }
+      75% { transform: translate(-40%, -55%); }
+    }
+
+    /* Talking: mouth opens */
+    @keyframes mouth-talk {
+      0%   { height: 19px; }
+      15%  { height: 26px; }
+      30%  { height: 17px; }
+      45%  { height: 30px; }
+      60%  { height: 19px; }
+      75%  { height: 24px; }
+      90%  { height: 16px; }
+      100% { height: 19px; }
+    }
+
+    .avatar.talking .mouth {
+      animation: mouth-talk 1.4s ease-in-out infinite;
+    }
+
+    @keyframes pupil-talk {
+      0%, 100% { transform: translate(-50%, -50%); }
+      12% { transform: translate(-62%, -55%); }
+      28% { transform: translate(-38%, -58%); }
+      44% { transform: translate(-55%, -42%); }
+      60% { transform: translate(-42%, -55%); }
+      76% { transform: translate(-58%, -48%); }
+      90% { transform: translate(-45%, -52%); }
+    }
+
+    .avatar.talking .pupil {
+      animation: pupil-talk 2.5s ease-in-out infinite;
+    }
+
+    .toggle-btn {
+      padding: 10px 20px;
+      background: #0086B6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    .toggle-btn:hover { background: #006a91; }
+  </style>
+</head>
+<body>
+  <h2>robotito_face2 - SVG-calculated positions</h2>
+
+  <div class="demo-row">
+    <div class="demo-box">
+      <p>Idle</p>
+      <div class="avatar">
+        <img class="avatar-img" src="robotito_face2.png" alt="Robot">
+        <div class="eye-left"><div class="pupil"></div><div class="eyelid"></div></div>
+        <div class="eye-right"><div class="pupil"></div><div class="eyelid"></div></div>
+        <div class="mouth"><div class="teeth"></div><div class="tongue"></div></div>
+      </div>
+    </div>
+    <div class="demo-box">
+      <p>Talking</p>
+      <div class="avatar talking">
+        <img class="avatar-img" src="robotito_face2.png" alt="Robot">
+        <div class="eye-left"><div class="pupil"></div><div class="eyelid"></div></div>
+        <div class="eye-right"><div class="pupil"></div><div class="eyelid"></div></div>
+        <div class="mouth"><div class="teeth"></div><div class="tongue"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <br>
+  <div class="demo-box">
+    <p>Interactive</p>
+    <div class="avatar" id="avatar-toggle">
+      <img class="avatar-img" src="robotito_face2.png" alt="Robot">
+      <div class="eye-left" id="eyeL"><div class="pupil"></div><div class="eyelid"></div></div>
+      <div class="eye-right" id="eyeR"><div class="pupil"></div><div class="eyelid"></div></div>
+      <div class="mouth" id="mouth"><div class="teeth" id="teeth"></div><div class="tongue" id="tongue"></div></div>
+    </div>
+    <br>
+    <button class="toggle-btn" onclick="document.getElementById('avatar-toggle').classList.toggle('talking')">Toggle Talking</button>
+  </div>
+</body>
+</html>
