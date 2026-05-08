@@ -1,82 +1,49 @@
-pip show hypercorn quart quart-cors h11 h2 hpack hyperframe wsproto priority | grep -E "Name|Version"
+2026-05-08 12:25:18,715 - ERROR - Exception on request POST /api/conversation/init
+Traceback (most recent call last):
+  File "asyncpg/protocol/prepared_stmt.pyx", line 175, in asyncpg.protocol.protocol.PreparedStatementState._encode_bind_msg
+  File "asyncpg/protocol/codecs/base.pyx", line 251, in asyncpg.protocol.protocol.Codec.encode
+  File "asyncpg/protocol/codecs/base.pyx", line 153, in asyncpg.protocol.protocol.Codec.encode_scalar
+  File "asyncpg/pgproto/codecs/text.pyx", line 29, in asyncpg.pgproto.pgproto.text_encode
+  File "asyncpg/pgproto/codecs/text.pyx", line 12, in asyncpg.pgproto.pgproto.as_pg_string_and_size
+TypeError: expected str, got list
 
-pip check
-
-While you're at it, try this exact known-working combo (these are the versions in your original requirements.txt):
-
-pip install --force-reinstall \
-  "hypercorn==0.17.3" \
-  "h11==0.14.0" \
-  "h2==4.2.0" \
-  "hpack==4.1.0" \
-  "hyperframe==6.1.0" \
-  "wsproto==1.2.0" \
-  "priority==2.0.0" \
-  "quart==0.20.0" \
-  "quart-cors==0.8.0"
-Name: Hypercorn
-Version: 0.17.3
-Name: Quart
-Version: 0.20.0
-Name: quart-cors
-Version: 0.8.0
-Name: h11
-Version: 0.14.0
-Name: h2
-Version: 4.2.0
-Name: hpack
-Version: 4.1.0
-Name: hyperframe
-Version: 6.1.0
-Name: wsproto
-Version: 1.2.0
-Name: priority
-Version: 2.0.0
+The above exception was the direct cause of the following exception:
 
 Traceback (most recent call last):
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/hypercorn/asyncio/task_group.py", line 27, in _handle
-    await app(scope, receive, send, sync_spawn, call_soon)
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/hypercorn/app_wrappers.py", line 34, in __call__
-    await self.app(scope, receive, send)
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/app.py", line 1735, in __call__
-    await self.asgi_app(scope, receive, send)
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/app.py", line 1761, in asgi_app
-    await asgi_handler(receive, send)
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 60, in __call__
-    raise_task_exceptions(done)
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/utils.py", line 186, in raise_task_exceptions
-    raise task.exception()
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 117, in handle_request
-    await asyncio.wait_for(self._send_response(send, response), timeout=timeout)
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/asyncio/tasks.py", line 520, in wait_for
-    return await fut
-           ^^^^^^^^^
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 148, in _send_response
-    await send(
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/hypercorn/protocol/http_stream.py", line 193, in app_send
-    Body(stream_id=self.stream_id, data=bytes(message.get("body", b"")))
-                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-TypeError: 'dict' object cannot be interpreted as an integer
-2026-05-08 12:18:33,956 - ERROR - Error in ASGI Framework
-Traceback (most recent call last):
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/hypercorn/asyncio/task_group.py", line 27, in _handle
-    await app(scope, receive, send, sync_spawn, call_soon)
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/hypercorn/app_wrappers.py", line 34, in __call__
-    await self.app(scope, receive, send)
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/app.py", line 1735, in __call__
-    await self.asgi_app(scope, receive, send)
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/app.py", line 1761, in asgi_app
-    await asgi_handler(receive, send)
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 60, in __call__
-    raise_task_exceptions(done)
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/utils.py", line 186, in raise_task_exceptions
-    raise task.exception()
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 117, in handle_request
-    await asyncio.wait_for(self._send_response(send, response), timeout=timeout)
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/asyncio/tasks.py", line 520, in wait_for
-    return await fut
-           ^^^^^^^^^
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 148, in _send_response
-    await send(
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/hypercorn/protocol/http_stream.py", line 193, in app_send
-    Body(stream_id=self.stream_id, data=bytes(message.get("body", b"")))
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/app.py", line 1464, in handle_request
+    return await self.full_dispatch_request(request_context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/app.py", line 1502, in full_dispatch_request
+    result = await self.handle_user_exception(error)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/app.py", line 1059, in handle_user_exception
+    raise error
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/app.py", line 1500, in full_dispatch_request
+    result = await self.dispatch_request(request_context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/app.py", line 1597, in dispatch_request
+    return await self.ensure_async(handler)(**request_.view_args)  # type: ignore[return-value]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/chuchip/robotito/back/src/api/conversation.py", line 82, in conversation_init
+    id_conversation=await db.init_conversation(None,data['user'],data['msg'])
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/chuchip/robotito/back/src/persistence.py", line 125, in init_conversation
+    await g.connection.execute(sql,{"id":id,"user_id":user,"name":msg,"final_date":now})
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart_db/backends/asyncpg.py", line 78, in execute
+    return await self._connection.execute(compiled_query, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/asyncpg/connection.py", line 357, in execute
+    _, status, _ = await self._execute(
+                   ^^^^^^^^^^^^^^^^^^^^
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/asyncpg/connection.py", line 1873, in _execute
+    result, _ = await self.__execute(
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/asyncpg/connection.py", line 1970, in __execute
+    result, stmt = await self._do_execute(
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/asyncpg/connection.py", line 2033, in _do_execute
+    result = await executor(stmt, None)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "asyncpg/protocol/protocol.pyx", line 184, in bind_execute
+  File "asyncpg/protocol/prepared_stmt.pyx", line 204, in asyncpg.protocol.protocol.PreparedStatementState._encode_bind_msg
+asyncpg.exceptions.DataError: invalid input for query argument $3: [{'type': 'text', 'text': 'Venice Bienna... (expected str, got list
