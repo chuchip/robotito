@@ -13,3 +13,51 @@ pip uninstall -y opentelemetry-proto opentelemetry-exporter-otlp-proto-grpc
 langchain-community 0.3.18 has requirement langchain<1.0.0,>=0.3.19, but you have langchain 1.2.17.
 langchain-community 0.3.18 has requirement langchain-core<1.0.0,>=0.3.37, but you have langchain-core 1.3.3.
 langchain-community 0.3.18 has requirement langsmith<0.4,>=0.1.125, but you have langsmith 0.8.3.
+
+
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/hypercorn/asyncio/task_group.py", line 28, in _handle
+    await app(scope, receive, send, sync_spawn, call_soon)
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/hypercorn/app_wrappers.py", line 34, in __call__
+    await self.app(scope, receive, send)
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/app.py", line 1735, in __call__
+    await self.asgi_app(scope, receive, send)
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/app.py", line 1761, in asgi_app
+    await asgi_handler(receive, send)
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 60, in __call__
+    raise_task_exceptions(done)
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/utils.py", line 186, in raise_task_exceptions
+    raise task.exception()
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 117, in handle_request
+    await asyncio.wait_for(self._send_response(send, response), timeout=timeout)
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/asyncio/tasks.py", line 520, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 148, in _send_response
+    await send(
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/hypercorn/protocol/http_stream.py", line 193, in app_send
+    Body(stream_id=self.stream_id, data=bytes(message.get("body", b"")))
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'dict' object cannot be interpreted as an integer
+2026-05-08 12:00:00,118 - ERROR - Error in ASGI Framework
+Traceback (most recent call last):
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/hypercorn/asyncio/task_group.py", line 28, in _handle
+    await app(scope, receive, send, sync_spawn, call_soon)
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/hypercorn/app_wrappers.py", line 34, in __call__
+    await self.app(scope, receive, send)
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/app.py", line 1735, in __call__
+    await self.asgi_app(scope, receive, send)
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/app.py", line 1761, in asgi_app
+    await asgi_handler(receive, send)
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 60, in __call__
+    raise_task_exceptions(done)
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/utils.py", line 186, in raise_task_exceptions
+    raise task.exception()
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 117, in handle_request
+    await asyncio.wait_for(self._send_response(send, response), timeout=timeout)
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/asyncio/tasks.py", line 520, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 148, in _send_response
+    await send(
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/hypercorn/protocol/http_stream.py", line 193, in app_send
+    Body(stream_id=self.stream_id, data=bytes(message.get("body", b"")))
