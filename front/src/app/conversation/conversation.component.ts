@@ -326,6 +326,7 @@ export class ConversationComponent {
       this.responseMessage="";
       this.numberLine++
       this.inputText=""
+      this.resetInputHeight()
       setTimeout(() => this.scrollToBottom(), 0)
     }
   }
@@ -859,6 +860,19 @@ export class ConversationComponent {
     textArea.style.height = 'auto'; // Reset height
     textArea.style.height = (textArea.scrollHeight+20) + 'px'; // Set new height
     this.divInputElement.nativeElement.style.height = (textArea.scrollHeight + 20) + 'px'; // Set new height
+  }
+
+  /** Collapse the input textarea back to its default single-line height
+   *  after a message is submitted. The inline style set by `adjustHeight`
+   *  keeps the box big until we explicitly clear it. */
+  resetInputHeight() {
+    const textArea = this.inputElement?.nativeElement as HTMLTextAreaElement | undefined;
+    if (textArea) {
+      textArea.style.height = '';
+    }
+    if (this.divInputElement?.nativeElement) {
+      this.divInputElement.nativeElement.style.height = '';
+    }
   }
   
   getSelectedText() {
