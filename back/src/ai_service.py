@@ -104,11 +104,11 @@ async def call_llm(state):
         _logger.debug(f"LLM Context: {context_text}\n Question: {question}")
         if _model_api == 'ollama':
             async for chunk in _client_text.astream(chat_prompt):
-                yield chunk
+                yield _chunk_to_text(chunk)
         else:
             try:
                 async for chunk in _client_text.astream(chat_prompt):
-                    yield chunk.content
+                    yield _chunk_to_text(chunk.content)
             except Exception as e:
                 _logger.error(f"Error in LLM call: {e}")
                 yield ""
@@ -116,6 +116,36 @@ async def call_llm(state):
             yield "*"
     else:
         yield " "
+
+
+def _chunk_to_text(content) -> str:
+    """Coerce an LLM streaming chunk into a plain string.
+
+    Newer langchain-google-genai (and some other providers) return
+    `chunk.content` as a list of content blocks like
+    `[{"type": "text", "text": "Hello"}]` instead of a string.
+    Quart's ASGI body field requires bytes/str, so we flatten anything
+    non-string into one string before yielding.
+    """
+    if content is None:
+        return ""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = []
+        for block in content:
+            if isinstance(block, str):
+                parts.append(block)
+            elif isinstance(block, dict):
+                # OpenAI-style: {"type": "text", "text": "..."}
+                # Google-style sometimes uses "content" instead of "text".
+                txt = block.get("text") or block.get("content") or ""
+                if isinstance(txt, str):
+                    parts.append(txt)
+        return "".join(parts)
+    if isinstance(content, dict):
+        return content.get("text") or content.get("content") or ""
+    return str(content)
 
 
 async def call_llm_internal(chat_prompt):
