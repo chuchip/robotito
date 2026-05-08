@@ -1,69 +1,15 @@
-opentelemetry-proto 1.30.0 has requirement protobuf<6.0,>=5.0, but you have protobuf 4.25.3.
-httpcore 1.0.7 has requirement h11<0.15,>=0.13, but you have h11 0.16.0.
-langchain-community 0.3.18 has requirement langchain<1.0.0,>=0.3.19, but you have langchain 1.2.17.
-langchain-community 0.3.18 has requirement langchain-core<1.0.0,>=0.3.37, but you have langchain-core 1.3.3.
-langchain-community 0.3.18 has requirement langsmith<0.4,>=0.1.125, but you have langsmith 0.8.3.
-opentelemetry-exporter-otlp-proto-grpc 1.30.0 has requirement grpcio<2.0.0,>=1.63.2, but you have grpcio 1.62.2.
+pip show hypercorn quart quart-cors h11 h2 hpack hyperframe wsproto priority | grep -E "Name|Version"
+pip check
 
-pip install "h11>=0.14,<0.15" "h2>=4,<5" "wsproto>=1.2,<2" "priority>=2,<3" hypercorn
-pip install "h11>=0.14,<0.15"
+While you're at it, try this exact known-working combo (these are the versions in your original requirements.txt):
 
-pip uninstall -y opentelemetry-proto opentelemetry-exporter-otlp-proto-grpc
-
-langchain-community 0.3.18 has requirement langchain<1.0.0,>=0.3.19, but you have langchain 1.2.17.
-langchain-community 0.3.18 has requirement langchain-core<1.0.0,>=0.3.37, but you have langchain-core 1.3.3.
-langchain-community 0.3.18 has requirement langsmith<0.4,>=0.1.125, but you have langsmith 0.8.3.
-
-
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/hypercorn/asyncio/task_group.py", line 28, in _handle
-    await app(scope, receive, send, sync_spawn, call_soon)
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/hypercorn/app_wrappers.py", line 34, in __call__
-    await self.app(scope, receive, send)
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/app.py", line 1735, in __call__
-    await self.asgi_app(scope, receive, send)
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/app.py", line 1761, in asgi_app
-    await asgi_handler(receive, send)
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 60, in __call__
-    raise_task_exceptions(done)
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/utils.py", line 186, in raise_task_exceptions
-    raise task.exception()
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 117, in handle_request
-    await asyncio.wait_for(self._send_response(send, response), timeout=timeout)
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/asyncio/tasks.py", line 520, in wait_for
-    return await fut
-           ^^^^^^^^^
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 146, in _send_response
-    async for data in response_body:
-  File "/home/chuchip/robotito/back/src/api/principal.py", line 12, in generate
-    async for msg  in ai.call_llm(msg_graph):
-  File "/home/chuchip/robotito/back/src/ai_service.py", line 77, in call_llm
-    context_text = context.getText()
-                   ^^^^^^^^^^^^^^^
-AttributeError: 'NoneType' object has no attribute 'getText'
-2026-05-08 12:03:54,751 - ERROR - Error in ASGI Framework
-Traceback (most recent call last):
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/hypercorn/asyncio/task_group.py", line 28, in _handle
-    await app(scope, receive, send, sync_spawn, call_soon)
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/hypercorn/app_wrappers.py", line 34, in __call__
-    await self.app(scope, receive, send)
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/app.py", line 1735, in __call__
-    await self.asgi_app(scope, receive, send)
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/app.py", line 1761, in asgi_app
-    await asgi_handler(receive, send)
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 60, in __call__
-    raise_task_exceptions(done)
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/utils.py", line 186, in raise_task_exceptions
-    raise task.exception()
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 117, in handle_request
-    await asyncio.wait_for(self._send_response(send, response), timeout=timeout)
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/asyncio/tasks.py", line 520, in wait_for
-    return await fut
-           ^^^^^^^^^
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 146, in _send_response
-    async for data in response_body:
-  File "/home/chuchip/robotito/back/src/api/principal.py", line 12, in generate
-    async for msg  in ai.call_llm(msg_graph):
-  File "/home/chuchip/robotito/back/src/ai_service.py", line 77, in call_llm
-    context_text = context.getText()
-                   ^^^^^^^^^^^^^^^
-AttributeError: 'NoneType' object has no attribute 'getText'
+pip install --force-reinstall \
+  "hypercorn==0.17.3" \
+  "h11==0.14.0" \
+  "h2==4.2.0" \
+  "hpack==4.1.0" \
+  "hyperframe==6.1.0" \
+  "wsproto==1.2.0" \
+  "priority==2.0.0" \
+  "quart==0.20.0" \
+  "quart-cors==0.8.0"
