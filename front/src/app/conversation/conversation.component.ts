@@ -864,17 +864,24 @@ export class ConversationComponent {
     this.divInputElement.nativeElement.style.height = (textArea.scrollHeight + 20) + 'px'; // Set new height
   }
 
-  /** Collapse the input textarea back to its default single-line height
-   *  after a message is submitted. The inline style set by `adjustHeight`
-   *  keeps the box big until we explicitly clear it. */
+  /** Collapse the input textarea back to the height that matches its current
+   *  (possibly empty) content. The inline style set by `adjustHeight` keeps
+   *  the box big until we recompute it. We re-run the same shrink-then-grow
+   *  trick used during typing so the layout matches "user pressed a key". */
   resetInputHeight() {
     const textArea = this.inputElement?.nativeElement as HTMLTextAreaElement | undefined;
-    if (textArea) {
-      textArea.style.height = '';
+    const container = this.divInputElement?.nativeElement as HTMLElement | undefined;
+    if (!textArea) {
+      if (container) container.style.height = '';
+      return;
     }
-    if (this.divInputElement?.nativeElement) {
-      this.divInputElement.nativeElement.style.height = '';
-    }
+    // First clear so scrollHeight reflects content, not the previous inline value.
+    textArea.style.height = 'auto';
+    if (container) container.style.height = 'auto';
+    // Then apply the same formula adjustHeight uses on every keystroke.
+    const newHeight = textArea.scrollHeight + 20;
+    textArea.style.height = newHeight + 'px';
+    if (container) container.style.height = newHeight + 'px';
   }
   
   getSelectedText() {
