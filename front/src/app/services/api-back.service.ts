@@ -380,6 +380,61 @@ async getLastUser(): Promise<any> {
     }
   }
 
+  // Long-term memory (per-user, persisted across conversations)
+  async getMemory(): Promise<any> {
+    try {
+      return await firstValueFrom(this.http.get(`${this.backendUrl}/memory`));
+    } catch (error) {
+      console.error('getMemory failed!:', error);
+      throw error;
+    }
+  }
+
+  async saveMemoryProfile(profile: string): Promise<any> {
+    try {
+      return await firstValueFrom(this.http.put(`${this.backendUrl}/memory/profile`, { profile }));
+    } catch (error) {
+      console.error('saveMemoryProfile failed!:', error);
+      throw error;
+    }
+  }
+
+  async setMemoryEnabled(enabled: boolean): Promise<any> {
+    try {
+      return await firstValueFrom(this.http.put(`${this.backendUrl}/memory/enabled`, { enabled }));
+    } catch (error) {
+      console.error('setMemoryEnabled failed!:', error);
+      throw error;
+    }
+  }
+
+  async deleteMemoryFact(factId: number): Promise<any> {
+    try {
+      return await firstValueFrom(this.http.delete(`${this.backendUrl}/memory/fact/${factId}`));
+    } catch (error) {
+      console.error('deleteMemoryFact failed!:', error);
+      throw error;
+    }
+  }
+
+  async forgetAllMemory(): Promise<any> {
+    try {
+      return await firstValueFrom(this.http.delete(`${this.backendUrl}/memory`));
+    } catch (error) {
+      console.error('forgetAllMemory failed!:', error);
+      throw error;
+    }
+  }
+
+  async consolidateMemoryNow(): Promise<any> {
+    try {
+      return await firstValueFrom(this.http.post(`${this.backendUrl}/memory/consolidate`, {}));
+    } catch (error) {
+      console.error('consolidateMemoryNow failed!:', error);
+      throw error;
+    }
+  }
+
   // Shared audio playback utility
   async playAudioFromResponse(audioBlob: Blob, playbackSpeed: number = 1): Promise<HTMLAudioElement> {
     const audioUrl = URL.createObjectURL(audioBlob);

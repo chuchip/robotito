@@ -58,6 +58,14 @@ async def logout():
     """Invalidate the current session in the DB and in-memory cache."""
     authorization = request.headers.get("Authorization")
     uuid_header = request.headers.get("uuid")
+    # Consolidate long-term memory before tearing down the in-memory session,
+    # so anything the user just shared is remembered next time they log in.
+    if uuid_header:
+        try:
+            import robotito_ai as ai
+            await ai.consolidate_memory(uuid_header)
+        except Exception as e:
+            logger_.error(f"Logout: memory consolidation failed: {e}")
     if authorization:
         await persistence.delete_session(authorization)
     mem = memory.getMemory(uuid_header)

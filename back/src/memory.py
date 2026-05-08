@@ -58,6 +58,11 @@ class memoryDTO:
         self.audioData=AudioData()
         self.url_context:str=None
         self.url_source:str=None
+        # Long-term memory loaded from DB once per session and prepended to the system prompt.
+        # None = not yet loaded; "" = loaded but empty (user has nothing remembered or memory disabled).
+        self.long_term_memory:str=None
+        # Counts user turns since the last memory consolidation, so we can periodically refresh.
+        self.turns_since_consolidation:int=0
     def getMaxLengthAnswer(self):
         return self.max_length_answer
     def setMaxLengthAnswer(self,max_lemgth:int):
@@ -82,7 +87,9 @@ class memoryDTO:
         self.context=None
         self.audioData=AudioData()
         self.url_context=None
-        self.url_source=None       
+        self.url_source=None
+        self.long_term_memory=None
+        self.turns_since_consolidation=0
     def getUser(self):
         return self.user
     def setUser(self,user:str):
@@ -113,6 +120,18 @@ class memoryDTO:
     def clearUrlContext(self):
         self.url_context=None
         self.url_source=None
+    def getLongTermMemory(self):
+        return self.long_term_memory
+    def setLongTermMemory(self, text):
+        self.long_term_memory = text or ""
+    def clearLongTermMemory(self):
+        self.long_term_memory = None
+    def getTurnsSinceConsolidation(self):
+        return self.turns_since_consolidation
+    def incrementTurnsSinceConsolidation(self):
+        self.turns_since_consolidation += 1
+    def resetTurnsSinceConsolidation(self):
+        self.turns_since_consolidation = 0
     def getUuid(self):    
         return self.uuid
 

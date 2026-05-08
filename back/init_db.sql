@@ -55,5 +55,25 @@ ALTER TABLE dictionary_words ADD COLUMN IF NOT EXISTS last_review_correct BOOLEA
 -- Secondary voice used for "alternative voice" playback (Shift+F4 / human lines).
 ALTER TABLE users ADD COLUMN IF NOT EXISTS human_voice text NULL;
 
+-- Long-term memory: a free-form profile the LLM uses to "know" the user across
+-- conversations (name, age, hobbies, level, standing instructions, etc.).
+ALTER TABLE users ADD COLUMN IF NOT EXISTS profile TEXT NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS memory_enabled BOOLEAN NOT NULL DEFAULT TRUE;
+
+-- Structured facts auto-extracted from past conversations.
+-- category: 'profile' | 'preference' | 'mistake' | 'goal' | 'instruction'
+CREATE TABLE IF NOT EXISTS user_facts (
+    id SERIAL PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    category TEXT NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    confidence REAL DEFAULT 0.7,
+    hit_count INT NOT NULL DEFAULT 1,
+    last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (user_id, category, key)
+);
+CREATE INDEX IF NOT EXISTS user_facts_user_idx ON user_facts (user_id, category);
+
 INSERT INTO users ( user_id,name,password,language,voice,role,max_length_answer,human_voice) VALUES ('default','Guest','secret','b','bm_fable','admin',150,'af_heart');
 INSERT INTO context ( user_id,label,context, remember)  VALUES ('default','default','You are my friend Robotito','')

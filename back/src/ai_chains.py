@@ -5,7 +5,7 @@
 from langchain.prompts import PromptTemplate
 from langchain.output_parsers import PydanticOutputParser
 
-from ai_models import SumaryResume, AnalizePhrase, AnalizePhrases, TranslationResult, ReviewResult
+from ai_models import SumaryResume, AnalizePhrase, AnalizePhrases, TranslationResult, ReviewResult, MemoryExtraction
 
 
 _prompt_resume_str = """
@@ -82,6 +82,52 @@ Always include every item from the input in the output, in the same order.
 Ensure your entire response is ONLY the JSON object, starting with {{ and ending with }}."""
 
 
+_prompt_memory_str = """
+You curate a long-term memory about a single user of a chatbot, so the assistant
+can "know" them across sessions. You receive:
+- The user's existing profile (may be empty).
+- The list of facts already remembered about them (may be empty).
+- A transcript of the most recent conversation.
+
+Your job:
+1. Extract STABLE information worth remembering: name, age, location, hobbies,
+   job, language level, learning goals, recurring mistakes, explicit standing
+   instructions ("call me X", "always answer in Spanish", "I prefer short
+   answers"), and strong preferences. Ignore one-off chitchat, weather, jokes,
+   transient moods.
+2. Update the profile paragraph by MERGING old + new info. Keep it under 300
+   words, written as a short third-person bio the assistant will read at the
+   start of every conversation. If nothing new came up, return the old profile
+   unchanged.
+3. Return a list of discrete facts. For each fact pick:
+   - category: one of 'profile' (identity), 'preference', 'mistake' (recurring
+     language mistake), 'goal', 'instruction'.
+   - key: short stable identifier in lowercase snake/colon style, e.g.
+     'age', 'name', 'hobby:football', 'mistake:past_tense',
+     'instruction:call_me_pedro', 'preference:short_answers'.
+     Reuse existing keys if the fact updates one.
+   - value: one short sentence in natural language.
+   - confidence: 0.0..1.0.
+4. Do NOT invent facts. If unsure, leave it out. Empty list is fine.
+
+Existing profile:
+---
+{existing_profile}
+---
+
+Existing facts (JSON):
+{existing_facts}
+
+Recent conversation transcript:
+---
+{transcript}
+---
+
+{format_instructions}
+
+Ensure your entire response is ONLY the JSON object, starting with {{ and ending with }}."""
+
+
 def _build_chain(template_str: str, input_variables: list, parser: PydanticOutputParser, llm):
     prompt = PromptTemplate(
         template=template_str,
@@ -115,5 +161,9 @@ def build_chains(llm_text) -> dict:
         "review": _build_chain(
             _prompt_review_str, ["direction", "items_input"],
             PydanticOutputParser(pydantic_object=ReviewResult), llm_text,
+        ),
+        "memory": _build_chain(
+            _prompt_memory_str, ["existing_profile", "existing_facts", "transcript"],
+            PydanticOutputParser(pydantic_object=MemoryExtraction), llm_text,
         ),
     }

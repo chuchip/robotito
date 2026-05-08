@@ -28,6 +28,7 @@ from api.security import security_bp
 from api.audio import audio_bp
 from api.context import context_bp
 from api.conversation import conversation_bp
+from api.memory import memory_bp
 
 os.environ["GRPC_VERBOSITY"] = "ERROR"
 os.environ["GLOG_minloglevel"] = "2"
@@ -136,6 +137,9 @@ save_msg = ai_service.save_msg
 restore_history = ai_service.restore_history
 call_llm_translate = ai_service.call_llm_translate
 call_llm_review = ai_service.call_llm_review
+consolidate_memory = ai_service.consolidate_memory
+load_long_term_memory = ai_service.load_long_term_memory
+schedule_consolidation_if_due = ai_service.schedule_consolidation_if_due
 
 getTextFromAudio = audio_service.getTextFromAudio
 getAudioFromText = audio_service.getAudioFromText
@@ -159,6 +163,7 @@ app.register_blueprint(context_bp, url_prefix='/api/context')
 app.register_blueprint(conversation_bp, url_prefix='/api/conversation')
 app.register_blueprint(principal_bp, url_prefix='/api')
 app.register_blueprint(security_bp, url_prefix='/api/security')
+app.register_blueprint(memory_bp, url_prefix='/api/memory')
 
 
 # ---------------------------------------------------------------------------

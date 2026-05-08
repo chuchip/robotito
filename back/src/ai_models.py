@@ -43,3 +43,17 @@ class ReviewItem(BaseModel):
 class ReviewResult(BaseModel):
     """Container for the evaluation of a list of quiz items."""
     items: List[ReviewItem] = Field(description="Evaluation results, one per quiz item, in the same order as the input")
+
+
+class MemoryFact(BaseModel):
+    """A single piece of long-term memory about the user."""
+    category: str = Field(description="One of: 'profile', 'preference', 'mistake', 'goal', 'instruction'")
+    key: str = Field(description="Short stable identifier for the fact (e.g. 'age', 'hobby:football', 'mistake:past_tense'). Lowercase, snake/colon style.")
+    value: str = Field(description="The fact value as a short human-readable sentence")
+    confidence: float = Field(description="Confidence in [0,1] that this fact is correct and worth remembering")
+
+
+class MemoryExtraction(BaseModel):
+    """Output of the memory consolidation chain."""
+    profile: str = Field(description="A short paragraph (<=300 words) merging the previous profile with new stable info about the user. May be empty if nothing changed.")
+    facts: List[MemoryFact] = Field(description="Discrete facts to remember. Empty list is allowed. Skip one-off chitchat.")

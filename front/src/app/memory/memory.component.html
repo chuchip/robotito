@@ -1,0 +1,49 @@
+<div class="page">
+  <div class="header">
+    <span class="title">🧠 What Robotito remembers about you</span>
+    <div class="header-actions">
+      <label class="toggle">
+        <input type="checkbox" [(ngModel)]="memoryEnabled" (change)="toggleEnabled()">
+        <span>Memory enabled</span>
+      </label>
+      <button class="action-btn" (click)="consolidateNow()" [disabled]="isSaving" title="Update memory now from the current conversation">
+        Update now
+      </button>
+      <button class="danger-btn" (click)="forgetAll()" [disabled]="isSaving">Forget everything</button>
+      <span class="save-message">{{ saveMessage }}</span>
+    </div>
+  </div>
+
+  <div class="body" *ngIf="!loading">
+    <section class="profile-section">
+      <h3>Profile</h3>
+      <p class="hint">Free-form description Robotito reads at the start of every conversation. You can edit it.</p>
+      <textarea class="profile-textarea" [(ngModel)]="profile"
+        placeholder="No profile yet. As you chat, Robotito will fill this in automatically — or write something here yourself."></textarea>
+      <div class="profile-actions">
+        <button class="save-btn" (click)="saveProfile()" [disabled]="isSaving">
+          {{ isSaving ? 'Saving...' : 'Save profile' }}
+        </button>
+      </div>
+    </section>
+
+    <section class="facts-section">
+      <h3>Remembered facts ({{ facts.length }})</h3>
+      <p class="hint" *ngIf="facts.length === 0">Nothing remembered yet. Have a few conversations and come back.</p>
+
+      <div class="facts-group" *ngFor="let group of groupedFacts()">
+        <h4>{{ group.category }}</h4>
+        <ul>
+          <li *ngFor="let f of group.items">
+            <span class="fact-key">{{ f.key }}</span>
+            <span class="fact-value">{{ f.value }}</span>
+            <span class="fact-meta" title="Times seen / confidence">×{{ f.hitCount }} · {{ (f.confidence * 100).toFixed(0) }}%</span>
+            <button class="delete-btn" (click)="deleteFact(f)" title="Forget this">×</button>
+          </li>
+        </ul>
+      </div>
+    </section>
+  </div>
+
+  <div class="body loading" *ngIf="loading">Loading…</div>
+</div>

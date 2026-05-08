@@ -108,6 +108,7 @@ export class ConversationComponent {
   notesWindow: Window | null = null;
   dictionaryWindow: Window | null = null;
   reviewWindow: Window | null = null;
+  memoryWindow: Window | null = null;
    
   constructor(private router: Router,public sound: SoundService,public back: ApiBackService,public persistence: PersistenceService,private avatarService: AvatarService, private dialog: MatDialog) {
     this.isLoading=true
@@ -903,6 +904,12 @@ export class ConversationComponent {
   {
     this.persistence.saveToLocalStorage();
     this.reviewWindow = window.open(`/review`, 'robotito_review', 'width=800,height=750,resizable=yes');
+  }
+
+  openMemory()
+  {
+    this.persistence.saveToLocalStorage();
+    this.memoryWindow = window.open(`/memory`, 'robotito_memory', 'width=720,height=750,resizable=yes');
   }
 
   getBackgroundColor(posHistory:number): string {

@@ -502,6 +502,86 @@ async def delete_session(authorization):
     memory.sessions.pop(authorization, None)
 
 
+# ---------------------------------------------------------------------------
+# Long-term memory (per user, persisted across conversations)
+# ---------------------------------------------------------------------------
+async def get_user_profile(user_id: str):
+    """Return the free-form profile text for a user (or empty string)."""
+    row = await g.connection.fetch_sole(
+        "SELECT profile, memory_enabled FROM users WHERE user_id = :user_id",
+        {"user_id": user_id},
+    )
+    if row is None:
+        return {"profile": "", "memory_enabled": True}
+    return {
+        "profile": row["profile"] or "",
+        "memory_enabled": bool(row["memory_enabled"]) if row["memory_enabled"] is not None else True,
+    }
+
+
+async def set_user_profile(user_id: str, profile: str):
+    sql = "UPDATE users SET profile = :profile WHERE user_id = :user_id"
+    await g.connection.execute(sql, {"profile": profile or "", "user_id": user_id})
+
+
+async def set_memory_enabled(user_id: str, enabled: bool):
+    sql = "UPDATE users SET memory_enabled = :enabled WHERE user_id = :user_id"
+    await g.connection.execute(sql, {"enabled": bool(enabled), "user_id": user_id})
+
+
+async def upsert_user_fact(user_id: str, category: str, key: str, value: str, confidence: float = 0.7):
+    """Insert a new fact or bump hit_count/last_seen if (user, category, key) already exists."""
+    now = datetime.now()
+    sql = """
+        INSERT INTO user_facts (user_id, category, key, value, confidence, hit_count, last_seen)
+        VALUES (:user_id, :category, :key, :value, :confidence, 1, :now)
+        ON CONFLICT (user_id, category, key) DO UPDATE
+            SET value = EXCLUDED.value,
+                confidence = GREATEST(user_facts.confidence, EXCLUDED.confidence),
+                hit_count = user_facts.hit_count + 1,
+                last_seen = EXCLUDED.last_seen
+    """
+    await g.connection.execute(sql, {
+        "user_id": user_id,
+        "category": category,
+        "key": key,
+        "value": value,
+        "confidence": float(confidence),
+        "now": now,
+    })
+
+
+async def get_user_facts(user_id: str, limit: int = 50):
+    sql = """
+        SELECT id, category, key, value, confidence, hit_count, last_seen
+          FROM user_facts
+         WHERE user_id = :user_id
+         ORDER BY hit_count DESC, last_seen DESC
+         LIMIT :limit
+    """
+    rows = await g.connection.fetch_all(sql, {"user_id": user_id, "limit": limit})
+    return [{
+        "id": row["id"],
+        "category": row["category"],
+        "key": row["key"],
+        "value": row["value"],
+        "confidence": row["confidence"],
+        "hitCount": row["hit_count"],
+        "lastSeen": row["last_seen"],
+    } for row in rows]
+
+
+async def delete_user_fact(user_id: str, fact_id: int):
+    sql = "DELETE FROM user_facts WHERE id = :id AND user_id = :user_id"
+    await g.connection.execute(sql, {"id": int(fact_id), "user_id": user_id})
+
+
+async def delete_all_user_facts(user_id: str):
+    await g.connection.execute(
+        "DELETE FROM user_facts WHERE user_id = :user_id", {"user_id": user_id}
+    )
+
+
 async def checkUser(user_id, password):
     row = await g.connection.fetch_sole(
         "SELECT user_id, password FROM users where user_id = :user_id",

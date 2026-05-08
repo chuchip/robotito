@@ -1,0 +1,120 @@
+:host { display: block; height: 100vh; margin: 0; font-family: sans-serif; }
+
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #f5f5f5;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: #37474f;
+  color: white;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.title { font-size: 16px; font-weight: bold; }
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.action-btn, .save-btn, .danger-btn {
+  padding: 6px 14px;
+  font-size: 13px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  color: white;
+}
+.action-btn { background: #1976d2; }
+.save-btn   { background: #4caf50; }
+.danger-btn { background: #c62828; }
+.action-btn:disabled, .save-btn:disabled, .danger-btn:disabled {
+  background: #aaa;
+  cursor: not-allowed;
+}
+
+.save-message { font-size: 13px; color: #a5d6a7; min-width: 50px; }
+
+.body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow-y: auto;
+  gap: 24px;
+}
+.body.loading { align-items: center; justify-content: center; color: #666; }
+
+.profile-section, .facts-section {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 14px 16px;
+}
+h3 { margin: 0 0 6px; font-size: 15px; }
+h4 { margin: 12px 0 6px; font-size: 13px; color: #455a64; text-transform: capitalize; }
+.hint { color: #607d8b; font-size: 12px; margin: 0 0 10px; }
+
+.profile-textarea {
+  width: 100%;
+  min-height: 140px;
+  resize: vertical;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+  line-height: 1.5;
+}
+.profile-actions { margin-top: 8px; text-align: right; }
+
+.facts-group ul { list-style: none; padding: 0; margin: 0; }
+.facts-group li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+.facts-group li:last-child { border-bottom: none; }
+.fact-key {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  background: #eceff1;
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.fact-value { flex: 1; }
+.fact-meta { font-size: 11px; color: #90a4ae; white-space: nowrap; }
+.delete-btn {
+  border: none;
+  background: transparent;
+  color: #c62828;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 6px;
+}
+.delete-btn:hover { color: #b71c1c; }

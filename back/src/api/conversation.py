@@ -55,17 +55,21 @@ async def conversation_deleteId(id):
 
 
 @conversation_bp.route('/id/<string:id>', methods=['POST'])
-async def conversation_saveId(id):     
+async def conversation_saveId(id):
+  import robotito_ai as ai
   data = await request.get_json()
-  uuid=request.headers.get("uuid")  
+  uuid=request.headers.get("uuid")
   mem = get_or_create_memory(uuid)
-  context = mem.getContext()  
+  context = mem.getContext()
   idContext=None
   if not context is None:
     idContext=context.getId()
   id_conversation=await db.conversation_save(uuid,id,data['user'],
                                        idContext,data['type'] ,data['msg'])
-  #logging.info(f"Save  conversation with id: {id}{data} ")
+  # Periodic long-term memory consolidation. Only counts user turns ('H')
+  # so a turn = user message + assistant reply doesn't double-count.
+  if data.get('type') == 'H':
+    ai.schedule_consolidation_if_due(uuid)
   return jsonify({'message': f'Conversation saved on id {id_conversation} !', 'id': id_conversation})
 
 
