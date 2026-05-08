@@ -2,8 +2,8 @@
 
 `build_chains(llm_text)` returns a dict of named chains wired to the provided LLM.
 """
-from langchain.prompts import PromptTemplate
-from langchain.output_parsers import PydanticOutputParser
+from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import PydanticOutputParser
 
 from ai_models import SumaryResume, AnalizePhrase, AnalizePhrases, TranslationResult, ReviewResult, MemoryExtraction
 
