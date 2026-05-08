@@ -32,13 +32,15 @@ langchain-community 0.3.18 has requirement langsmith<0.4,>=0.1.125, but you have
   File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/asyncio/tasks.py", line 520, in wait_for
     return await fut
            ^^^^^^^^^
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 148, in _send_response
-    await send(
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/hypercorn/protocol/http_stream.py", line 193, in app_send
-    Body(stream_id=self.stream_id, data=bytes(message.get("body", b"")))
-                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-TypeError: 'dict' object cannot be interpreted as an integer
-2026-05-08 12:00:00,118 - ERROR - Error in ASGI Framework
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 146, in _send_response
+    async for data in response_body:
+  File "/home/chuchip/robotito/back/src/api/principal.py", line 12, in generate
+    async for msg  in ai.call_llm(msg_graph):
+  File "/home/chuchip/robotito/back/src/ai_service.py", line 77, in call_llm
+    context_text = context.getText()
+                   ^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'getText'
+2026-05-08 12:03:54,751 - ERROR - Error in ASGI Framework
 Traceback (most recent call last):
   File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/hypercorn/asyncio/task_group.py", line 28, in _handle
     await app(scope, receive, send, sync_spawn, call_soon)
@@ -57,7 +59,11 @@ Traceback (most recent call last):
   File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/asyncio/tasks.py", line 520, in wait_for
     return await fut
            ^^^^^^^^^
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 148, in _send_response
-    await send(
-  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/hypercorn/protocol/http_stream.py", line 193, in app_send
-    Body(stream_id=self.stream_id, data=bytes(message.get("body", b"")))
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 146, in _send_response
+    async for data in response_body:
+  File "/home/chuchip/robotito/back/src/api/principal.py", line 12, in generate
+    async for msg  in ai.call_llm(msg_graph):
+  File "/home/chuchip/robotito/back/src/ai_service.py", line 77, in call_llm
+    context_text = context.getText()
+                   ^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'getText'
