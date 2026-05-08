@@ -42,14 +42,13 @@
             matTooltip="Play this message aloud">
             <span class="material-icons" aria-hidden="true">volume_up</span>
           </button>
-          <span class="material-icons line-avatar" aria-hidden="true">{{line_chat.type=='H'?"face":"smart_toy" }}</span>
+          <button *ngIf="line_chat.type=='H'" class="teacher-button"  [ngStyle]="{'background-color': getBackgroundColor(i)}"
+             (click)="showRating(i)"
+             aria-label="Show rating details for this message"
+             matTooltip="Rating details">
+            <span class="material-icons" aria-hidden="true">info</span>
+          </button>
         </div>
-        <button *ngIf="line_chat.type=='H'" class="teacher-button"  [ngStyle]="{'background-color': getBackgroundColor(i)}"
-           (click)="showRating(i)"
-           aria-label="Show rating details for this message"
-           matTooltip="Rating details">
-          <span class="material-icons" aria-hidden="true">info</span>
-        </button>
         <span   [ngClass]="line_chat.type=='H'? 'line-text-human':'line-text-robot'">
           <span [innerHTML]="toHtml(line_chat.msg,line_chat.type)"> </span>
         </span>
