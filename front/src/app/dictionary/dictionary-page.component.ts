@@ -210,14 +210,12 @@ export class DictionaryPageComponent implements OnInit {
       event.preventDefault();
       this.stopAudio();
     }
-    if (event.key === 'F4') {
+    if (event.key === 'F4' || event.key === 'F5') {
       event.preventDefault();
       this.getSelectedText();
       if (this.selectedText.trim() !== '') {
-        // Consistent convention with the rest of the app: F4 = primary
-        // voice (let the backend pick the user's selectVoice), Shift+F4 =
-        // alternative (human) voice.
-        const voice = event.shiftKey ? this.humanVoice : '';
+        // F4 = primary voice (backend default), F5 = alternative voice.
+        const voice = event.key === 'F5' ? this.humanVoice : '';
         this.speakSelectedText(this.selectedText, voice);
       }
     }

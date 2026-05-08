@@ -261,12 +261,12 @@ export class ReviewPageComponent implements OnInit {
       event.preventDefault();
       this.stopAudio();
     }
-    if (event.key === 'F4') {
+    if (event.key === 'F4' || event.key === 'F5') {
       event.preventDefault();
       this.getSelectedText();
       if (this.selectedText.trim() !== '') {
-        // F4 = primary voice (backend default), Shift+F4 = alternative.
-        const voice = event.shiftKey ? this.humanVoice : '';
+        // F4 = primary voice (backend default), F5 = alternative voice.
+        const voice = event.key === 'F5' ? this.humanVoice : '';
         this.speakSelectedText(this.selectedText, voice);
       }
     }

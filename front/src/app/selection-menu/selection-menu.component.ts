@@ -70,7 +70,9 @@ export class SelectionMenuComponent {
       this.menuY = rect.bottom + margin;
     }
     // Clamp horizontally so the menu stays inside the viewport.
-    const approxMenuWidth = 320;
+    // Estimate is generous because the menu now has 3 buttons including the
+    // long "Alternative voice" label, plus material icons.
+    const approxMenuWidth = 460;
     this.menuX = Math.min(
       Math.max(margin, rect.left),
       Math.max(margin, window.innerWidth - approxMenuWidth - margin),
@@ -98,9 +100,12 @@ export class SelectionMenuComponent {
    */
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
-    // Don't dismiss when clicking inside the translation popover itself.
+    // Don't dismiss when clicking inside the menu itself or inside the
+    // translation popover — otherwise the very click that asked for the
+    // translation would close the popover before it renders.
     const target = event.target as HTMLElement | null;
-    if (target && target.closest('.selection-translation')) {
+    if (target && (target.closest('.selection-translation') ||
+                   target.closest('.selection-menu'))) {
       return;
     }
     if (this.showTranslation) {
@@ -142,7 +147,13 @@ export class SelectionMenuComponent {
     }
     // Anchor the popover to the same coords as the menu, but slightly below
     // it so they don't overlap if the user clicked the menu's Translate.
-    this.translationX = this.menuX;
+    // Clamp horizontally too (popover is narrower).
+    const approxPopoverWidth = 380;
+    const margin = 6;
+    this.translationX = Math.min(
+      Math.max(margin, this.menuX),
+      Math.max(margin, window.innerWidth - approxPopoverWidth - margin),
+    );
     this.translationY = this.menuY + 44;
     this.translationLoading = true;
     this.showTranslation = true;

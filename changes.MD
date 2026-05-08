@@ -420,3 +420,20 @@ Google Cloud Translation API which charges per character).
 3. A small popover appears next to the selection with the Spanish
    translation. Click anywhere outside, press **Esc**, or click the × to
    dismiss.
+
+---
+
+# Tweaks: F5 shortcut + popover fixes
+
+- **Alternative-voice shortcut changed from `Shift+F4` to `F5`** across all
+  pages (conversation, dictionary, notes, review, settings label, and the
+  selection menu). `F5`'s default browser-reload action is suppressed via
+  `preventDefault()`.
+- Selection menu's right-edge clipping fixed: the width estimate used to
+  clamp the menu inside the viewport was bumped from 320 px to 460 px (the
+  menu now has 3 buttons including the long "Alternative voice" label).
+- Translation popover no longer dismisses on the same click that opens it.
+  The `document:click` handler now ignores clicks inside `.selection-menu`
+  and `.selection-translation`.
+- The translation popover is also clamped horizontally so it stays inside
+  the viewport when the selection is on the right edge.

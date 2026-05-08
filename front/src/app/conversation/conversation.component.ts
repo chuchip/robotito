@@ -777,15 +777,14 @@ export class ConversationComponent {
   }
 
   speakOnF4(event: KeyboardEvent, text: string) {
-      if (event.key === 'F4') {
+      if (event.key === 'F4' || event.key === 'F5') {
         // Reset the text+voice cache so the textarea always re-fetches; the
         // text changes as the user types, but reusing the cache could
         // otherwise replay stale audio for the same content.
         this.textSpeakAloud=""
         event.preventDefault();
-        // Consistent convention across the app: F4 = primary voice,
-        // Shift+F4 = alternative (human) voice.
-        if (event.shiftKey) {
+        // Convention across the app: F4 = primary voice, F5 = alternative.
+        if (event.key === 'F5') {
           this.speakAloud(text, this.human_voice);
         } else {
           this.speakAloud(text);
@@ -840,12 +839,12 @@ export class ConversationComponent {
       event.preventDefault();
       this.toggleRecording()
     }    
-    if (event.key === 'F4'  && activeElement.tagName !== 'TEXTAREA') {      
-      event.preventDefault(); 
+    if ((event.key === 'F4' || event.key === 'F5') && activeElement.tagName !== 'TEXTAREA') {
+      event.preventDefault();
       // this.textSpeakAloud=""
       if (this.selectedText.trim()!='')
-        if (event.shiftKey) {
-          this.speakAloud(this.selectedText,this.human_voice); 
+        if (event.key === 'F5') {
+          this.speakAloud(this.selectedText,this.human_voice);
         } else {
           this.speakAloud(this.selectedText);
         }
