@@ -191,3 +191,149 @@ Front-end:
 
 Documentation:
 - `changes.MD` (this file)
+
+---
+
+# Conversation list: notes/dictionary indicators + filter
+
+Adds visual indicators and a filter to the conversation history side panel:
+
+- Each conversation row now shows a small icon when it has saved **notes**
+  (amber `note_alt`) and/or **dictionary words** (sky-blue `library_books`).
+- Two new toggle buttons sit next to "Review words" in the side panel: filter
+  to only show conversations that have notes, that have dictionary words, or
+  both (AND when both are active).
+
+## Backend
+
+### `back/src/persistence.py`
+- `conversation_get_list(user)` SQL extended with two derived booleans:
+  - `has_notes` — true when `conversation_notes` row exists with non-empty text.
+  - `has_words` — true when at least one `dictionary_words` row exists.
+- Returned dicts now include `hasNotes` and `hasWords`.
+
+No new endpoint — same `GET /api/conversation/user/<user>` route, now richer.
+
+## Front-end
+
+### `front/src/app/model/conversationHistory.dto.ts`
+- DTO gains optional `hasNotes` and `hasWords` flags.
+
+### `front/src/app/conversation-history/conversation-history.component.ts`
+- New component state `filterNotes`, `filterWords`.
+- New computed getter `filteredConversations` applied to the list.
+- `toggleFilterNotes()` / `toggleFilterWords()` handlers.
+
+### `front/src/app/conversation-history/conversation-history.component.html`
+- Two new toggle buttons (`history__filter`) inside `.history__tools`,
+  each sporting the corresponding material icon and an `aria-pressed` state.
+- Each conversation row renders a `history__badges` span with up to two
+  badges (`note_alt`, `library_books`) when the corresponding flag is true.
+- The list iterates `filteredConversations` instead of `conversations`.
+- New empty-state message when filters hide every entry.
+
+### `front/src/app/conversation-history/conversation-history.component.scss`
+- New rules: `.history__filters`, `.history__filter`,
+  `.history__filter--active`, `.history__badges`, `.history__badge`,
+  `.history__badge--notes`, `.history__badge--words`. Visual style matches
+  the existing `.history__tool` look.
+
+## Behaviour
+
+- The conversation list is already reloaded when the sidebar is opened
+  (`getConversationsHistory()` in `conversation.component.ts`), so badges
+  refresh naturally after adding/removing notes or dictionary words — no
+  extra wiring required.
+- Filters are local to the component (not persisted). Closing/re-opening the
+  sidebar resets them, which keeps the UI predictable.
+
+---
+
+# Gemini model: env-driven, default `gemini-3.1-flash-lite`
+
+## Why
+
+Gemini 3 is out. `gemini-3.1-flash-lite` is **stable**, cheaper than
+`gemini-2.5-flash` ($0.25 / $1.50 per 1M in/out vs $0.30 / $2.50), and Google
+markets it as "frontier-class". `gemini-3-flash-preview` is more capable but
+still preview — handy to A/B test for memory extraction / quiz grading.
+
+## Changes
+
+### `back/src/robotito_ai.py`
+- New env var `GEMINI_MODEL` overrides the model id used for both the chat
+  client and the structured-output LLM.
+- Default changed from `gemini-2.5-flash` → `gemini-3.1-flash-lite`.
+- Startup log now prints the resolved model name, e.g.
+  `Model API: gemini (gemini-3.1-flash-lite)`.
+
+```python
+gemini_model = os.getenv("GEMINI_MODEL") or "gemini-3.1-flash-lite"
+client_text = ai_providers.configGeminiAI(gemini_model)
+llm_text    = ai_providers.configGeminiAI(gemini_model, 0.0)
+```
+
+## How to test `gemini-3-flash-preview`
+
+```bash
+export GEMINI_MODEL=gemini-3-flash-preview
+python src/flask_server.py
+```
+
+To switch back:
+```bash
+export GEMINI_MODEL=gemini-2.5-flash    # previous default
+# or unset to use the new default
+unset GEMINI_MODEL
+```
+
+No code changes; just restart the back-end.
+
+---
+
+# Smart-model split (`GEMINI_MODEL_SMART`)
+
+Lets you run the heavy structured chains on a more capable model while keeping
+chat streaming and the cheap chains on the fast model. Memory extraction and
+vocabulary review grading benefit most from a stronger model; everything else
+doesn't.
+
+## Changes
+
+### `back/src/ai_chains.py`
+- `build_chains(llm_text, llm_smart=None)`. The `review` and `memory` chains
+  use `llm_smart`; the rest stay on `llm_text`. If `llm_smart` is omitted,
+  both fall back to `llm_text` (no behaviour change).
+
+### `back/src/robotito_ai.py`
+- New env var `GEMINI_MODEL_SMART`. When set and different from
+  `GEMINI_MODEL`, a second `ChatGoogleGenerativeAI` client is built and passed
+  to `build_chains` as `llm_smart`.
+- Startup log now reports both, e.g.
+  `Model API: gemini (gemini-3.1-flash-lite + smart=gemini-3-flash-preview)`.
+
+## How to use
+
+Default (single model, cheapest):
+```bash
+# unset both — uses gemini-3.1-flash-lite for everything
+```
+
+Test `gemini-3-flash-preview` only on memory + review:
+```bash
+export GEMINI_MODEL=gemini-3.1-flash-lite
+export GEMINI_MODEL_SMART=gemini-3-flash-preview
+```
+
+Test the preview everywhere:
+```bash
+export GEMINI_MODEL=gemini-3-flash-preview
+unset GEMINI_MODEL_SMART
+```
+
+## Cost note
+
+Memory consolidation runs every `MEMORY_CONSOLIDATE_EVERY` user turns
+(default 20) plus once on logout. Review grading runs only when the user takes
+a quiz. So `GEMINI_MODEL_SMART=gemini-3-flash-preview` adds maybe a handful of
+calls per session — negligible vs the per-turn chat traffic.

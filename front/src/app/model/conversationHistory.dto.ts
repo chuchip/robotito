@@ -4,4 +4,6 @@ export interface conversationHistoryDTO {
     idContext: string;
     name: string;
     initial_time: string;final_date: string;
+    hasNotes?: boolean;
+    hasWords?: boolean;
   }

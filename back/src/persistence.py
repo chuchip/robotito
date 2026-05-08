@@ -424,13 +424,20 @@ async def conversation_get_by_id(id):
     return result
 async def conversation_get_list(user):
     sql = """
-        select c.id,c.user_id,c.context_id,c.name,c.initial_time,c.final_date
-         from conversation as c where c.user_id = :id  order by c.final_date desc
+        select c.id, c.user_id, c.context_id, c.name, c.initial_time, c.final_date,
+               (n.conversation_id IS NOT NULL) as has_notes,
+               EXISTS (SELECT 1 FROM dictionary_words w WHERE w.conversation_id = c.id) as has_words
+         from conversation as c
+         left join conversation_notes as n
+           on n.conversation_id = c.id and COALESCE(NULLIF(TRIM(n.notes), ''), NULL) IS NOT NULL
+         where c.user_id = :id
+         order by c.final_date desc
     """
 
     data=await g.connection.fetch_all(sql,{"id":user})
     result = [{"id":row['id'] , "user": row['user_id'], "idContext": row['context_id'], "name": row['name'],
-            "initial_time": row['initial_time'],"final_date":row['final_date']} for row in data]
+            "initial_time": row['initial_time'],"final_date":row['final_date'],
+            "hasNotes": bool(row['has_notes']), "hasWords": bool(row['has_words'])} for row in data]
     
     return result
 

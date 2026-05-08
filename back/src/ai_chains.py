@@ -137,10 +137,16 @@ def _build_chain(template_str: str, input_variables: list, parser: PydanticOutpu
     return prompt | llm | parser
 
 
-def build_chains(llm_text) -> dict:
-    """Create the four chains used by the app. Returns dict with keys:
-    'resume', 'detail', 'rating', 'translation'.
+def build_chains(llm_text, llm_smart=None) -> dict:
+    """Create the chains used by the app.
+
+    `llm_text` powers the cheap, high-volume chains (chat summary, rating,
+    translation, init summary).
+    `llm_smart` (optional) powers the heavier reasoning chains: vocabulary
+    review grading and long-term memory extraction. Falls back to `llm_text`
+    when not provided.
     """
+    smart = llm_smart or llm_text
     return {
         "resume": _build_chain(
             _prompt_resume_str, ["sentences_input"],
@@ -160,10 +166,10 @@ def build_chains(llm_text) -> dict:
         ),
         "review": _build_chain(
             _prompt_review_str, ["direction", "items_input"],
-            PydanticOutputParser(pydantic_object=ReviewResult), llm_text,
+            PydanticOutputParser(pydantic_object=ReviewResult), smart,
         ),
         "memory": _build_chain(
             _prompt_memory_str, ["existing_profile", "existing_facts", "transcript"],
-            PydanticOutputParser(pydantic_object=MemoryExtraction), llm_text,
+            PydanticOutputParser(pydantic_object=MemoryExtraction), smart,
         ),
     }

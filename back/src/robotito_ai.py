@@ -80,6 +80,9 @@ max_history = int(os.getenv("MAX_HISTORY") or 12)
 max_length_answers = memory.get_max_length_answer()
 
 model_api = (os.getenv("MODEL_API") or "gemini").lower()
+llm_smart = None
+gemini_model = None
+gemini_smart_model = None
 if model_api == "openai":
     client_text = ai_providers.configOpenAI()
     llm_text = ai_providers.configOpenAI(temperature=0.0)
@@ -88,8 +91,20 @@ elif model_api == "ollama":
     llm_text = ai_providers.configOllamaAI("gemma3", "http://172.24.144.1:11434", 0.0)
 else:
     model_api = "gemini"
-    client_text = ai_providers.configGeminiAI()
-    llm_text = ai_providers.configGeminiAI("gemini-2.5-flash", 0.0)
+    # Override the Gemini model with the GEMINI_MODEL env var. Defaults to the
+    # current best price/performance "Flash-Lite" tier; set to e.g.
+    # "gemini-3-flash-preview" or "gemini-2.5-flash" to A/B test.
+    gemini_model = os.getenv("GEMINI_MODEL") or "gemini-3.1-flash-lite"
+    # Optional "smart" model used only for heavy structured chains (memory
+    # extraction, vocabulary review grading). Costs more per call but runs
+    # rarely. Defaults to the same as GEMINI_MODEL — set GEMINI_MODEL_SMART
+    # to e.g. "gemini-3-flash-preview" or "gemini-3.1-pro-preview" to upgrade
+    # only those chains while keeping chat on the cheap fast model.
+    gemini_smart_model = os.getenv("GEMINI_MODEL_SMART") or gemini_model
+    client_text = ai_providers.configGeminiAI(gemini_model)
+    llm_text = ai_providers.configGeminiAI(gemini_model, 0.0)
+    if gemini_smart_model != gemini_model:
+        llm_smart = ai_providers.configGeminiAI(gemini_smart_model, 0.0)
 
 
 # ---------------------------------------------------------------------------
@@ -124,7 +139,7 @@ else:
 # ---------------------------------------------------------------------------
 # Wire up services
 # ---------------------------------------------------------------------------
-chains = ai_chains.build_chains(llm_text)
+chains = ai_chains.build_chains(llm_text, llm_smart)
 ai_service.init(client_text, llm_text, model_api, chains, max_history, logger_)
 audio_service.init(stt, tts, local_whisper, logger_)
 
@@ -148,8 +163,14 @@ set_language = audio_service.set_language
 
 logger_.info("--------------------------------")
 logger_.info("Initializing Robotito ...")
+_model_label = model_api
+if model_api == "gemini":
+    if gemini_smart_model and gemini_smart_model != gemini_model:
+        _model_label = f"gemini ({gemini_model} + smart={gemini_smart_model})"
+    else:
+        _model_label = f"gemini ({gemini_model})"
 logger_.info(
-    f"Model API: {model_api}  STT: {stt} TTS: {tts} . "
+    f"Model API: {_model_label}  STT: {stt} TTS: {tts} . "
     f"Max Lenght Answers: {max_length_answers} Max History: {max_history}"
 )
 logger_.info("--------------------------------")

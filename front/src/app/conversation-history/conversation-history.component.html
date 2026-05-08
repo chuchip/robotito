@@ -36,6 +36,25 @@
       <span class="material-icons" aria-hidden="true">quiz</span>
       <span class="history__tool-label">Review words</span>
     </button>
+
+    <div class="history__filters" role="group" aria-label="Filter conversations">
+      <button type="button" class="history__filter"
+        [class.history__filter--active]="filterNotes"
+        (click)="toggleFilterNotes()"
+        [attr.aria-pressed]="filterNotes"
+        matTooltip="Only conversations with notes"
+        matTooltipPosition="right">
+        <span class="material-icons" aria-hidden="true">note_alt</span>
+      </button>
+      <button type="button" class="history__filter"
+        [class.history__filter--active]="filterWords"
+        (click)="toggleFilterWords()"
+        [attr.aria-pressed]="filterWords"
+        matTooltip="Only conversations with dictionary words"
+        matTooltipPosition="right">
+        <span class="material-icons" aria-hidden="true">library_books</span>
+      </button>
+    </div>
   </div>
 
   <!-- Compact icon-only entry when the side panel is collapsed. -->
@@ -49,7 +68,7 @@
   </button>
 
   <ul class="history__list" *ngIf="expanded" role="list">
-    <li *ngFor="let line of conversations; trackBy: trackById"
+    <li *ngFor="let line of filteredConversations; trackBy: trackById"
         class="history__item"
         [class.history__item--active]="line.id === activeId"
         role="listitem">
@@ -66,6 +85,16 @@
               {{ getFormattedDate(line.final_date) | date: 'dd/MMM HH:mm' }}
             </span>
           </span>
+          <span class="history__badges" aria-hidden="true">
+            <span *ngIf="line.hasNotes" class="history__badge history__badge--notes"
+              matTooltip="Has notes" matTooltipPosition="left">
+              <span class="material-icons">note_alt</span>
+            </span>
+            <span *ngIf="line.hasWords" class="history__badge history__badge--words"
+              matTooltip="Has dictionary words" matTooltipPosition="left">
+              <span class="material-icons">library_books</span>
+            </span>
+          </span>
         </button>
 
         <button type="button" class="history__remove"
@@ -77,6 +106,9 @@
       </div>
     </li>
 
+    <li *ngIf="filteredConversations.length === 0 && conversations.length > 0" class="history__empty">
+      No conversations match the current filter.
+    </li>
     <li *ngIf="conversations.length === 0" class="history__empty">
       No conversations yet. Start chatting!
     </li>

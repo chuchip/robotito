@@ -31,6 +31,22 @@ export class ConversationHistoryComponent {
   @Output() clear = new EventEmitter<void>();
   @Output() review = new EventEmitter<void>();
 
+  // Filter toggles. When both are off, all conversations are shown.
+  // When both are on, only conversations that have BOTH notes and dictionary words show.
+  filterNotes = false;
+  filterWords = false;
+
+  get filteredConversations(): conversationHistoryDTO[] {
+    if (!this.filterNotes && !this.filterWords) return this.conversations;
+    return this.conversations.filter(c =>
+      (!this.filterNotes || !!c.hasNotes) &&
+      (!this.filterWords || !!c.hasWords)
+    );
+  }
+
+  toggleFilterNotes() { this.filterNotes = !this.filterNotes; }
+  toggleFilterWords() { this.filterWords = !this.filterWords; }
+
   onToggle() {
     this.toggle.emit();
   }

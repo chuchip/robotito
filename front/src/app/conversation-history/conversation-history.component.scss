@@ -281,3 +281,68 @@
     min-width: 220px;
   }
 }
+
+/* Filter toggle buttons next to the "Review words" tool. */
+.history__filters {
+  display: flex;
+  gap: 6px;
+  padding: 4px 0 0 0;
+}
+
+.history__filter {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  border: 1px solid var(--color-border, #e2e8f0);
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--color-text-muted, #64748b);
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.history__filter .material-icons { font-size: 16px; }
+
+.history__filter:hover {
+  border-color: var(--color-primary, #6366f1);
+  color: var(--color-primary, #6366f1);
+}
+
+.history__filter--active {
+  background: var(--color-primary, #6366f1);
+  border-color: var(--color-primary, #6366f1);
+  color: #ffffff;
+}
+
+.history__filter:focus-visible {
+  outline: 2px solid var(--color-primary, #6366f1);
+  outline-offset: 2px;
+}
+
+/* Badges shown on each conversation row indicating notes/dictionary content. */
+.history__badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: 6px;
+}
+
+.history__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+}
+
+.history__badge .material-icons {
+  font-size: 14px;
+  color: inherit;
+}
+
+.history__badge--notes { color: #f59e0b; }   /* amber for notes */
+.history__badge--words { color: #0ea5e9; }   /* sky for dictionary */
