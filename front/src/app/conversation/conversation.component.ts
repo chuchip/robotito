@@ -749,7 +749,9 @@ export class ConversationComponent {
     if (this.reviewWindow && !this.reviewWindow.closed) {
       this.reviewWindow.location.href = `/review`;
     }
+    this.inputText = ""
     this.isLoading=false
+    setTimeout(() => this.resetInputHeight(), 0)
   }
   async hystoryDelete(event: Event, id: string)
   {
