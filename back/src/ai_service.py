@@ -65,7 +65,7 @@ async def call_llm(state):
     question = state["message"]
     if question.strip() != "":
         swRemember = False
-        if rememberText != "":
+        if context is not None and rememberText != "":
             if context.hasToRemember():
                 question += f". {context.getRememberText()}"
                 swRemember = True
@@ -74,9 +74,13 @@ async def call_llm(state):
             msgs = chat_history[_max_history * -1:]
         else:
             msgs = chat_history
-        context_text = context.getText()
+        # Fall back to an empty system prompt if no context has been selected
+        # yet (e.g. very first message of a brand-new session). Long-term
+        # memory and the URL context block are still appended below.
+        context_text = context.getText() if context is not None else ""
         if max_length_answers != 0:
-            context_text = f"{limit_words}. {context.getText()}"
+            base_text = context.getText() if context is not None else ""
+            context_text = f"{limit_words}. {base_text}"
             insert_pos = len(msgs) - 4
             if insert_pos > 0:
                 msgs.insert(insert_pos, HumanMessage(f"Remember: {limit_words}"))
