@@ -1,4 +1,5 @@
 pip show hypercorn quart quart-cors h11 h2 hpack hyperframe wsproto priority | grep -E "Name|Version"
+
 pip check
 
 While you're at it, try this exact known-working combo (these are the versions in your original requirements.txt):
@@ -13,3 +14,69 @@ pip install --force-reinstall \
   "priority==2.0.0" \
   "quart==0.20.0" \
   "quart-cors==0.8.0"
+Name: Hypercorn
+Version: 0.17.3
+Name: Quart
+Version: 0.20.0
+Name: quart-cors
+Version: 0.8.0
+Name: h11
+Version: 0.14.0
+Name: h2
+Version: 4.2.0
+Name: hpack
+Version: 4.1.0
+Name: hyperframe
+Version: 6.1.0
+Name: wsproto
+Version: 1.2.0
+Name: priority
+Version: 2.0.0
+
+Traceback (most recent call last):
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/hypercorn/asyncio/task_group.py", line 27, in _handle
+    await app(scope, receive, send, sync_spawn, call_soon)
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/hypercorn/app_wrappers.py", line 34, in __call__
+    await self.app(scope, receive, send)
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/app.py", line 1735, in __call__
+    await self.asgi_app(scope, receive, send)
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/app.py", line 1761, in asgi_app
+    await asgi_handler(receive, send)
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 60, in __call__
+    raise_task_exceptions(done)
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/utils.py", line 186, in raise_task_exceptions
+    raise task.exception()
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 117, in handle_request
+    await asyncio.wait_for(self._send_response(send, response), timeout=timeout)
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/asyncio/tasks.py", line 520, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 148, in _send_response
+    await send(
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/hypercorn/protocol/http_stream.py", line 193, in app_send
+    Body(stream_id=self.stream_id, data=bytes(message.get("body", b"")))
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'dict' object cannot be interpreted as an integer
+2026-05-08 12:18:33,956 - ERROR - Error in ASGI Framework
+Traceback (most recent call last):
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/hypercorn/asyncio/task_group.py", line 27, in _handle
+    await app(scope, receive, send, sync_spawn, call_soon)
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/hypercorn/app_wrappers.py", line 34, in __call__
+    await self.app(scope, receive, send)
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/app.py", line 1735, in __call__
+    await self.asgi_app(scope, receive, send)
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/app.py", line 1761, in asgi_app
+    await asgi_handler(receive, send)
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 60, in __call__
+    raise_task_exceptions(done)
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/utils.py", line 186, in raise_task_exceptions
+    raise task.exception()
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 117, in handle_request
+    await asyncio.wait_for(self._send_response(send, response), timeout=timeout)
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/asyncio/tasks.py", line 520, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/quart/asgi.py", line 148, in _send_response
+    await send(
+  File "/home/chuchip/anaconda3/envs/robotito2/lib/python3.12/site-packages/hypercorn/protocol/http_stream.py", line 193, in app_send
+    Body(stream_id=self.stream_id, data=bytes(message.get("body", b"")))
