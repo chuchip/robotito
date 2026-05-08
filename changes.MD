@@ -370,3 +370,48 @@ Mirrors the dictionary page's "select + speak" UX.
 3. Either click the floating speak button from the selection menu, or press
    **F4** (primary voice) / **Shift+F4** (alternative voice).
 4. **Esc** stops playback.
+
+---
+
+# Translate selected text
+
+Adds a "Translate" button to the floating selection menu. Uses the existing
+Gemini LLM (no extra API key, ~$0.66/year at typical usage — cheaper than
+Google Cloud Translation API which charges per character).
+
+## Backend
+
+### `back/src/ai_service.py`
+- New `translate_text(text, target_language='Spanish')` — calls
+  `call_llm_internal` with a one-shot prompt; returns the translation as a
+  plain string.
+
+### `back/src/robotito_ai.py`
+- Re-exports `translate_text` for `import robotito_ai as ai`.
+
+### `back/src/api/principal.py`
+- New endpoint `POST /api/translate` taking `{text, target?}` and returning
+  `{translation, target}`.
+
+## Front-end
+
+### `front/src/app/services/api-back.service.ts`
+- New `translatePhrase(text, target='Spanish')` calling `POST /api/translate`.
+
+### `front/src/app/selection-menu/`
+- New `(translate)` event emitter.
+- New "Translate" button in the menu (material icon `translate`).
+
+### `front/src/app/{conversation,notes,dictionary,review}/...`
+- Each page binds `(translate)="onSelectionMenuTranslate($event)"` on
+  `<app-selection-menu>`.
+- Each component implements `onSelectionMenuTranslate(payload)`:
+  shows "Translating...", calls `back.translatePhrase`, displays the
+  result in the page's existing status banner (`statusMessage` /
+  `responseBack`) prefixed with 🇪🇸 for ~8 seconds.
+
+## How to use
+
+1. Select any text inside the conversation, dictionary, notes, or review page.
+2. Click the **Translate** button in the floating selection menu.
+3. The Spanish translation appears in the page's status banner.

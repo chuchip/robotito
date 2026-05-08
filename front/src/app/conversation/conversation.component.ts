@@ -903,6 +903,22 @@ export class ConversationComponent {
       this.speakAloud(text);
     }
   }
+
+  async onSelectionMenuTranslate(payload: { text: string }) {
+    const text = payload.text.trim();
+    if (text === '') return;
+    this.responseBack = 'Translating...';
+    try {
+      const tr = await this.back.translatePhrase(text);
+      this.responseBack = tr ? `🇪🇸 ${tr}` : 'No translation';
+      setTimeout(() => {
+        if (this.responseBack.startsWith('🇪🇸')) this.responseBack = '';
+      }, 8000);
+    } catch {
+      this.responseBack = 'Translate error';
+      setTimeout(() => { this.responseBack = ''; }, 3000);
+    }
+  }
   async sumary_conversation()
   {
     this.clicksWindow=0

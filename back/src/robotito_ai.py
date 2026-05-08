@@ -152,6 +152,7 @@ save_msg = ai_service.save_msg
 restore_history = ai_service.restore_history
 call_llm_translate = ai_service.call_llm_translate
 call_llm_review = ai_service.call_llm_review
+translate_text = ai_service.translate_text
 consolidate_memory = ai_service.consolidate_memory
 load_long_term_memory = ai_service.load_long_term_memory
 schedule_consolidation_if_due = ai_service.schedule_consolidation_if_due

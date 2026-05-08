@@ -24,6 +24,8 @@ export class SelectionMenuComponent {
   /** Fired when the user clicks one of the menu buttons. `alt` is true
    *  when the user picked the alternative-voice action (Shift+F4). */
   @Output() speak = new EventEmitter<{ text: string; alt: boolean }>();
+  /** Fired when the user clicks the Translate button. */
+  @Output() translate = new EventEmitter<{ text: string }>();
 
   showMenu = false;
   menuX = 0;
@@ -109,6 +111,16 @@ export class SelectionMenuComponent {
       return;
     }
     this.speak.emit({ text, alt });
+    this.showMenu = false;
+  }
+
+  onTranslate() {
+    const text = this.selectedText.trim();
+    if (text === '') {
+      this.showMenu = false;
+      return;
+    }
+    this.translate.emit({ text });
     this.showMenu = false;
   }
 }

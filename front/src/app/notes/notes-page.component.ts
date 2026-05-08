@@ -108,6 +108,18 @@ export class NotesPageComponent implements OnInit {
     this.speakSelectedText(payload.text, voice);
   }
 
+  async onSelectionMenuTranslate(payload: { text: string }) {
+    this.statusMessage = 'Translating...';
+    try {
+      const tr = await this.back.translatePhrase(payload.text);
+      this.statusMessage = tr ? `🇪🇸 ${tr}` : 'No translation';
+      // Stays visible long enough to read; click anywhere to dismiss.
+      setTimeout(() => { if (this.statusMessage.startsWith('🇪🇸')) this.statusMessage = ''; }, 8000);
+    } catch {
+      this.statusMessage = 'Translate error';
+    }
+  }
+
   async speakSelectedText(text: string, voice: string = '') {
     try {
       const response = await this.back.text_to_sound(text, voice);

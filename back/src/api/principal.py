@@ -98,6 +98,20 @@ async def get_last_user():
   return jsonify(data)
 
 
+@principal_bp.route('/translate', methods=['POST'])
+async def translate_endpoint():
+  """Translate a free-form text snippet using the LLM. Used by the floating
+  selection menu in the conversation, dictionary, notes and memory pages."""
+  import robotito_ai as ai
+  data = await request.get_json() or {}
+  text = (data.get('text') or '').strip()
+  target = (data.get('target') or 'Spanish').strip()
+  if not text:
+    return jsonify({'translation': ''})
+  translation = await ai.translate_text(text, target)
+  return jsonify({'translation': translation, 'target': target})
+
+
 @principal_bp.route('/words', methods=['GET'])
 async def get_user_words():
   """Return every word saved by the current user across all their conversations."""

@@ -207,6 +207,29 @@ async def call_llm_translate(word: str):
         )
 
 
+async def translate_text(text: str, target_language: str = "Spanish") -> str:
+    """Translate a free-form snippet of text to `target_language`.
+
+    Uses the cheap chat LLM directly (no structured output parser) because
+    the answer is a single short string. Returns the translation, or an
+    empty string on error.
+    """
+    text = (text or "").strip()
+    if not text:
+        return ""
+    prompt = (
+        f"Translate the following text to {target_language}. "
+        "Return ONLY the translation, no quotes, no commentary, no original. "
+        "Keep the tone and register (formal/informal) of the source.\n\n"
+        f"Text:\n{text}"
+    )
+    try:
+        return _chunk_to_text(await call_llm_internal(prompt))
+    except Exception as e:
+        _logger.error(f"translate_text error: {e}")
+        return ""
+
+
 async def call_llm_review(items: list, direction: str):
     """Evaluate a list of vocabulary quiz answers using the LLM.
 

@@ -435,6 +435,19 @@ async getLastUser(): Promise<any> {
     }
   }
 
+  /** Translate a free-form snippet of text using the LLM. */
+  async translatePhrase(text: string, target: string = 'Spanish'): Promise<string> {
+    try {
+      const result: any = await firstValueFrom(
+        this.http.post(`${this.backendUrl}/translate`, { text, target })
+      );
+      return result?.translation ?? '';
+    } catch (error) {
+      console.error('translatePhrase failed!:', error);
+      throw error;
+    }
+  }
+
   // Shared audio playback utility
   async playAudioFromResponse(audioBlob: Blob, playbackSpeed: number = 1): Promise<HTMLAudioElement> {
     const audioUrl = URL.createObjectURL(audioBlob);
