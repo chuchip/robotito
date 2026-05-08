@@ -337,3 +337,36 @@ Memory consolidation runs every `MEMORY_CONSOLIDATE_EVERY` user turns
 (default 20) plus once on logout. Review grading runs only when the user takes
 a quiz. So `GEMINI_MODEL_SMART=gemini-3-flash-preview` adds maybe a handful of
 calls per session — negligible vs the per-turn chat traffic.
+
+---
+
+# Notes page: speak selected text aloud
+
+Mirrors the dictionary page's "select + speak" UX.
+
+## Changes
+
+### `front/src/app/notes/notes-page.component.ts`
+- Imports `HostListener` and `SelectionMenuComponent`.
+- New state: `audio`, `selectedText`, `statusMessage`, `humanVoice`.
+- Loads the user's stored alternative voice via `getLastUser()` in `ngOnInit`.
+- New methods: `handleKeydown` (F4 / Shift+F4 / Esc), `getSelectedText`,
+  `stopAudio`, `onSelectionMenuSpeak`, `speakSelectedText` — copied/adapted
+  from `dictionary-page.component.ts`.
+
+### `front/src/app/notes/notes.component.html`
+- Adds `<app-selection-menu>` at the top so the floating "speak" button
+  appears when text is selected.
+- Adds a `status-message` span in the header for "Playing..." feedback.
+- Updates the textarea placeholder to advertise the F4 shortcut.
+
+### `front/src/app/notes/notes.component.scss`
+- Adds `.status-message` colour to match the existing `.save-message`.
+
+## How to use
+
+1. Open a conversation's notes (Notes button or `/notes/:id`).
+2. Select any text inside the editor or the preview.
+3. Either click the floating speak button from the selection menu, or press
+   **F4** (primary voice) / **Shift+F4** (alternative voice).
+4. **Esc** stops playback.

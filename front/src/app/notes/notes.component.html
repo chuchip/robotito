@@ -1,3 +1,4 @@
+<app-selection-menu (speak)="onSelectionMenuSpeak($event)"></app-selection-menu>
 <div class="page">
   <div class="header">
     <span class="title">📝 Conversation Notes</span>
@@ -9,11 +10,12 @@
         {{ isSaving ? 'Saving...' : 'Save' }}
       </button>
       <span class="save-message">{{ saveMessage }}</span>
+      <span class="status-message" *ngIf="statusMessage">{{ statusMessage }}</span>
     </div>
   </div>
   <div class="body">
     <textarea *ngIf="!isPreview" class="notes-textarea" [(ngModel)]="notes"
-      placeholder="Write your notes in Markdown format...">
+      placeholder="Write your notes in Markdown format. Select any text and press F4 to read it aloud (Shift+F4 for the alternative voice).">
         </textarea>
     <div *ngIf="isPreview" class="notes-preview" [innerHTML]="renderedNotes">
     </div>
