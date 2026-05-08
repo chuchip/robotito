@@ -904,21 +904,10 @@ export class ConversationComponent {
     }
   }
 
-  async onSelectionMenuTranslate(payload: { text: string }) {
-    const text = payload.text.trim();
-    if (text === '') return;
-    this.responseBack = 'Translating...';
-    try {
-      const tr = await this.back.translatePhrase(text);
-      this.responseBack = tr ? `🇪🇸 ${tr}` : 'No translation';
-      setTimeout(() => {
-        if (this.responseBack.startsWith('🇪🇸')) this.responseBack = '';
-      }, 8000);
-    } catch {
-      this.responseBack = 'Translate error';
-      setTimeout(() => { this.responseBack = ''; }, 3000);
-    }
-  }
+  /** Bound as a property so `this` is preserved when the selection menu
+   *  invokes it. The menu shows the result inline in a popover. */
+  translateSelection = (text: string): Promise<string> =>
+    this.back.translatePhrase(text);
   async sumary_conversation()
   {
     this.clicksWindow=0

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
@@ -24,13 +24,23 @@ export class SelectionMenuComponent {
   /** Fired when the user clicks one of the menu buttons. `alt` is true
    *  when the user picked the alternative-voice action (Shift+F4). */
   @Output() speak = new EventEmitter<{ text: string; alt: boolean }>();
-  /** Fired when the user clicks the Translate button. */
-  @Output() translate = new EventEmitter<{ text: string }>();
+  /** Optional translate function. When provided, the component calls it
+   *  directly and shows the result in a small popover next to the
+   *  selection — parent doesn't need to handle anything. */
+  @Input() translateFn?: (text: string) => Promise<string>;
 
   showMenu = false;
   menuX = 0;
   menuY = 0;
   selectedText = '';
+
+  // Translation popover state. Lives in the same component so the popover
+  // can be anchored to the selection rect we already track.
+  showTranslation = false;
+  translationText = '';
+  translationLoading = false;
+  translationX = 0;
+  translationY = 0;
 
   /** Re-evaluate the current document selection and toggle the menu. */
   private updateFromSelection() {
@@ -88,6 +98,15 @@ export class SelectionMenuComponent {
    */
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
+    // Don't dismiss when clicking inside the translation popover itself.
+    const target = event.target as HTMLElement | null;
+    if (target && target.closest('.selection-translation')) {
+      return;
+    }
+    if (this.showTranslation) {
+      this.showTranslation = false;
+      this.translationText = '';
+    }
     if (!this.showMenu) return;
     const sel = window.getSelection();
     const stillSelected = sel ? sel.toString().trim() : '';
@@ -101,6 +120,7 @@ export class SelectionMenuComponent {
   onKeyDown(event: KeyboardEvent) {
     if (event.key === 'Escape') {
       this.showMenu = false;
+      this.showTranslation = false;
     }
   }
 
@@ -114,13 +134,32 @@ export class SelectionMenuComponent {
     this.showMenu = false;
   }
 
-  onTranslate() {
+  async onTranslate() {
     const text = this.selectedText.trim();
-    if (text === '') {
+    if (text === '' || !this.translateFn) {
       this.showMenu = false;
       return;
     }
-    this.translate.emit({ text });
+    // Anchor the popover to the same coords as the menu, but slightly below
+    // it so they don't overlap if the user clicked the menu's Translate.
+    this.translationX = this.menuX;
+    this.translationY = this.menuY + 44;
+    this.translationLoading = true;
+    this.showTranslation = true;
+    this.translationText = '';
     this.showMenu = false;
+    try {
+      const result = await this.translateFn(text);
+      this.translationText = result || '(no translation)';
+    } catch {
+      this.translationText = 'Translate error';
+    } finally {
+      this.translationLoading = false;
+    }
+  }
+
+  closeTranslation() {
+    this.showTranslation = false;
+    this.translationText = '';
   }
 }

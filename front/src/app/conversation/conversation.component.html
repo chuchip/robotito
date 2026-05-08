@@ -14,7 +14,7 @@
 <!-- Floating contextual menu shown when the user selects text. The component
      listens to its own document events, so we just have to react to its
      (speak) output. -->
-<app-selection-menu (speak)="onSelectionMenuSpeak($event)" (translate)="onSelectionMenuTranslate($event)"></app-selection-menu>
+<app-selection-menu (speak)="onSelectionMenuSpeak($event)" [translateFn]="translateSelection"></app-selection-menu>
 
 <div class="system" *ngIf="responseBack!=''" role="status" aria-live="polite">{{responseBack}}</div>
 <div class="page">

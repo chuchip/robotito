@@ -399,19 +399,24 @@ Google Cloud Translation API which charges per character).
 - New `translatePhrase(text, target='Spanish')` calling `POST /api/translate`.
 
 ### `front/src/app/selection-menu/`
-- New `(translate)` event emitter.
+- New `[translateFn]` `@Input` — optional `(text) => Promise<string>` callback.
 - New "Translate" button in the menu (material icon `translate`).
+- New floating **translation popover** anchored next to the selection,
+  showing "Translating…" then the result. Auto-dismisses when the user
+  clicks outside or presses Esc; can also be closed with the × button.
+- New SCSS rules: `.selection-translation*`.
 
 ### `front/src/app/{conversation,notes,dictionary,review}/...`
-- Each page binds `(translate)="onSelectionMenuTranslate($event)"` on
-  `<app-selection-menu>`.
-- Each component implements `onSelectionMenuTranslate(payload)`:
-  shows "Translating...", calls `back.translatePhrase`, displays the
-  result in the page's existing status banner (`statusMessage` /
-  `responseBack`) prefixed with 🇪🇸 for ~8 seconds.
+- Each page binds `[translateFn]="translateSelection"` on
+  `<app-selection-menu>` and exposes a one-line arrow-function field
+  `translateSelection = (text) => this.back.translatePhrase(text)`.
+- No per-page popover/banner code needed — the popover lives inside
+  `SelectionMenuComponent`.
 
 ## How to use
 
 1. Select any text inside the conversation, dictionary, notes, or review page.
 2. Click the **Translate** button in the floating selection menu.
-3. The Spanish translation appears in the page's status banner.
+3. A small popover appears next to the selection with the Spanish
+   translation. Click anywhere outside, press **Esc**, or click the × to
+   dismiss.

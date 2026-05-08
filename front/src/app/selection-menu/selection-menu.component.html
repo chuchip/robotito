@@ -26,3 +26,20 @@
     <span>Translate</span>
   </button>
 </div>
+
+<div *ngIf="showTranslation" class="selection-translation"
+  [style.left.px]="translationX" [style.top.px]="translationY"
+  (mousedown)="$event.preventDefault()"
+  role="dialog" aria-label="Translation">
+  <div class="selection-translation-header">
+    <span class="material-icons" aria-hidden="true">translate</span>
+    <span>Spanish</span>
+    <button type="button" class="selection-translation-close"
+      (click)="closeTranslation()"
+      aria-label="Close translation">×</button>
+  </div>
+  <div class="selection-translation-body">
+    <span *ngIf="translationLoading" class="selection-translation-loading">Translating…</span>
+    <span *ngIf="!translationLoading">{{ translationText }}</span>
+  </div>
+</div>
