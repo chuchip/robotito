@@ -81,7 +81,10 @@
             [matTooltip]="getFormattedDate(line.final_date) | date: 'dd/MMM HH:mm'"
             matTooltipPosition="right">
             <span class="history__meta">
-              <span class="history__name">{{ line.name }}</span>
+              <span class="history__name"
+                [matTooltip]="line.name"
+                matTooltipPosition="above"
+                [title]="line.name">{{ line.name }}</span>
               <span class="history__date">
                 {{ getFormattedDate(line.final_date) | date: 'dd/MMM HH:mm' }}
               </span>

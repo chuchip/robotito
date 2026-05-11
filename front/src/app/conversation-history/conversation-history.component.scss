@@ -23,8 +23,8 @@
 }
 
 .history.expanded {
-  width: 280px;
-  min-width: 280px;
+  width: 360px;
+  min-width: 360px;
 }
 
 /* Header */
@@ -306,8 +306,8 @@
 /* Responsive: on small screens, keep expanded narrower */
 @media (max-width: 640px) {
   .history.expanded {
-    width: 220px;
-    min-width: 220px;
+    width: 260px;
+    min-width: 260px;
   }
 }
 

@@ -109,12 +109,33 @@ async def get_context_by_id(id):
     return get_DTO_context(row)
 
 async def _summarize_for_title(text: str) -> str:
-    """Ask the LLM for a short (<12 words) title summarising the given text."""
+    """Ask the LLM for a short (<10 words) title summarising the given text.
+
+    The prompt asks the model for fewer than 10 words in plain text (no
+    markdown), and we also enforce that hard cap in code in case the model
+    goes over. Any stray markdown formatting the LLM adds is stripped so
+    the title renders as plain text in the side panel.
+    """
+    import re
     import robotito_ai as ai
     resp = await ai.call_llm_internal(
-        f"Create a summary of less than 12 words from this text: '{text}'"
+        f"Create a summary of less than 10 words from this text. "
+        f"Return plain text only, without any markdown formatting "
+        f"(no **, *, _, `, #, backticks, quotes or bullets): '{text}'"
     )
-    return str(resp).strip()
+    title = str(resp).strip()
+    # Drop fenced code blocks if the model wrapped the answer in ```...```.
+    title = re.sub(r"^```[a-zA-Z]*\s*|\s*```$", "", title).strip()
+    # Strip common markdown emphasis / heading / code markers.
+    title = re.sub(r"[*_`#>]+", "", title)
+    # Strip surrounding quotes the model sometimes adds.
+    title = title.strip().strip('"').strip("'").strip()
+    # Collapse whitespace (including newlines) into single spaces.
+    title = re.sub(r"\s+", " ", title)
+    words = title.split()
+    if len(words) > 9:
+        title = " ".join(words[:9])
+    return title
 
 
 async def init_conversation(id ,user,msg,force=False):
