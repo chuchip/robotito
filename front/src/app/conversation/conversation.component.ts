@@ -263,9 +263,10 @@ export class ConversationComponent {
           const chunk = decoder.decode(value, { stream: true });
           
           this.responseMessage+= chunk;
-          pFin=this.findNextPunctuation(this.responseMessage,pIni)
+          pFin=this.findNextPunctuation(this.responseMessage,pIni)          
           if (pFin!=-1) {
-            txt+=this.responseMessage.substring(pIni,pFin)
+            txt+=this.responseMessage.substring(pIni,pFin+1)
+            debugger
             if (txt.length>200){            
               setTimeout(() => this.scrollToBottom(), 0)  
               if (this.swTalkResponse && !this.ttsAbort) {
@@ -330,7 +331,7 @@ export class ConversationComponent {
       setTimeout(() => this.scrollToBottom(), 0)
     }
   }
-  async speak_aloud_response(event:MouseEvent,i:number,type_line:string, all_text:boolean=false){
+  async speak_aloud_response(event:MouseEvent,i:number,type_line:string, all_text:boolean=false){    
     var voice=this.selectVoice
     if (type_line =="H") {
       voice=this.human_voice
@@ -355,7 +356,8 @@ export class ConversationComponent {
     
       pFin=this.findNextPunctuation(cleanText,pIni)
       if (pFin!=-1) {
-        txt+=cleanText.substring(pIni,pFin)
+        txt+=cleanText.substring(pIni,pFin+1)
+        
         if (txt.length>150 && !this.ttsAbort){                      
           // Throttled dispatch (max TTS_MAX_CONCURRENT in flight, ESC-aware).
           this.ttsArray.push(this.ttsRequest(txt,voice))
@@ -468,12 +470,12 @@ export class ConversationComponent {
     console.log("out ttsWait. ")
   }
   findNextPunctuation(text: string, startIndex: number): number {
-    // Split on real sentence/clause boundaries (., ?, !, :, ,) plus newlines
+    // Split on real sentence/clause boundaries ( ?, !, :, ,)
     // so each TTS chunk is a natural piece of speech. The 200/150-char
     // thresholds in sendData() / speak_aloud_response() still keep us from
     // dispatching tiny chunks for every comma.
     const substring = text.substring(startIndex);
-    const match = substring.match(/[.,:?!\n]/);
+    const match = substring.match(/[.;:?!]/);
     return match ? startIndex + match.index! : -1;
   }
 

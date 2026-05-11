@@ -310,6 +310,7 @@ async def consolidate_memory(uuid: str) -> bool:
     then upserts the result. Safe to call multiple times. Returns True if it
     actually ran an update, False if there was nothing to do.
     """
+    _logger.info(f"Attempting memory consolidation for UUID: {uuid}")
     memoryData = memory.getMemory(uuid)
     if memoryData is None:
         return False
