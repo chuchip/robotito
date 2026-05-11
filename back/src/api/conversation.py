@@ -64,13 +64,29 @@ async def conversation_saveId(id):
   idContext=None
   if not context is None:
     idContext=context.getId()
-  id_conversation=await db.conversation_save(uuid,id,data['user'],
+  id_conversation, new_name = await db.conversation_save(uuid,id,data['user'],
                                        idContext,data['type'] ,data['msg'])
   # Periodic long-term memory consolidation. Only counts user turns ('H')
   # so a turn = user message + assistant reply doesn't double-count.
   if data.get('type') == 'H':
     ai.schedule_consolidation_if_due(uuid)
-  return jsonify({'message': f'Conversation saved on id {id_conversation} !', 'id': id_conversation})
+  return jsonify({'message': f'Conversation saved on id {id_conversation} !',
+                  'id': id_conversation,
+                  'name': new_name})
+
+
+@conversation_bp.route('/id/<string:id>/name', methods=['PUT'])
+async def conversation_update_name(id):
+  """Rename a conversation. Body: {"name": "..."}."""
+  data = await request.get_json()
+  name = (data or {}).get('name', '')
+  if not isinstance(name, str) or name.strip() == '':
+    return jsonify({'message': 'Name cannot be empty'}), 400
+  name = name.strip()
+  updated = await db.update_conversation_name(id, name)
+  if not updated:
+    return jsonify({'message': f'Conversation {id} not updated'}), 404
+  return jsonify({'message': 'Conversation renamed', 'id': id, 'name': name})
 
 
 @conversation_bp.route('/init', methods=['POST'])

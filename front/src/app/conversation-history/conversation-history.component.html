@@ -74,35 +74,68 @@
         role="listitem">
 
       <div class="history__entry">
-        <button type="button" class="history__open"
-          (click)="onChoose(line)"
-          [attr.aria-label]="'Open conversation ' + line.name"
-          [matTooltip]="getFormattedDate(line.final_date) | date: 'dd/MMM HH:mm'"
-          matTooltipPosition="right">
-          <span class="history__meta">
-            <span class="history__name">{{ line.name }}</span>
-            <span class="history__date">
-              {{ getFormattedDate(line.final_date) | date: 'dd/MMM HH:mm' }}
+        <ng-container *ngIf="editingId !== line.id; else editTpl">
+          <button type="button" class="history__open"
+            (click)="onChoose(line)"
+            [attr.aria-label]="'Open conversation ' + line.name"
+            [matTooltip]="getFormattedDate(line.final_date) | date: 'dd/MMM HH:mm'"
+            matTooltipPosition="right">
+            <span class="history__meta">
+              <span class="history__name">{{ line.name }}</span>
+              <span class="history__date">
+                {{ getFormattedDate(line.final_date) | date: 'dd/MMM HH:mm' }}
+              </span>
             </span>
-          </span>
-          <span class="history__badges" aria-hidden="true">
-            <span *ngIf="line.hasNotes" class="history__badge history__badge--notes"
-              matTooltip="Has notes" matTooltipPosition="left">
-              <span class="material-icons">note_alt</span>
+            <span class="history__badges" aria-hidden="true">
+              <span *ngIf="line.hasNotes" class="history__badge history__badge--notes"
+                matTooltip="Has notes" matTooltipPosition="left">
+                <span class="material-icons">note_alt</span>
+              </span>
+              <span *ngIf="line.hasWords" class="history__badge history__badge--words"
+                matTooltip="Has dictionary words" matTooltipPosition="left">
+                <span class="material-icons">library_books</span>
+              </span>
             </span>
-            <span *ngIf="line.hasWords" class="history__badge history__badge--words"
-              matTooltip="Has dictionary words" matTooltipPosition="left">
-              <span class="material-icons">library_books</span>
-            </span>
-          </span>
-        </button>
+          </button>
 
-        <button type="button" class="history__remove"
-          (click)="onRemove($event, line.id)"
-          aria-label="Delete conversation"
-          matTooltip="Delete conversation">
-          <span class="material-icons" aria-hidden="true">delete_outline</span>
-        </button>
+          <button type="button" class="history__action"
+            (click)="startEdit($event, line)"
+            aria-label="Rename conversation"
+            matTooltip="Rename conversation">
+            <span class="material-icons" aria-hidden="true">edit</span>
+          </button>
+
+          <button type="button" class="history__action history__remove"
+            (click)="onRemove($event, line.id)"
+            aria-label="Delete conversation"
+            matTooltip="Delete conversation">
+            <span class="material-icons" aria-hidden="true">delete_outline</span>
+          </button>
+        </ng-container>
+
+        <ng-template #editTpl>
+          <input #editInput type="text" class="history__edit"
+            [(ngModel)]="editingName"
+            (keydown)="onEditKey($event)"
+            (click)="$event.stopPropagation()"
+            (blur)="commitEdit()"
+            [attr.aria-label]="'Rename conversation ' + line.name"
+            autofocus />
+          <button type="button" class="history__action"
+            (mousedown)="$event.preventDefault()"
+            (click)="commitEdit($event)"
+            aria-label="Save name"
+            matTooltip="Save">
+            <span class="material-icons" aria-hidden="true">check</span>
+          </button>
+          <button type="button" class="history__action"
+            (mousedown)="$event.preventDefault()"
+            (click)="cancelEdit($event)"
+            aria-label="Cancel rename"
+            matTooltip="Cancel">
+            <span class="material-icons" aria-hidden="true">close</span>
+          </button>
+        </ng-template>
       </div>
     </li>
 

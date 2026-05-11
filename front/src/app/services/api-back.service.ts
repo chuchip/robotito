@@ -188,11 +188,19 @@ async getLastUser(): Promise<any> {
   {
     try {
       const payload={msg:msg,type:type,user:this.persistence.getUser()}
-      return await firstValueFrom(this.http.post<{ id: string;}>(`${this.backendUrl}/conversation/id/${id}`,payload));
+      return await firstValueFrom(this.http.post<{ id: string; name?: string | null }>(`${this.backendUrl}/conversation/id/${id}`,payload));
     } catch (error) {
       console.error('conversation_user failed!:', error);
       throw error;
     }          
+  }
+  async renameConversation(id: string, name: string): Promise<any> {
+    try {
+      return await firstValueFrom(this.http.put(`${this.backendUrl}/conversation/id/${id}/name`, { name }));
+    } catch (error) {
+      console.error('renameConversation failed!:', error);
+      throw error;
+    }
   }
   async initConversation(msg:string)
   {

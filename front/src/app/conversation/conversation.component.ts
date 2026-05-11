@@ -320,8 +320,15 @@ export class ConversationComponent {
         // strictly before the robot line. Firing them in parallel was racing
         // them on time_msg, which together with the backend's ORDER BY
         // time_msg made loaded conversations appear in the wrong order.
-        await this.back.saveConversation(this.conversationId, "H",this.inputText);
+        const savedHuman: any = await this.back.saveConversation(this.conversationId, "H",this.inputText);
         await this.back.saveConversation(this.conversationId, "R",this.responseMessage);
+        // The backend regenerates the conversation title from the first 3
+        // user messages. When it returns a refreshed name, update the local
+        // history entry so the side panel reflects the new title without
+        // requiring a full refresh.
+        if (savedHuman && savedHuman.name) {
+          this.applyConversationName(this.conversationId, savedHuman.name);
+        }
       }  
       this.chatHistory.push({line:this.numberLine,type: "R",msg: msg,msgClean:this.responseMessage})
       this.responseMessage="";
@@ -773,6 +780,31 @@ export class ConversationComponent {
         });
       }
     });
+  }
+
+  /** Persist a user-edited conversation title and reflect it locally. */
+  async historyRename(id: string, name: string) {
+    const trimmed = (name || '').trim();
+    if (!id || !trimmed) return;
+    try {
+      await this.back.renameConversation(id, trimmed);
+      this.applyConversationName(id, trimmed);
+    } catch (err) {
+      console.error('Rename conversation failed:', err);
+      this.showSystemMessage('Could not rename conversation');
+    }
+  }
+
+  /** Update the cached `conversationHistory` entry for `id` with a new name. */
+  private applyConversationName(id: string, name: string) {
+    if (!id || !name) return;
+    const entry = this.conversationHistory.find(c => c.id === id);
+    if (entry && entry.name !== name) {
+      entry.name = name;
+      // Replace the array reference so OnPush-style consumers (and Angular's
+      // default change detection) reliably re-render the side panel.
+      this.conversationHistory = [...this.conversationHistory];
+    }
   }
   getFormattedDate(dateString: string): Date {
     return new Date(dateString);

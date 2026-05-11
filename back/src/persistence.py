@@ -108,13 +108,20 @@ async def get_context_by_id(id):
     
     return get_DTO_context(row)
 
+async def _summarize_for_title(text: str) -> str:
+    """Ask the LLM for a short (<12 words) title summarising the given text."""
+    import robotito_ai as ai
+    resp = await ai.call_llm_internal(
+        f"Create a summary of less than 12 words from this text: '{text}'"
+    )
+    return str(resp).strip()
+
+
 async def init_conversation(id ,user,msg,force=False):
-    import robotito_ai as ai 
     if id is None or force:
         if len(msg.split())>15:
             # Do a sumary of the message
-            resp = await ai.call_llm_internal(f"Create a summary of less than 12 words from this sentence: '{msg}'")
-            msg=resp
+            msg = await _summarize_for_title(msg)
             logging.info(f"Summary: {msg}")
         now = datetime.now()
         random_uuid = uuid.uuid4()  # Generate a random UUID
@@ -126,6 +133,34 @@ async def init_conversation(id ,user,msg,force=False):
         
     return id
 
+
+async def update_conversation_name(conversation_id: str, name: str):
+    """Set the conversation title. Returns True if a row was updated."""
+    if not conversation_id or name is None:
+        return False
+    name = name.strip()
+    if name == "":
+        return False
+    sql = "update conversation set name = :name where id = :id"
+    await g.connection.execute(sql, {"name": name, "id": conversation_id})
+    return True
+
+
+async def _count_human_lines(conversation_id: str) -> int:
+    sql = "select count(*) as n from conversation_lines where conversation_id = :id and type = 'H'"
+    row = await g.connection.fetch_sole(sql, {"id": conversation_id})
+    return int(row["n"]) if row is not None else 0
+
+
+async def _get_human_messages(conversation_id: str, limit: int):
+    sql = """select msg from conversation_lines
+             where conversation_id = :id and type = 'H'
+             order by time_msg, ctid
+             limit :limit"""
+    rows = await g.connection.fetch_all(sql, {"id": conversation_id, "limit": limit})
+    return [r["msg"] for r in (rows or [])]
+
+
 # Conversation
 async def conversation_save(uuid,id ,user, context_id,type,msg):
     import robotito_ai as ai
@@ -136,8 +171,30 @@ async def conversation_save(uuid,id ,user, context_id,type,msg):
     sql="update conversation set final_date = :final_date, context_id=:context_id where id = :id "
     await g.connection.execute(sql,{"final_date":now,"context_id":str(context_id),"id":id})
     sql="insert into conversation_lines  (conversation_id,type,msg) values (:id,:type,:msg)"
-    await g.connection.execute(sql,{"id":id,"type":type,"msg":msg})    
-    return id
+    await g.connection.execute(sql,{"id":id,"type":type,"msg":msg})
+
+    # Refine the conversation title using the first 3 user messages. The
+    # initial title is set from the very first message in init_conversation;
+    # here we regenerate it after the 2nd and 3rd user turns so it better
+    # reflects what the conversation is actually about.
+    new_name = None
+    if type == 'H':
+        try:
+            human_count = await _count_human_lines(id)
+            if 2 <= human_count <= 3:
+                msgs = await _get_human_messages(id, 3)
+                combined = "\n".join(m for m in msgs if m)
+                if combined.strip():
+                    new_name = await _summarize_for_title(combined)
+                    if new_name:
+                        await update_conversation_name(id, new_name)
+                    else:
+                        new_name = None
+        except Exception as e:
+            logging.error(f"Failed to refresh conversation title for {id}: {e}")
+            new_name = None
+
+    return id, new_name
 async def updateConversationContext(conversation_id,context_id):
     if conversation_id is None or context_id is None:
         return

@@ -241,13 +241,14 @@
   margin-top: 2px;
 }
 
-.history__remove {
+/* Shared style for the small icon-only buttons next to a conversation row
+   (rename / delete / save-edit / cancel-edit). */
+.history__action {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
-  margin-right: 4px;
+  width: 28px;
+  height: 28px;
   border: 1px solid transparent;
   border-radius: 8px;
   background: transparent;
@@ -257,14 +258,42 @@
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
+.history__action:hover {
+  background: color-mix(in srgb, var(--color-primary, #6366f1) 12%, transparent);
+  color: var(--color-primary, #6366f1);
+}
+
+.history__action .material-icons {
+  font-size: 18px;
+  color: inherit;
+}
+
+.history__action:focus-visible {
+  outline: 2px solid var(--color-primary, #6366f1);
+  outline-offset: 2px;
+}
+
+.history__remove {
+  margin-right: 4px;
+}
+
 .history__remove:hover {
   background: color-mix(in srgb, var(--color-danger, #ef4444) 12%, transparent);
   color: var(--color-danger, #ef4444);
 }
 
-.history__remove .material-icons {
-  font-size: 18px;
-  color: inherit;
+.history__edit {
+  flex: 1;
+  min-width: 0;
+  margin: 4px 4px 4px 8px;
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 0.88rem;
+  color: var(--color-text, #0f172a);
+  background: #ffffff;
+  border: 1px solid var(--color-primary, #6366f1);
+  border-radius: 8px;
+  outline: none;
 }
 
 .history__empty {

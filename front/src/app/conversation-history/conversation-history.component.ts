@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { conversationHistoryDTO } from '../model/conversationHistory.dto';
 
@@ -16,7 +17,7 @@ import { conversationHistoryDTO } from '../model/conversationHistory.dto';
 @Component({
   selector: 'app-conversation-history',
   standalone: true,
-  imports: [CommonModule, MatTooltipModule],
+  imports: [CommonModule, FormsModule, MatTooltipModule],
   templateUrl: './conversation-history.component.html',
   styleUrls: ['./conversation-history.component.scss']
 })
@@ -30,11 +31,17 @@ export class ConversationHistoryComponent {
   @Output() remove = new EventEmitter<{ event: Event; id: string }>();
   @Output() clear = new EventEmitter<void>();
   @Output() review = new EventEmitter<void>();
+  @Output() rename = new EventEmitter<{ id: string; name: string }>();
 
   // Filter toggles. When both are off, all conversations are shown.
   // When both are on, only conversations that have BOTH notes and dictionary words show.
   filterNotes = false;
   filterWords = false;
+
+  // Inline edit state. When `editingId` matches a conversation row, that row
+  // shows a text input bound to `editingName` instead of the static title.
+  editingId: string = '';
+  editingName: string = '';
 
   get filteredConversations(): conversationHistoryDTO[] {
     if (!this.filterNotes && !this.filterWords) return this.conversations;
@@ -52,6 +59,7 @@ export class ConversationHistoryComponent {
   }
 
   onChoose(line: conversationHistoryDTO) {
+    if (this.editingId) return; // ignore selection clicks while editing
     this.choose.emit({ id: line.id, idContext: line.idContext });
   }
 
@@ -66,6 +74,42 @@ export class ConversationHistoryComponent {
 
   onReview() {
     this.review.emit();
+  }
+
+  startEdit(event: Event, line: conversationHistoryDTO) {
+    event.stopPropagation();
+    this.editingId = line.id;
+    this.editingName = line.name || '';
+  }
+
+  cancelEdit(event?: Event) {
+    if (event) event.stopPropagation();
+    this.editingId = '';
+    this.editingName = '';
+  }
+
+  commitEdit(event?: Event) {
+    if (event) event.stopPropagation();
+    const name = (this.editingName || '').trim();
+    const id = this.editingId;
+    if (!id) return;
+    const current = this.conversations.find(c => c.id === id);
+    if (name && current && name !== current.name) {
+      this.rename.emit({ id, name });
+    }
+    this.cancelEdit();
+  }
+
+  onEditKey(event: KeyboardEvent) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.commitEdit(event);
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      this.cancelEdit(event);
+    } else {
+      event.stopPropagation();
+    }
   }
 
   getFormattedDate(dateString: string): Date {

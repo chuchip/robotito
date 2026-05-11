@@ -26,6 +26,7 @@
     (toggle)="toggleSidebar()"
     (choose)="historyChoose($event.id, $event.idContext)"
     (remove)="hystoryDelete($event.event, $event.id)"
+    (rename)="historyRename($event.id, $event.name)"
     (review)="openReview()"
     (clear)="clearConversation()">
   </app-conversation-history>
