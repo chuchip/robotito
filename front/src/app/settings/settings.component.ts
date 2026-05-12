@@ -88,6 +88,10 @@ export class SettingsComponent {
   adminLoading = false;
   newUser = { user_id: '', password: '', role: 'user' };
 
+  /* ---------- self-service password change ---------- */
+  passwordExpanded = false;
+  passwordForm = { current: '', next: '', confirm: '' };
+
   constructor(
     private back: ApiBackService,
     private router: Router,
@@ -179,6 +183,34 @@ export class SettingsComponent {
     if (resp?.status === 'OK') {
       this.newUser = { user_id: '', password: '', role: 'user' };
       await this.reloadAdminUsers();
+    }
+  }
+
+  /* ---------- password handlers ---------- */
+  togglePassword() {
+    this.passwordExpanded = !this.passwordExpanded;
+    if (!this.passwordExpanded) {
+      this.passwordForm = { current: '', next: '', confirm: '' };
+    }
+  }
+
+  async onChangeOwnPassword() {
+    const current = (this.passwordForm.current || '').trim();
+    const next = (this.passwordForm.next || '').trim();
+    const confirm = (this.passwordForm.confirm || '').trim();
+    if (!current || !next) {
+      this.message.emit('Current and new password are required');
+      return;
+    }
+    if (next !== confirm) {
+      this.message.emit('New password and confirmation do not match');
+      return;
+    }
+    const resp = await this.back.changeOwnPassword(current, next);
+    this.putMessage(resp);
+    if (resp?.status === 'OK') {
+      this.passwordForm = { current: '', next: '', confirm: '' };
+      this.passwordExpanded = false;
     }
   }
 

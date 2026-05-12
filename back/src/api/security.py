@@ -53,6 +53,33 @@ async def get_uuid(authorization):
    return jsonify({'status': 'OK', 'session': session.__dict__})
 
 
+@security_bp.route('/password', methods=['POST'])
+async def change_password():
+    """Allow the currently logged-in user to change their own password.
+
+    Requires the caller to supply their current password for verification,
+    regardless of role. Authentication itself is already enforced by the
+    global before_request hook.
+    """
+    uuid_header = request.headers.get("uuid")
+    mem = memory.getMemory(uuid_header)
+    if mem is None or not mem.getUser():
+        return jsonify({'status': 'KO', 'message': 'Not authenticated'}), 401
+    data = await request.get_json() or {}
+    current = data.get('current_password') or ''
+    new_password = data.get('new_password') or ''
+    if not current or not new_password:
+        return jsonify({'status': 'KO', 'message': 'Current and new password are required'}), 400
+    if len(new_password) < 4:
+        return jsonify({'status': 'KO', 'message': 'New password is too short'}), 400
+    user = mem.getUser()
+    if not await persistence.checkUser(user, current):
+        return jsonify({'status': 'KO', 'message': 'Current password is incorrect'}), 403
+    await persistence.admin_update_user(user, password=new_password)
+    logger_.info(f"User {user} changed their own password")
+    return jsonify({'status': 'OK', 'message': 'Password updated'})
+
+
 @security_bp.route('/logout', methods=['POST'])
 async def logout():
     """Invalidate the current session in the DB and in-memory cache."""

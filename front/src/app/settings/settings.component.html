@@ -178,6 +178,48 @@
     </div>
   </section>
 
+  <!-- Self-service: change own password (visible to all users) -->
+  <section class="settings__section" aria-label="Account">
+    <div class="settings__row settings__row--wrap">
+      <button type="button" class="settings__section-toggle"
+        [class.is-open]="passwordExpanded"
+        (click)="togglePassword()"
+        [attr.aria-expanded]="passwordExpanded"
+        aria-controls="password-section"
+        matTooltip="Change your password">
+        <span class="material-icons" aria-hidden="true">
+          {{ passwordExpanded ? 'expand_more' : 'chevron_right' }}
+        </span>
+        <span>Change my password</span>
+      </button>
+    </div>
+
+    <div *ngIf="passwordExpanded" id="password-section" class="settings__row settings__row--wrap">
+      <label class="field">
+        <span class="field__label">Current password</span>
+        <input type="password" class="field__input"
+          [(ngModel)]="passwordForm.current" autocomplete="current-password">
+      </label>
+      <label class="field">
+        <span class="field__label">New password</span>
+        <input type="password" class="field__input"
+          [(ngModel)]="passwordForm.next" autocomplete="new-password">
+      </label>
+      <label class="field">
+        <span class="field__label">Confirm new password</span>
+        <input type="password" class="field__input"
+          [(ngModel)]="passwordForm.confirm" autocomplete="new-password"
+          (keydown.enter)="onChangeOwnPassword()">
+      </label>
+      <button type="button" class="icon-button"
+        (click)="onChangeOwnPassword()"
+        aria-label="Update password"
+        matTooltip="Update password">
+        <span class="material-icons" aria-hidden="true">key</span>
+      </button>
+    </div>
+  </section>
+
   <!-- Admin: user management (only visible to admins) -->
   <section class="settings__section" *ngIf="persistence.isAdmin()" aria-label="Admin">
     <div class="settings__row settings__row--wrap">

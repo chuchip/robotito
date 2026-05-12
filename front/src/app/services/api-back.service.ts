@@ -263,6 +263,15 @@ async getLastUser(): Promise<any> {
       throw error;
     }     
   }
+  async changeOwnPassword(currentPassword: string, newPassword: string): Promise<any> {
+    try {
+      const payload = { current_password: currentPassword, new_password: newPassword };
+      return await firstValueFrom(this.http.post(`${this.backendUrl}/security/password`, payload));
+    } catch (error: any) {
+      console.error('changeOwnPassword failed!:', error);
+      return error?.error ?? { status: 'KO', message: 'Request failed' };
+    }
+  }
   async logoutUser(): Promise<any> {
     try {
       return await firstValueFrom(this.http.post(`${this.backendUrl}/security/logout`, {}));
