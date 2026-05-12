@@ -262,7 +262,7 @@ export class ConversationComponent {
           if (done) break;
           const chunk = decoder.decode(value, { stream: true });
           
-          this.responseMessage+= chunk;
+          this.responseMessage+= chunk.replace(/\n/g, '');
           pFin=this.findNextPunctuation(this.responseMessage,pIni)          
           if (pFin!=-1) {
             txt+=this.responseMessage.substring(pIni,pFin+1)
@@ -506,7 +506,7 @@ export class ConversationComponent {
     this.showSoundLoading() 
     if (voice=="" )  {
       voice=this.selectVoice
-    }
+    }    
     if (inputText.trim()!='') {      
       // Cache key is (text, voice). Replaying with the same text but a
       // different voice (e.g. F4 then Shift+F4) was wrongly hitting the
@@ -514,8 +514,7 @@ export class ConversationComponent {
       if (this.textSpeakAloud!=inputText || this.voiceSpeakAloud!=voice) {
         this.textSpeakAloud=inputText
         this.voiceSpeakAloud=voice
-        this.responseTextToSound= await this.back.text_to_sound(this.back.cleanText(inputText),voice);
-        console.log("1 speakAloud . playing sound false")
+        this.responseTextToSound= await this.back.text_to_sound(this.back.cleanText(inputText),voice);       
         this.isPlayingSound=false
       }  
       else{

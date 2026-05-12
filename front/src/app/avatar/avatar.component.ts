@@ -154,7 +154,7 @@ export class AvatarComponent implements AfterViewInit, OnDestroy {
 
     // Smooth interpolation every frame
     const animate = () => {
-      const ease = 0.06;
+      const ease = 0.02;
       this.headRotation += (this.targetRotation - this.headRotation) * ease;
       this.headTiltX += (this.targetTiltX - this.headTiltX) * ease;
       this.headTiltY += (this.targetTiltY - this.headTiltY) * ease;

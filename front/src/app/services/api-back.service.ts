@@ -235,15 +235,15 @@ async getLastUser(): Promise<any> {
   } 
   cleanText(text:string):string
   {   
-    const caracteresPermitidos = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ñáéíóúüÁÉÍÓÚÜ .,\'"?!¿:-\n';
+    const caracteresPermitidos = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ñáéíóúüÁÉÍÓÚÜ .,\'"?!¿:-\n\r';
     let textoLimpio = '';
 
     for (const char of text) {
       if (caracteresPermitidos.includes(char)) {
         textoLimpio += char;
       }
-    }
-    //console.log(textoLimpio)
+    }   
+  
     return textoLimpio;
   }
   async getLoginUser(uuid:string): Promise<any> {    
