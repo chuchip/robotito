@@ -550,6 +550,7 @@ export class ConversationComponent {
     this.isPlayingSound=true;
     // start talking animation
     this.avatarService.setTalking(true);
+    this.avatarService.connectAudio(this.audio);
     this.audio.play();
     this.audio.onended = () => {
       // Add your custom logic here

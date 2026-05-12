@@ -1,4 +1,6 @@
-import { Component, Input, OnDestroy, ElementRef, ViewChild, AfterViewInit } from "@angular/core";
+import { Component, Input, OnDestroy, ElementRef, ViewChild, AfterViewInit, inject } from "@angular/core";
+import { Subscription } from "rxjs";
+import { AvatarService } from "../services/avatar.service";
 
 @Component({
   selector: 'app-avatar',
@@ -18,6 +20,10 @@ export class AvatarComponent implements AfterViewInit, OnDestroy {
   @ViewChild('mouthOuter') mouthOuter!: ElementRef<SVGPathElement>;
   @ViewChild('mouthInner') mouthInner!: ElementRef<SVGPathElement>;
   @ViewChild('headGroup') headGroup!: ElementRef<SVGGElement>;
+
+  private avatarService = inject(AvatarService);
+  private volumeSub!: Subscription;
+  private currentVolume = 0;
 
   private mouthAnimFrame: any;
   private eyeInterval: any;
@@ -41,27 +47,15 @@ export class AvatarComponent implements AfterViewInit, OnDestroy {
   // Mouth animation state
   private curOY = 740;
   private curIY = 715;
-  private targetOY = 740;
-  private targetIY = 715;
-  private mouthEase = 0.08;
-  private nextMouthChangeTime = 0;
 
-  // Wider variety of mouth shapes: [outerY, innerY, easing, holdMs]
-  // outerY > 740 = open, < 740 = pursed; innerY controls tongue/inner mouth
-  private readonly mouthRest: [number, number] = [740, 715];
-  private readonly mouthShapes: [number, number, number, number][] = [
-    [720, 726, 0.10, 80],   // slightly open, quick
-    [735, 730, 0.08, 120],  // barely open
-    [755, 740, 0.06, 150],  // medium open
-    [785, 750, 0.05, 180],  // wide open
-    [765, 677, 0.07, 100],  // open with inner low
-    [745, 670, 0.09, 90],   // small open, inner low
-    [730, 720, 0.12, 60],   // near closed, fast
-    [770, 745, 0.06, 140],  // medium-wide
-    [740, 715, 0.10, 200],  // brief rest between words
-  ];
+  private readonly mouthRestOY = 740;
+  private readonly mouthRestIY = 715;
+  // Volume-driven range: min/max for outer and inner Y
+  private readonly outerYRange: [number, number] = [740, 800]; // closed → wide open
+  private readonly innerYRange: [number, number] = [715, 760];
 
   ngAfterViewInit(): void {
+    this.volumeSub = this.avatarService.volume$.subscribe((v: number) => this.currentVolume = v);
     this.startMouthAnimation();
     this.startEyeAnimation();
     this.startBlinkAnimation();
@@ -69,6 +63,7 @@ export class AvatarComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.volumeSub?.unsubscribe();
     cancelAnimationFrame(this.mouthAnimFrame);
     clearInterval(this.eyeInterval);
     clearInterval(this.blinkInterval);
@@ -77,27 +72,29 @@ export class AvatarComponent implements AfterViewInit, OnDestroy {
   }
 
   private startMouthAnimation(): void {
-    const animate = (time: number) => {
-      if (this.talking) {
-        // Time to pick a new mouth shape?
-        if (time >= this.nextMouthChangeTime) {
-          const shape = this.mouthShapes[Math.floor(Math.random() * this.mouthShapes.length)];
-          // Add slight random variation for organic feel
-          this.targetOY = shape[0] + (Math.random() - 0.5) * 10;
-          this.targetIY = shape[1] + (Math.random() - 0.5) * 8;
-          this.mouthEase = shape[2];
-          this.nextMouthChangeTime = time + shape[3] + Math.random() * 80;
-        }
+    const animate = () => {
+      // Determine target mouth opening from volume when talking
+      let targetOY: number;
+      let targetIY: number;
+
+      if (this.talking && this.currentVolume > 0.01) {
+        // Map volume (0–1) to mouth opening with an exponent curve for more natural feel
+        const v = Math.pow(this.currentVolume, 0.6); // boost low volumes
+        targetOY = this.outerYRange[0] + (this.outerYRange[1] - this.outerYRange[0]) * v;
+        targetIY = this.innerYRange[0] + (this.innerYRange[1] - this.innerYRange[0]) * v * 0.85;
       } else {
-        // Ease back to rest
-        this.targetOY = this.mouthRest[0];
-        this.targetIY = this.mouthRest[1];
-        this.mouthEase = 0.06;
+        targetOY = this.mouthRestOY;
+        targetIY = this.mouthRestIY;
       }
 
-      // Smooth interpolation toward target
-      this.curOY += (this.targetOY - this.curOY) * this.mouthEase;
-      this.curIY += (this.targetIY - this.curIY) * this.mouthEase;
+      // Smooth interpolation — open faster than close for snappy articulation
+      const easeOpen = 0.25;
+      const easeClose = 0.10;
+      const easeOY = targetOY > this.curOY ? easeOpen : easeClose;
+      const easeIY = targetIY > this.curIY ? easeOpen : easeClose;
+
+      this.curOY += (targetOY - this.curOY) * easeOY;
+      this.curIY += (targetIY - this.curIY) * easeIY;
 
       const outer = this.mouthOuter.nativeElement;
       const inner = this.mouthInner.nativeElement;
