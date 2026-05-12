@@ -4,6 +4,7 @@ import { securityDTO } from '../model/security.dto';
 @Injectable()
 export class PersistenceService {
   private security: securityDTO={'user':'','authorization':''}
+  private role: string = '';
   public uuid:string="";
   public clearLogin=false  
   public showSummary=false;
@@ -22,6 +23,15 @@ export class PersistenceService {
   getUser():string 
   {
     return this.security.user
+  }
+  setRole(role: string) {
+    this.role = role || '';
+  }
+  getRole(): string {
+    return this.role;
+  }
+  isAdmin(): boolean {
+    return this.role === 'admin';
   }
   getAuthorization(): string {
     if (! this.security)
@@ -111,6 +121,7 @@ export class PersistenceService {
 
   logout() {
     this.security = { user: '', authorization: '' };
+    this.role = '';
     this.clearLocalStorage();
     this.deleteCookie('robotito-auth');
     this.clearLogin = true;

@@ -29,6 +29,7 @@ from api.audio import audio_bp
 from api.context import context_bp
 from api.conversation import conversation_bp
 from api.memory import memory_bp
+from api.admin import admin_bp
 
 os.environ["GRPC_VERBOSITY"] = "ERROR"
 os.environ["GLOG_minloglevel"] = "2"
@@ -186,6 +187,7 @@ app.register_blueprint(conversation_bp, url_prefix='/api/conversation')
 app.register_blueprint(principal_bp, url_prefix='/api')
 app.register_blueprint(security_bp, url_prefix='/api/security')
 app.register_blueprint(memory_bp, url_prefix='/api/memory')
+app.register_blueprint(admin_bp, url_prefix='/api/admin')
 
 
 # ---------------------------------------------------------------------------

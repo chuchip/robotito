@@ -688,3 +688,49 @@ async def checkUser(user_id, password):
     logging.info(f"Upgraded plaintext password to bcrypt for user: {user_id}")
     return True
 
+
+# ---------------------------------------------------------------------------
+# Admin user management
+# ---------------------------------------------------------------------------
+async def list_users():
+    """Return every user account as {user_id, role}, ordered by user_id."""
+    rows = await g.connection.fetch_all(
+        "SELECT user_id, role FROM users ORDER BY user_id"
+    )
+    return [{"user_id": r["user_id"], "role": r["role"] or ""} for r in (rows or [])]
+
+
+async def user_exists(user_id: str) -> bool:
+    row = await g.connection.fetch_sole(
+        "SELECT user_id FROM users WHERE user_id = :user_id", {"user_id": user_id}
+    )
+    return row is not None
+
+
+async def create_user(user_id: str, password: str, role: str):
+    """Create a new user with a bcrypt-hashed password. Caller must check role."""
+    sql = """INSERT INTO users (user_id, name, password, role, max_length_answer)
+             VALUES (:user_id, :name, :password, :role, 150)"""
+    await g.connection.execute(sql, {
+        "user_id": user_id,
+        "name": user_id,
+        "password": hash_password(password),
+        "role": role or "user",
+    })
+    logging.info(f"Admin created user: {user_id} (role={role})")
+
+
+async def admin_update_user(user_id: str, role: str = None, password: str = None):
+    """Update role and/or password for the given user (admin action)."""
+    if role is not None:
+        await g.connection.execute(
+            "UPDATE users SET role = :role WHERE user_id = :user_id",
+            {"role": role, "user_id": user_id},
+        )
+    if password:
+        await g.connection.execute(
+            "UPDATE users SET password = :password WHERE user_id = :user_id",
+            {"password": hash_password(password), "user_id": user_id},
+        )
+    logging.info(f"Admin updated user: {user_id} (role={role}, password_changed={bool(password)})")
+
