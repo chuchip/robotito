@@ -334,8 +334,10 @@ export class ConversationComponent {
       this.responseMessage="";
       this.numberLine++
       this.inputText=""
-      this.resetInputHeight()
-      setTimeout(() => this.scrollToBottom(), 0)
+      setTimeout(() => {
+        this.resetInputHeight()
+        this.scrollToBottom()
+      }, 0)
     }
   }
   async speak_aloud_response(event:MouseEvent,i:number,type_line:string, all_text:boolean=false){    
