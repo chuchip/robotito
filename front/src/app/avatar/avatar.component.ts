@@ -51,8 +51,8 @@ export class AvatarComponent implements AfterViewInit, OnDestroy {
   private readonly mouthRestOY = 740;
   private readonly mouthRestIY = 715;
   // Volume-driven range: min/max for outer and inner Y
-  private readonly outerYRange: [number, number] = [740, 800]; // closed → wide open
-  private readonly innerYRange: [number, number] = [715, 760];
+  private readonly outerYRange: [number, number] = [740, 830]; // closed → wide open
+  private readonly innerYRange: [number, number] = [715, 800];
 
   ngAfterViewInit(): void {
     this.volumeSub = this.avatarService.volume$.subscribe((v: number) => this.currentVolume = v);
@@ -100,11 +100,11 @@ export class AvatarComponent implements AfterViewInit, OnDestroy {
       const inner = this.mouthInner.nativeElement;
 
       // Outer mouth path
-      outer.setAttribute('d', `M 340 690 Q 390 ${this.curOY.toFixed(1)} 440 690`);
+      outer.setAttribute('d', `M 310 690 Q 390 ${this.curOY.toFixed(1)} 470 690`);
       outer.setAttribute('fill', this.curOY > 730 ? 'rgb(25,47,72)' : 'none');
 
       // Inner mouth path
-      inner.setAttribute('d', `M 345 691 Q 390 ${this.curIY.toFixed(1)} 435 691`);
+      inner.setAttribute('d', `M 318 691 Q 390 ${this.curIY.toFixed(1)} 462 691`);
       inner.setAttribute('fill', this.curIY > 725 ? 'rgb(139,0,0)' : 'none');
 
       this.mouthAnimFrame = requestAnimationFrame(animate);
