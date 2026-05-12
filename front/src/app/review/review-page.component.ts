@@ -188,7 +188,16 @@ export class ReviewPageComponent implements OnInit {
     try {
       this.readingQuestionIndex = index;
       this.statusMessage = 'Loading audio...';
-      const response = await this.back.text_to_sound(q.word, '');
+
+      let textToSpeak = q.word;
+      if (this.isExamplesExpanded(index) && q.examples && q.examples.length > 0) {
+        const englishExamples = q.examples
+          .map((ex: any, i: number) => `${i + 1}: ${ex.english_phrase}  \n `)
+          .join('. ');
+        textToSpeak = `${q.word}. ". Examples: " ${englishExamples}`;
+      }
+
+      const response = await this.back.text_to_sound(textToSpeak, '');
       if (this.audio) {
         this.audio.pause();
         this.audio.currentTime = 0;
