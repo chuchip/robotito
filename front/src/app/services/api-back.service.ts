@@ -466,4 +466,33 @@ async getLastUser(): Promise<any> {
 
     return audio;
   }
+
+  // ---------------- Admin (user management) ----------------
+  async adminListUsers(): Promise<any[]> {
+    try {
+      const result: any = await firstValueFrom(this.http.get(`${this.backendUrl}/admin/users`));
+      return result?.users ?? [];
+    } catch (error) {
+      console.error('adminListUsers failed!:', error);
+      throw error;
+    }
+  }
+
+  async adminCreateUser(user_id: string, password: string, role: string): Promise<any> {
+    try {
+      return await firstValueFrom(this.http.post(`${this.backendUrl}/admin/users`, { user_id, password, role }));
+    } catch (error: any) {
+      console.error('adminCreateUser failed!:', error);
+      return error?.error ?? { status: 'KO', message: 'Request failed' };
+    }
+  }
+
+  async adminUpdateUser(user_id: string, body: { role?: string, password?: string }): Promise<any> {
+    try {
+      return await firstValueFrom(this.http.put(`${this.backendUrl}/admin/users/${encodeURIComponent(user_id)}`, body));
+    } catch (error: any) {
+      console.error('adminUpdateUser failed!:', error);
+      return error?.error ?? { status: 'KO', message: 'Request failed' };
+    }
+  }
 }

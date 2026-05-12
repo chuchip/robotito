@@ -178,6 +178,76 @@
     </div>
   </section>
 
+  <!-- Admin: user management (only visible to admins) -->
+  <section class="settings__section" *ngIf="persistence.isAdmin()" aria-label="Admin">
+    <div class="settings__row settings__row--wrap">
+      <button type="button" class="settings__section-toggle"
+        [class.is-open]="adminExpanded"
+        (click)="toggleAdmin()"
+        [attr.aria-expanded]="adminExpanded"
+        aria-controls="admin-section"
+        matTooltip="Manage users">
+        <span class="material-icons" aria-hidden="true">
+          {{ adminExpanded ? 'expand_more' : 'chevron_right' }}
+        </span>
+        <span>Admin &middot; Users</span>
+      </button>
+    </div>
+
+    <div *ngIf="adminExpanded" id="admin-section">
+      <h3 class="settings__subtitle">Add new user</h3>
+      <div class="settings__row settings__row--wrap">
+        <label class="field">
+          <span class="field__label">User</span>
+          <input type="text" class="field__input" [(ngModel)]="newUser.user_id" placeholder="username">
+        </label>
+        <label class="field">
+          <span class="field__label">Password</span>
+          <input type="password" class="field__input" [(ngModel)]="newUser.password" placeholder="password">
+        </label>
+        <label class="field">
+          <span class="field__label">Role</span>
+          <select class="field__input" [(ngModel)]="newUser.role">
+            <option value="user">user</option>
+            <option value="admin">admin</option>
+          </select>
+        </label>
+        <button type="button" class="icon-button"
+          (click)="onAdminCreateUser()"
+          aria-label="Create user"
+          matTooltip="Create user">
+          <span class="material-icons" aria-hidden="true">person_add</span>
+        </button>
+      </div>
+
+      <h3 class="settings__subtitle">Existing users</h3>
+      <div *ngIf="adminLoading">Loading...</div>
+      <div class="settings__row settings__row--wrap" *ngFor="let u of adminUsers">
+        <label class="field">
+          <span class="field__label">User</span>
+          <input type="text" class="field__input" [value]="u.user_id" readonly>
+        </label>
+        <label class="field">
+          <span class="field__label">Role</span>
+          <select class="field__input" [(ngModel)]="u.role" (change)="onAdminChangeRole(u)">
+            <option value="user">user</option>
+            <option value="admin">admin</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="field__label">New password</span>
+          <input type="password" class="field__input" [(ngModel)]="u.newPassword" placeholder="leave blank to keep">
+        </label>
+        <button type="button" class="icon-button"
+          (click)="onAdminResetPassword(u)"
+          aria-label="Reset password"
+          matTooltip="Reset password">
+          <span class="material-icons" aria-hidden="true">key</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
   <!-- Footer info -->
   <footer class="settings__footer">
     <div class="settings__info">

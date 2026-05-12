@@ -125,6 +125,9 @@ export class ConversationComponent {
         this.voiceOptions=await this.back.getVoices()
         this.selectVoice=data.voice
         this.selectLanguage=data.language
+        if (data.role) {
+          this.persistence.setRole(data.role)
+        }
         if (data.human_voice) {
           this.human_voice = data.human_voice
         }

@@ -82,6 +82,12 @@ export class SettingsComponent {
    */
   voicesExpanded = false;
 
+  /* ---------- admin (user management) ---------- */
+  adminExpanded = false;
+  adminUsers: { user_id: string; role: string; newPassword?: string }[] = [];
+  adminLoading = false;
+  newUser = { user_id: '', password: '', role: 'user' };
+
   constructor(
     private back: ApiBackService,
     private router: Router,
@@ -122,6 +128,58 @@ export class SettingsComponent {
   /* ---------- UI handlers ---------- */
   toggleVoices() {
     this.voicesExpanded = !this.voicesExpanded;
+  }
+
+  /* ---------- admin handlers ---------- */
+  async toggleAdmin() {
+    this.adminExpanded = !this.adminExpanded;
+    if (this.adminExpanded && this.adminUsers.length === 0) {
+      await this.reloadAdminUsers();
+    }
+  }
+
+  private async reloadAdminUsers() {
+    this.adminLoading = true;
+    try {
+      const users = await this.back.adminListUsers();
+      this.adminUsers = users.map(u => ({ user_id: u.user_id, role: u.role || 'user', newPassword: '' }));
+    } catch (e) {
+      this.message.emit('Failed to load users');
+    } finally {
+      this.adminLoading = false;
+    }
+  }
+
+  async onAdminChangeRole(u: { user_id: string; role: string }) {
+    const resp = await this.back.adminUpdateUser(u.user_id, { role: u.role });
+    this.putMessage(resp);
+  }
+
+  async onAdminResetPassword(u: { user_id: string; newPassword?: string }) {
+    const pwd = (u.newPassword || '').trim();
+    if (!pwd) {
+      this.message.emit('Enter a new password first');
+      return;
+    }
+    const resp = await this.back.adminUpdateUser(u.user_id, { password: pwd });
+    this.putMessage(resp);
+    if (resp?.status === 'OK') u.newPassword = '';
+  }
+
+  async onAdminCreateUser() {
+    const user_id = (this.newUser.user_id || '').trim();
+    const password = (this.newUser.password || '').trim();
+    const role = this.newUser.role || 'user';
+    if (!user_id || !password) {
+      this.message.emit('User and password are required');
+      return;
+    }
+    const resp = await this.back.adminCreateUser(user_id, password, role);
+    this.putMessage(resp);
+    if (resp?.status === 'OK') {
+      this.newUser = { user_id: '', password: '', role: 'user' };
+      await this.reloadAdminUsers();
+    }
   }
 
   onSpeedInput(event: Event) {
