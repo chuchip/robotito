@@ -147,13 +147,6 @@
       placeholder="Type a context..."
       aria-label="Context text"></textarea>
 
-    <textarea class="settings__textarea"
-      (keydown.enter)="onContextRememberSend($event)"
-      (keydown.esc)="onClose()"
-      [(ngModel)]="context.remember"
-      placeholder="Type something the AI has to remember..."
-      aria-label="Context remember"></textarea>
-
     <div class="settings__row settings__row--url">
       <label class="field field--grow">
         <span class="field__label" for="context_url">Context URL</span>

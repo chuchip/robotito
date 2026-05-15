@@ -1,0 +1,37 @@
+<h2 mat-dialog-title>New conversation</h2>
+<div mat-dialog-content class="new-conv">
+  <p class="new-conv__hint">
+    Choose a context (theme) for this conversation. You can pick an existing
+    one, edit it, or add a new one.
+  </p>
+
+  <label class="new-conv__field">
+    <span class="new-conv__label">Context profile</span>
+    <select [(ngModel)]="selectedId" (change)="onSelectChange()" aria-label="Context profile">
+      <option *ngFor="let c of contexts" [value]="c.id">{{ c.label }}</option>
+      <option value="new">+ Add new context</option>
+    </select>
+  </label>
+
+  <label class="new-conv__field">
+    <span class="new-conv__label">Label</span>
+    <input type="text" [(ngModel)]="label" [disabled]="!isNew"
+      placeholder="Context label" aria-label="Context label">
+  </label>
+
+  <label class="new-conv__field">
+    <span class="new-conv__label">Context (theme)</span>
+    <textarea [(ngModel)]="text" rows="6"
+      placeholder="Type a context for this conversation..."
+      aria-label="Context text"></textarea>
+  </label>
+
+  <p *ngIf="errorMsg" class="new-conv__error" role="alert">{{ errorMsg }}</p>
+</div>
+
+<div mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()" [disabled]="saving">Cancel</button>
+  <button mat-button color="primary" (click)="onAccept()" [disabled]="saving" cdkFocusInitial>
+    {{ saving ? 'Saving...' : 'OK' }}
+  </button>
+</div>

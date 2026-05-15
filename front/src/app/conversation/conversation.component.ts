@@ -27,6 +27,8 @@ import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.compone
 import { ConversationHistoryComponent } from '../conversation-history/conversation-history.component';
 import { SettingsComponent } from '../settings/settings.component';
 import { SelectionMenuComponent } from '../selection-menu/selection-menu.component';
+import { NewConversationDialogComponent } from '../new-conversation-dialog/new-conversation-dialog.component';
+import { firstValueFrom } from 'rxjs';
 @Component({
   selector: 'app-conversation',
   imports: [CommonModule, MatTooltipModule, MatCheckboxModule, FormsModule,
@@ -109,6 +111,24 @@ export class ConversationComponent {
   dictionaryWindow: Window | null = null;
   reviewWindow: Window | null = null;
   memoryWindow: Window | null = null;
+
+  /**
+   * First robot line announcing the chosen context (e.g. "Context of this
+   * conversation: ..."). It is added to `chatHistory` for display but is
+   * NOT persisted until the conversation is actually initialised in the
+   * backend (i.e. the user sends their first message or opens notes /
+   * dictionary). We keep it here so we can flush it as the first saved
+   * line at that moment.
+   */
+  pendingContextLine: string = '';
+
+  /**
+   * True after a conversation was initialised with the placeholder name
+   * "Empty conversation" (because the user opened notes/dictionary before
+   * writing anything). When the user eventually writes their first
+   * message, we rename the conversation to reflect it.
+   */
+  isEmptyConversation: boolean = false;
    
   constructor(private router: Router,public sound: SoundService,public back: ApiBackService,public persistence: PersistenceService,private avatarService: AvatarService, private dialog: MatDialog) {
     this.isLoading=true
@@ -133,7 +153,10 @@ export class ConversationComponent {
         }
 
         await this.back.changeLanguage(this.selectLanguage,this.selectVoice);
-        this.clearConversation()
+        // On boot we silently reset the local state — no dialog. The user
+        // sees the previously selected conversation (loaded below), or the
+        // default greeting if there is no history.
+        this._resetConversationState()
         await this.list_context()
         await this.getConversationsHistory()        
         if  (this.conversationHistory.length>0)
@@ -310,11 +333,19 @@ export class ConversationComponent {
       this.isLoading=false
       this.numberLine++
       const msg=await this.toHtml(this.responseMessage,"R")
+      let wasEmpty = this.isEmptyConversation
       if (this.conversationId=="")
       {
         var conversation=await this.back.initConversation( this.inputText);        
         this.conversationId=conversation.id
         await this.getConversationsHistory();
+        // Flush the pending "Context of this conversation: ..." line as
+        // the very first message of the new conversation so it shows up
+        // in the saved history too.
+        if (this.swSaveConversation && this.pendingContextLine) {
+          await this.back.saveConversation(this.conversationId, "R", this.pendingContextLine);
+          this.pendingContextLine = ''
+        }
       }
       if (this.swSaveConversation) 
       {
@@ -330,6 +361,23 @@ export class ConversationComponent {
         // requiring a full refresh.
         if (savedHuman && savedHuman.name) {
           this.applyConversationName(this.conversationId, savedHuman.name);
+        }
+        // If the conversation was created as "Empty conversation" (e.g.
+        // because the user opened notes/dictionary before writing), the
+        // backend won't auto-rename it after the first user turn. Do it
+        // here from the first message so the side panel reflects what the
+        // conversation is actually about.
+        if (wasEmpty) {
+          const derived = this._deriveTitleFromMessage(this.inputText)
+          if (derived) {
+            try {
+              await this.back.renameConversation(this.conversationId, derived)
+              this.applyConversationName(this.conversationId, derived)
+            } catch (e) {
+              console.error('Rename after empty conversation failed:', e)
+            }
+          }
+          this.isEmptyConversation = false
         }
       }  
       this.chatHistory.push({line:this.numberLine,type: "R",msg: msg,msgClean:this.responseMessage})
@@ -629,13 +677,52 @@ export class ConversationComponent {
   }
   async clearConversation()
   {
-    this.chatHistory.length=0
-    this.ratingHistory.length=0
-    this.numberLine=1 
-    this.conversationId=""
-    this.showLanguageOptions=false
-    this.persistence.showSummary=false
-    this.swRating=false
+    // Ask the user for the context (theme) of the new conversation before
+    // wiping the current one. If they cancel, we leave the current
+    // conversation untouched.
+    const result = await this.askNewConversationContext();
+    if (!result) {
+      // user cancelled the dialog (Cancel button or backdrop click)
+      return;
+    }
+    await this._resetConversationState();
+    // Apply the chosen context to the LLM for this new conversation.
+    this.setContext(result);
+    try {
+      await this.back.contextSet(result.id);
+    } catch (e) {
+      console.error('Could not set active context:', e);
+    }
+    // Refresh the contexts list so the side state stays in sync (the
+    // dialog may have created a new profile).
+    await this.list_context();
+    // Show the chosen context as the first robot line, but don't persist
+    // it yet — we only save it when the conversation actually starts.
+    const text = (result.text || '').trim();
+    if (text) {
+      const line = `Context of this conversation: ${text}`;
+      this.chatHistory.push({ line: this.numberLine, type: 'R', msg: line, msgClean: line });
+      this.pendingContextLine = line;
+      this.numberLine++;
+    }
+  }
+
+  /**
+   * Reset all per-conversation state (chat history, ratings, summary
+   * flags, child windows, pending context line, ...). Does NOT touch the
+   * active LLM context — callers do that explicitly after a successful
+   * dialog round-trip.
+   */
+  private async _resetConversationState() {
+    this.chatHistory.length = 0
+    this.ratingHistory.length = 0
+    this.numberLine = 1
+    this.conversationId = ''
+    this.showLanguageOptions = false
+    this.persistence.showSummary = false
+    this.swRating = false
+    this.pendingContextLine = ''
+    this.isEmptyConversation = false
     this.putGreeting()
     // Close notes and dictionary windows
     if (this.notesWindow) {
@@ -650,8 +737,26 @@ export class ConversationComponent {
       this.reviewWindow.close();
       this.reviewWindow = null;
     }
-    const response=await this.back.clearConversation();    
+    const response = await this.back.clearConversation();
     this.put_message(response)
+  }
+
+  /**
+   * Open the "new conversation" dialog and return the chosen contextDTO,
+   * `null` if the user cancelled, or `undefined` if the dialog could not
+   * be opened at all (no `dialog` available, etc).
+   */
+  private async askNewConversationContext(): Promise<contextDTO | null | undefined> {
+    if (!this.dialog) return undefined;
+    const ref = this.dialog.open(NewConversationDialogComponent, {
+      width: '560px',
+      data: {
+        contexts: this.contexts,
+        current: this.context,
+      },
+      disableClose: false,
+    });
+    return await firstValueFrom(ref.afterClosed());
   }
 
   setTextContextById(id:string)  {
@@ -953,16 +1058,66 @@ export class ConversationComponent {
 
   openNotes()
   {
-    if (!this.conversationId) return;
     this.persistence.saveToLocalStorage();
-    this.notesWindow = window.open(`/notes/${this.conversationId}`, 'robotito_notes', 'width=680,height=750,resizable=yes');
+    this._ensureConversationInitialized().then(id => {
+      if (!id) return;
+      this.notesWindow = window.open(`/notes/${id}`, 'robotito_notes', 'width=680,height=750,resizable=yes');
+    });
   }
 
   openDictionary()
   {
-    if (!this.conversationId) return;
     this.persistence.saveToLocalStorage();
-    this.dictionaryWindow = window.open(`/dictionary/${this.conversationId}`, 'robotito_dictionary', 'width=800,height=700,resizable=yes');
+    this._ensureConversationInitialized().then(id => {
+      if (!id) return;
+      this.dictionaryWindow = window.open(`/dictionary/${id}`, 'robotito_dictionary', 'width=800,height=700,resizable=yes');
+    });
+  }
+
+  /**
+   * Make sure there is a backend conversation we can attach notes /
+   * dictionary entries to. If the user opened notes/dictionary before
+   * writing anything, we create the conversation now with the placeholder
+   * title "Empty conversation" and flush the pending context line. The
+   * title will be refined to the user's first real message later (see
+   * `sendData`).
+   */
+  private async _ensureConversationInitialized(): Promise<string> {
+    if (this.conversationId) return this.conversationId;
+    try {
+      const conv: any = await this.back.initConversation('Empty conversation');
+      this.conversationId = conv?.id || '';
+      if (!this.conversationId) return '';
+      this.isEmptyConversation = true;
+      // Persist the pending context line, if any, as the first robot line.
+      if (this.swSaveConversation && this.pendingContextLine) {
+        try {
+          await this.back.saveConversation(this.conversationId, 'R', this.pendingContextLine);
+        } catch (e) {
+          console.error('Failed to save pending context line:', e);
+        }
+        this.pendingContextLine = '';
+      }
+      await this.getConversationsHistory();
+      return this.conversationId;
+    } catch (e) {
+      console.error('Failed to init empty conversation:', e);
+      this.showSystemMessage('Could not start conversation');
+      return '';
+    }
+  }
+
+  /**
+   * Derive a short conversation title from the user's first real message.
+   * Mirrors the simple branch of the backend's `init_conversation` helper
+   * (use the message as-is, capped at 9 words) so renamed conversations
+   * look consistent with freshly initialised ones.
+   */
+  private _deriveTitleFromMessage(msg: string): string {
+    const cleaned = (msg || '').replace(/\s+/g, ' ').trim();
+    if (!cleaned) return '';
+    const words = cleaned.split(' ');
+    return words.length > 9 ? words.slice(0, 9).join(' ') : cleaned;
   }
 
   openReview()

@@ -238,7 +238,11 @@ export class SettingsComponent {
     const found = this.contexts.find(c => c.label === selectedLabel)
                 ?? this.contexts.find(c => c.id === 'default');
     if (found) this.applyContext(found);
-    await this.back.contextSet(id);
+    // NOTE: previously this also called `back.contextSet(id)` to apply the
+    // context to the LLM immediately. That now belongs to the "new
+    // conversation" dialog — changing the selection in settings only
+    // affects the locally displayed/edited profile and is not pushed to
+    // the active conversation.
   }
 
   async onContextDelete(id: string) {
@@ -262,16 +266,6 @@ export class SettingsComponent {
     this.selectContext = this.context.label;
     this.putMessage(response);
     this.onClose();
-  }
-
-  async onContextRememberSend(event: Event) {
-    const textArea = event.target as HTMLTextAreaElement;
-    if (!textArea) return;
-    this.context.remember = textArea.value;
-    await this.back.contextSend(this.context);
-    await this.reloadContexts();
-    this.selectContext = this.context.label;
-    this.message.emit('Changed text to remember');
   }
 
   async onContextUrlSend() {
