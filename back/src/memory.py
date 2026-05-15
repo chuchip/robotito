@@ -39,6 +39,112 @@ class AudioData:
         self.kpipeline = None
         self.voice_name="af_heart"
         self.configGoogle=None
+
+
+# ---------------------------------------------------------------------------
+# Vocabulary review session (in-memory only; never persisted)
+# ---------------------------------------------------------------------------
+class ReviewWord:
+    """A single dictionary word selected for the review session.
+
+    Holds the data needed for both the teacher prompt (word + meaning +
+    examples) and the per-word judgement, plus a few attempt counters used
+    to produce the end-of-session summary.
+    """
+    def __init__(self, word_id, word, translation, examples=None):
+        self.id = word_id
+        self.word = word or ""
+        self.translation = translation or ""
+        self.examples = examples or []  # list of {english_phrase, spanish_phrase}
+        self.attempts = 0   # how many user turns spent on this word
+        self.hints = 0      # how many hint-style turns
+        self.status = "pending"  # 'pending' | 'known' | 'unknown' | 'skipped'
+
+
+class ReviewSession:
+    """State machine driving a one-on-one vocabulary review conversation.
+
+    Lives on `memoryDTO.review_session` and is wiped on logout / clear.
+    Never persisted: a refresh that loses the in-memory session simply ends
+    the review (the conversation lines stay saved as normal).
+    """
+    def __init__(self, words):
+        self.words = words or []
+        self.index = 0
+        self.last_verdict = None
+        # Frozen snapshot of the per-word outcomes once advanced/skipped, in
+        # the order they were resolved. Used for the closing summary.
+        self.history = []
+
+    def current(self) -> "ReviewWord":
+        if 0 <= self.index < len(self.words):
+            return self.words[self.index]
+        return None
+
+    def is_finished(self) -> bool:
+        return self.index >= len(self.words)
+
+    def record_attempt(self, verdict: str):
+        """Update counters for the current word after a turn.
+
+        Does NOT advance; advancing is always user-initiated (3c flow).
+        """
+        self.last_verdict = verdict
+        w = self.current()
+        if w is None:
+            return
+        w.attempts += 1
+        if verdict == "hint_given":
+            w.hints += 1
+
+    def advance(self, mark: str):
+        """Mark the current word with `mark` ('known' | 'unknown' | 'skipped')
+        and move to the next one. Returns the new current word (or None).
+        """
+        w = self.current()
+        if w is None:
+            return None
+        w.status = mark if mark in ("known", "unknown", "skipped") else "unknown"
+        self.history.append({
+            "word": w.word,
+            "translation": w.translation,
+            "status": w.status,
+            "attempts": w.attempts,
+            "hints": w.hints,
+        })
+        self.index += 1
+        self.last_verdict = None
+        return self.current()
+
+    def public_state(self) -> dict:
+        """Frontend-facing snapshot. Includes the CURRENT word only (future
+        words are intentionally not exposed)."""
+        cur = self.current()
+        return {
+            "active": True,
+            "index": self.index,
+            "total": len(self.words),
+            "current_word": cur.word if cur else None,
+            "last_verdict": self.last_verdict,
+            "is_finished": self.is_finished(),
+            "resolved": [
+                {"word": h["word"], "translation": h["translation"], "status": h["status"]}
+                for h in self.history
+            ],
+        }
+
+    def summary(self) -> dict:
+        """End-of-session summary used by /review/end."""
+        known = sum(1 for h in self.history if h["status"] == "known")
+        skipped = sum(1 for h in self.history if h["status"] == "skipped")
+        unknown = sum(1 for h in self.history if h["status"] == "unknown")
+        return {
+            "total": len(self.words),
+            "known": known,
+            "skipped": skipped,
+            "unknown": unknown,
+            "history": self.history,
+        }
 def get_max_length_answer():
   max_length_answers = os.getenv("MAX_LENGHT_ANSWERS")
   if max_length_answers is None:
@@ -63,6 +169,9 @@ class memoryDTO:
         self.long_term_memory:str=None
         # Counts user turns since the last memory consolidation, so we can periodically refresh.
         self.turns_since_consolidation:int=0
+        # Active vocabulary-review session, if any (see ReviewSession).
+        # Lives in memory only; cleared on logout or a fresh conversation.
+        self.review_session:ReviewSession=None
     def getMaxLengthAnswer(self):
         return self.max_length_answer
     def setMaxLengthAnswer(self,max_lemgth:int):
@@ -90,6 +199,7 @@ class memoryDTO:
         self.url_source=None
         self.long_term_memory=None
         self.turns_since_consolidation=0
+        self.review_session=None
     def getUser(self):
         return self.user
     def setUser(self,user:str):
@@ -132,6 +242,12 @@ class memoryDTO:
         self.turns_since_consolidation += 1
     def resetTurnsSinceConsolidation(self):
         self.turns_since_consolidation = 0
+    def getReviewSession(self) -> "ReviewSession":
+        return self.review_session
+    def setReviewSession(self, session: "ReviewSession"):
+        self.review_session = session
+    def clearReviewSession(self):
+        self.review_session = None
     def getUuid(self):    
         return self.uuid
 

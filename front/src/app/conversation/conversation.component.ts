@@ -128,6 +128,27 @@ export class ConversationComponent {
    * message, we rename the conversation to reflect it.
    */
   isEmptyConversation: boolean = false;
+
+  /**
+   * Active vocabulary-review session, mirrored from the backend after
+   * `POST /api/review/start`. While non-null:
+   *   - user turns are routed through `back.reviewTurn` (streamed) instead
+   *     of `back.sendQuestion`;
+   *   - the review toolbar is shown above the input;
+   *   - `last_verdict` is updated from the trailing `[[VERDICT:...]]`
+   *     marker on each turn and drives the highlighted state of the
+   *     "Next word" button.
+   * The shape matches `ReviewSession.public_state()` on the backend.
+   */
+  reviewState: {
+    active: boolean;
+    index: number;
+    total: number;
+    current_word: string | null;
+    last_verdict: string | null;
+    is_finished: boolean;
+    resolved: { word: string; translation: string; status: string }[];
+  } | null = null;
    
   constructor(private router: Router,public sound: SoundService,public back: ApiBackService,public persistence: PersistenceService,private avatarService: AvatarService, private dialog: MatDialog) {
     this.isLoading=true
@@ -266,7 +287,13 @@ export class ConversationComponent {
       this.getRatingTeacher(this.numberLine,this.inputText.trim())
       this.isLoading=true
       this.responseMessage=""
-      const response=await this.back.sendQuestion(this.inputText)
+      // Pick the right backend route: review sessions stream through
+      // `/review/turn` (per-word teacher prompt + trailing verdict marker)
+      // while everything else goes through the normal `/send-question`.
+      const inReview = !!this.reviewState
+      const response = inReview
+        ? await this.back.reviewTurn(this.inputText)
+        : await this.back.sendQuestion(this.inputText)
     
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
@@ -282,12 +309,37 @@ export class ConversationComponent {
         }
         this.ttsArray.length=0
         this.ttsAbort=false
+        // Review-mode verdict marker accumulators. The backend appends
+        // `\n[[VERDICT:<value>]]` at the end of the stream; we strip it
+        // before it ever reaches `responseMessage` (so it's never shown or
+        // TTS'd) and apply the parsed value to `reviewState.last_verdict`
+        // once the stream completes. The marker may straddle two chunks,
+        // hence the running buffer.
+        let inVerdict = false
+        let verdictBuffer = ''
         while (true) {          
           const { done, value } = await reader.read();
           if (done) break;
           const chunk = decoder.decode(value, { stream: true });
           
-          this.responseMessage+= chunk.replace(/\n/g, '');
+          let displayChunk = chunk
+          if (inReview) {
+            if (inVerdict) {
+              verdictBuffer += chunk
+              displayChunk = ''
+            } else {
+              // Look for the marker spanning the existing message + this chunk.
+              const probe = this.responseMessage + chunk
+              const idx = probe.indexOf('[[VERDICT:')
+              if (idx >= 0) {
+                const startInChunk = idx - this.responseMessage.length
+                displayChunk = startInChunk > 0 ? chunk.slice(0, startInChunk) : ''
+                verdictBuffer = chunk.slice(Math.max(0, startInChunk))
+                inVerdict = true
+              }
+            }
+          }
+          this.responseMessage+= displayChunk.replace(/\n/g, '');
           pFin=this.findNextPunctuation(this.responseMessage,pIni)          
           if (pFin!=-1) {
             txt+=this.responseMessage.substring(pIni,pFin+1)
@@ -325,6 +377,12 @@ export class ConversationComponent {
           }
         }
         this.ttsStart=false
+        // Parse the trailing verdict marker (if any) and update the local
+        // review-state mirror. Wrong/missing markers are silently treated
+        // as off_topic so the toolbar doesn't get stuck.
+        if (inReview) {
+          this._applyVerdictMarker(verdictBuffer)
+        }
       }
       else{
         console.log("No reader")
@@ -712,81 +770,163 @@ export class ConversationComponent {
   }
 
   /**
-   * Start a new conversation in "vocabulary review" mode: pick 10 random
-   * words from the user's dictionary, build a context that asks the LLM
-   * to use those words inside invented short stories, and show the
-   * introductory robotito line. Like the normal flow, nothing is saved
-   * to the backend until the user writes their first message (or opens
-   * notes/dictionary, which routes through `_ensureConversationInitialized`).
+   * Start a new conversation in vocabulary-review mode by asking the
+   * backend to pick 10 random words and initialise a `ReviewSession`. The
+   * words themselves are kept server-side; the frontend only sees the
+   * CURRENT word at any moment (`reviewState.current_word`). User turns
+   * during the review are routed through `back.reviewTurn` (streamed),
+   * which also returns a structured verdict the toolbar uses to highlight
+   * the "Next word" button.
+   *
+   * As with the normal new-conversation flow, nothing is persisted until
+   * the user writes their first message (or opens notes/dictionary).
    */
   private async _startReviewConversation() {
-    let words: any[] = []
+    // If a previous review was active, drop the local mirror first so
+    // `_resetConversationState` doesn't try to end the session we are
+    // about to recreate (backend `/review/start` already overwrites any
+    // existing session for this user).
+    this.reviewState = null
+
+    let resp: any
     try {
-      words = await this.back.getUserWords()
-    } catch (e) {
-      console.error('Failed to load dictionary words:', e)
-      this.showSystemMessage('Could not load your dictionary words')
+      resp = await this.back.reviewStart()
+    } catch (e: any) {
+      // The 400 "no words" case bubbles up as an HttpErrorResponse with the
+      // message in `error.message`; surface it gently instead of throwing.
+      const msg = e?.error?.message || 'Could not start review session.'
+      console.error('reviewStart failed:', e)
+      this.showSystemMessage(msg)
       return
     }
-    if (!words || words.length === 0) {
-      this.showSystemMessage('No words saved yet. Add some in the dictionary first.')
-      return
-    }
-
-    // Pick up to 10 random words with a partial Fisher-Yates shuffle so
-    // the selection is unbiased even when the dictionary is small.
-    const sample = [...words]
-    const pickCount = Math.min(10, sample.length)
-    for (let i = 0; i < pickCount; i++) {
-      const j = i + Math.floor(Math.random() * (sample.length - i))
-      const tmp = sample[i]; sample[i] = sample[j]; sample[j] = tmp
-    }
-    const picked = sample.slice(0, pickCount)
-    const wordList = picked.map(w => w.word).filter(Boolean)
-    const wordListStr = wordList.join(', ')
-
-    // Build the LLM context. It instructs the AI to weave the words into
-    // short stories without revealing their meaning directly, so the user
-    // can guess from context.
-    const contextText =
-      `This conversation is a vocabulary review session. ` +
-      `We are going to practice these English words: ${wordListStr}. ` +
-      `In every answer, invent a short story or example sentences that use one or more of these words in natural context, ` +
-      `so the user can guess what each word means from the situation. ` +
-      `Do not state the translation or definition of a word unless the user explicitly asks. ` +
-      `Encourage the user to guess; confirm or gently correct when they try.`
-
-    // Apply the context for THIS conversation only — do NOT persist it as
-    // a profile in the user's contexts list. The backend's
-    // `/context/transient` endpoint sets the active in-memory context
-    // without touching the DB, so this review session leaves no trace in
-    // the contexts dropdown.
-    try {
-      await this.back.contextSetTransient(contextText, 'Word review')
-    } catch (e) {
-      console.error('Failed to apply transient review context:', e)
-      this.showSystemMessage('Could not apply review context')
+    if (!resp || !resp.state || !resp.state.current_word) {
+      this.showSystemMessage('No words available to review.')
       return
     }
 
     await this._resetConversationState()
-    // Reflect the transient context locally so the rest of the UI (the
-    // settings panel, the side history, etc.) sees a consistent value.
-    // Important: we do NOT push this into `this.contexts` — the list of
-    // saved profiles must stay unchanged.
-    this.context.id = ''
-    this.context.label = 'Word review'
-    this.context.text = contextText
-    this.context.remember = ''
+    this.reviewState = resp.state
+    // Push the intro line as the first robot message — and store it in
+    // `pendingContextLine` so it's saved when the conversation is later
+    // initialised in the backend (first user turn, or open notes/dict).
+    const intro = (resp.intro || '').trim()
+    if (intro) {
+      this.chatHistory.push({ line: this.numberLine, type: 'R', msg: intro, msgClean: intro })
+      this.pendingContextLine = intro
+      this.numberLine++
+    }
+  }
 
-    // Introductory line shown (and later saved) as the first robot
-    // message of the conversation.
-    const introLine =
-      `Now, we are going to review these words: ${wordListStr}. ` +
-      `I'll try to imagine a story so I can use these words, and you have to guess what is the meaning of these words.`
-    this.chatHistory.push({ line: this.numberLine, type: 'R', msg: introLine, msgClean: introLine })
-    this.pendingContextLine = introLine
-    this.numberLine++
+  // ---------------------------------------------------------------------
+  // Review session toolbar handlers
+  // ---------------------------------------------------------------------
+
+  /** Advance to the next word. The backend marks the current one as
+   *  learned (`known=true`) so the end-of-session summary reflects the
+   *  user's actual progress. Also pushes the new word's intro line into
+   *  the chat. */
+  async reviewNext() {
+    if (!this.reviewState) return
+    await this._reviewAdvance(true)
+  }
+
+  /** Skip the current word (records it as `skipped` in the summary). */
+  async reviewSkip() {
+    if (!this.reviewState) return
+    try {
+      const resp: any = await this.back.reviewSkip()
+      this._applyReviewAdvanceResponse(resp)
+    } catch (e) {
+      console.error('reviewSkip failed:', e)
+      this.showSystemMessage('Could not skip word')
+    }
+  }
+
+  /** End the active review session and post a short summary as a robot
+   *  line. The conversation continues afterwards as a normal chat. */
+  async reviewEndSession() {
+    if (!this.reviewState) return
+    try {
+      const resp: any = await this.back.reviewEnd()
+      const summary = resp?.summary
+      this.reviewState = null
+      if (summary) {
+        const total = summary.total ?? 0
+        const known = summary.known ?? 0
+        const skipped = summary.skipped ?? 0
+        const unknown = summary.unknown ?? 0
+        const missed = (summary.history || [])
+          .filter((h: any) => h.status !== 'known')
+          .map((h: any) => h.word)
+        let line = `Review finished! You got ${known} / ${total} right.`
+        if (skipped) line += ` Skipped: ${skipped}.`
+        if (unknown) line += ` Didn't know: ${unknown}.`
+        if (missed.length) line += ` Words to revisit: ${missed.join(', ')}.`
+        this.chatHistory.push({ line: this.numberLine, type: 'R', msg: line, msgClean: line })
+        this.numberLine++
+        // Save the summary line too if the conversation already exists.
+        if (this.conversationId && this.swSaveConversation) {
+          try { await this.back.saveConversation(this.conversationId, 'R', line) } catch (e) { console.error(e) }
+        }
+      }
+    } catch (e) {
+      console.error('reviewEnd failed:', e)
+      this.showSystemMessage('Could not end review')
+    }
+  }
+
+  /** Parse a `[[VERDICT:<value>]]` marker (possibly preceded/followed by
+   *  whitespace) and write the value into `reviewState.last_verdict`. The
+   *  marker may have been split across chunks, so we only look at the
+   *  accumulated buffer here at end-of-stream. */
+  private _applyVerdictMarker(buffer: string) {
+    if (!this.reviewState) return
+    const m = (buffer || '').match(/\[\[VERDICT:([a-z_]+)\]\]/i)
+    if (!m) {
+      this.reviewState.last_verdict = 'off_topic'
+      return
+    }
+    this.reviewState.last_verdict = m[1].toLowerCase()
+  }
+
+  private async _reviewAdvance(known: boolean) {
+    try {
+      const resp: any = await this.back.reviewAdvance(known)
+      this._applyReviewAdvanceResponse(resp)
+    } catch (e) {
+      console.error('reviewAdvance failed:', e)
+      this.showSystemMessage('Could not advance to next word')
+    }
+  }
+
+  /** Common post-processing for /advance and /skip: update the local
+   *  mirror, push the new word's intro line into the chat, and persist it
+   *  if the conversation already exists. */
+  private async _applyReviewAdvanceResponse(resp: any) {
+    if (!resp || !resp.state) return
+    this.reviewState = resp.state
+    const intro = (resp.intro || '').trim()
+    if (this.reviewState && this.reviewState.is_finished) {
+      // No more words; offer to end the session.
+      const done = 'That was the last word. Click "End review" when you want to see your summary.'
+      this.chatHistory.push({ line: this.numberLine, type: 'R', msg: done, msgClean: done })
+      this.numberLine++
+      if (this.conversationId && this.swSaveConversation) {
+        try { await this.back.saveConversation(this.conversationId, 'R', done) } catch (e) { console.error(e) }
+      }
+      return
+    }
+    if (intro) {
+      this.chatHistory.push({ line: this.numberLine, type: 'R', msg: intro, msgClean: intro })
+      this.numberLine++
+      if (this.conversationId && this.swSaveConversation) {
+        try { await this.back.saveConversation(this.conversationId, 'R', intro) } catch (e) { console.error(e) }
+      } else {
+        // No conversation yet — keep the line pending so it's flushed when
+        // the first real user turn (or notes/dictionary) initialises one.
+        this.pendingContextLine = intro
+      }
+    }
   }
 
   /**
@@ -805,6 +945,14 @@ export class ConversationComponent {
     this.swRating = false
     this.pendingContextLine = ''
     this.isEmptyConversation = false
+    // If a backend review session is still running from the previous
+    // conversation, end it server-side so the next turn doesn't get routed
+    // back to /review/turn by mistake. We don't need its summary here —
+    // the user is moving on.
+    if (this.reviewState) {
+      try { await this.back.reviewEnd() } catch (e) { console.error('reviewEnd cleanup failed:', e) }
+    }
+    this.reviewState = null
     this.putGreeting()
     // Close notes and dictionary windows
     if (this.notesWindow) {
@@ -922,6 +1070,13 @@ export class ConversationComponent {
   async historyChoose(id:string,idContext:string)
   {    
     this.isLoading=true
+    // Loading a saved conversation always exits review mode, both locally
+    // and on the backend (the picked conversation has no live review
+    // session attached to it).
+    if (this.reviewState) {
+      try { await this.back.reviewEnd() } catch (e) { console.error('reviewEnd cleanup failed:', e) }
+    }
+    this.reviewState = null
     this.conversationId=id
     const response=await this.back.conversation_by_id(id);
     this.contextUrl = response.url || '';

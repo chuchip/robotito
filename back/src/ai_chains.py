@@ -5,7 +5,7 @@
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 
-from ai_models import SumaryResume, AnalizePhrase, AnalizePhrases, TranslationResult, ReviewResult, MemoryExtraction
+from ai_models import SumaryResume, AnalizePhrase, AnalizePhrases, TranslationResult, ReviewResult, MemoryExtraction, ReviewVerdict
 
 
 _prompt_resume_str = """
@@ -129,6 +129,43 @@ Recent conversation transcript:
 Ensure your entire response is ONLY the JSON object, starting with {{ and ending with }}."""
 
 
+_prompt_review_judge_str = """
+You are the silent judge in a vocabulary-review session. After every turn you
+return a single verdict describing the user's latest message about the
+CURRENT word.
+
+Current word: "{word}"
+Its accepted meaning(s): "{translation}"
+
+The user is interacting with a teacher assistant that just replied to them
+(included only for context — DO NOT judge the teacher's reply, judge the
+USER's message):
+
+Teacher reply:
+---
+{teacher_reply}
+---
+
+User message:
+---
+{user_message}
+---
+
+Pick exactly one verdict:
+- "correct"     - the user clearly stated the meaning (translation, synonym, or accurate definition). Be lenient with spelling, accents, plural/singular, and articles.
+- "partial"     - close but imprecise, or only one of several meanings of a multi-sense word.
+- "incorrect"   - they guessed and were wrong.
+- "hint_given"  - they did NOT guess: they asked for a clue, an example sentence, a synonym, a category, said "I don't remember", etc.
+- "gave_up"     - they explicitly gave up or asked for the answer ("I don't know, tell me", "just give me the answer", "skip").
+- "off_topic"   - their message is not about this word at all.
+
+Provide a one-sentence rationale.
+
+{format_instructions}
+
+Ensure your entire response is ONLY the JSON object, starting with {{ and ending with }}."""
+
+
 def _build_chain(template_str: str, input_variables: list, parser: PydanticOutputParser, llm):
     prompt = PromptTemplate(
         template=template_str,
@@ -172,5 +209,15 @@ def build_chains(llm_text, llm_smart=None) -> dict:
         "memory": _build_chain(
             _prompt_memory_str, ["existing_profile", "existing_facts", "transcript"],
             PydanticOutputParser(pydantic_object=MemoryExtraction), smart,
+        ),
+        # Vocabulary-review judge. Called once per user turn during a review
+        # session to produce a structured verdict (correct / partial /
+        # incorrect / hint_given / gave_up / off_topic). Uses the cheap
+        # `llm_text` model: the prompt is short, the schema tiny, and the
+        # call happens for every user turn, so cost matters more than peak
+        # reasoning quality.
+        "review_judge": _build_chain(
+            _prompt_review_judge_str, ["word", "translation", "teacher_reply", "user_message"],
+            PydanticOutputParser(pydantic_object=ReviewVerdict), llm_text,
         ),
     }

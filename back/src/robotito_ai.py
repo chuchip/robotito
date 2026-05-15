@@ -23,6 +23,7 @@ import ai_providers
 import ai_chains
 import ai_service
 import audio_service
+import review_service
 from api.principal import principal_bp
 from api.security import security_bp
 from api.audio import audio_bp
@@ -30,6 +31,7 @@ from api.context import context_bp
 from api.conversation import conversation_bp
 from api.memory import memory_bp
 from api.admin import admin_bp
+from api.review import review_bp
 
 os.environ["GRPC_VERBOSITY"] = "ERROR"
 os.environ["GLOG_minloglevel"] = "2"
@@ -142,6 +144,7 @@ else:
 # ---------------------------------------------------------------------------
 chains = ai_chains.build_chains(llm_text, llm_smart)
 ai_service.init(client_text, llm_text, model_api, chains, max_history, logger_)
+review_service.init(client_text, chains, model_api, logger_)
 audio_service.init(stt, tts, local_whisper, logger_)
 
 # Re-export for backward compatibility with ``import robotito_ai as ai``.
@@ -157,6 +160,14 @@ translate_text = ai_service.translate_text
 consolidate_memory = ai_service.consolidate_memory
 load_long_term_memory = ai_service.load_long_term_memory
 schedule_consolidation_if_due = ai_service.schedule_consolidation_if_due
+
+# Vocabulary review session (see review_service.py).
+review_start = review_service.start_review
+review_turn = review_service.review_turn
+review_advance = review_service.advance_word
+review_skip = review_service.skip_word
+review_end = review_service.end_review
+review_get_state = review_service.get_state
 
 getTextFromAudio = audio_service.getTextFromAudio
 getAudioFromText = audio_service.getAudioFromText
@@ -188,6 +199,7 @@ app.register_blueprint(principal_bp, url_prefix='/api')
 app.register_blueprint(security_bp, url_prefix='/api/security')
 app.register_blueprint(memory_bp, url_prefix='/api/memory')
 app.register_blueprint(admin_bp, url_prefix='/api/admin')
+app.register_blueprint(review_bp, url_prefix='/api/review')
 
 
 # ---------------------------------------------------------------------------

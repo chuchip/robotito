@@ -36,6 +36,74 @@ export class ApiBackService {
       headers: this.getAuthHeaders(),
     });
   }
+
+  // ---------------------------------------------------------------------
+  // Vocabulary review session (see backend `api/review.py`).
+  // ---------------------------------------------------------------------
+
+  /** Begin a new review session. Returns `{state, intro}` on success or
+   *  `{message}` with 4xx when the user has no words in their dictionary. */
+  async reviewStart(): Promise<any> {
+    try {
+      return await firstValueFrom(this.http.post(`${this.backendUrl}/review/start`, {}));
+    } catch (error) {
+      console.error('reviewStart failed!:', error);
+      throw error;
+    }
+  }
+
+  /** Send one user turn during an active review. Uses raw `fetch()` because
+   *  the response is streamed (text chunks + trailing `[[VERDICT:...]]`). */
+  async reviewTurn(text: string): Promise<Response> {
+    return await fetch(`${this.backendUrl}/review/turn`, {
+      method: 'POST',
+      body: JSON.stringify({ text }),
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  /** Advance to the next word. `known=true` marks the current word as
+   *  learned; `known=false` records it as unknown without skipping. */
+  async reviewAdvance(known: boolean = true): Promise<any> {
+    try {
+      return await firstValueFrom(
+        this.http.post(`${this.backendUrl}/review/advance`, { known })
+      );
+    } catch (error) {
+      console.error('reviewAdvance failed!:', error);
+      throw error;
+    }
+  }
+
+  /** Skip the current word (records it as skipped) and advance. */
+  async reviewSkip(): Promise<any> {
+    try {
+      return await firstValueFrom(this.http.post(`${this.backendUrl}/review/skip`, {}));
+    } catch (error) {
+      console.error('reviewSkip failed!:', error);
+      throw error;
+    }
+  }
+
+  /** End the active review and return a summary. */
+  async reviewEnd(): Promise<any> {
+    try {
+      return await firstValueFrom(this.http.post(`${this.backendUrl}/review/end`, {}));
+    } catch (error) {
+      console.error('reviewEnd failed!:', error);
+      throw error;
+    }
+  }
+
+  /** Fetch the current public state (or `state:null` if no session is active). */
+  async reviewState(): Promise<any> {
+    try {
+      return await firstValueFrom(this.http.get(`${this.backendUrl}/review/state`));
+    } catch (error) {
+      console.error('reviewState failed!:', error);
+      throw error;
+    }
+  }
   uploadAudio(audioChunks:Blob[]): Promise<string> {
     return new Promise((resolve, reject) => {
       const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });

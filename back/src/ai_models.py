@@ -57,3 +57,21 @@ class MemoryExtraction(BaseModel):
     """Output of the memory consolidation chain."""
     profile: str = Field(description="A short paragraph (<=300 words) merging the previous profile with new stable info about the user. May be empty if nothing changed.")
     facts: List[MemoryFact] = Field(description="Discrete facts to remember. Empty list is allowed. Skip one-off chitchat.")
+
+
+class ReviewVerdict(BaseModel):
+    """Verdict produced after each user turn during a vocabulary review session.
+
+    The frontend uses the `verdict` to decide whether to highlight the
+    "Next word" button (correct/partial) and to record per-word outcomes for
+    the end-of-session summary.
+    """
+    verdict: str = Field(description=(
+        "One of: 'correct' (user clearly stated the meaning), 'partial' "
+        "(close but imprecise), 'incorrect' (wrong guess), 'hint_given' "
+        "(user asked for a clue / example / sentence without guessing), "
+        "'gave_up' (user explicitly gave up or asked for the answer), "
+        "'off_topic' (unrelated to the word)."
+    ))
+    rationale: str = Field(default="", description="One short sentence justifying the verdict. May be empty.")
+

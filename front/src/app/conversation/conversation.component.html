@@ -61,6 +61,41 @@
         </span>
       </div>
     </div>
+    <!-- Vocabulary review toolbar. Only visible while a review session is
+         active. The "Next word" button highlights itself when the LLM
+         judge said the user got the current word right; the user remains
+         in control (3c flow) — clicking it advances regardless. -->
+    <div class="review-toolbar" *ngIf="reviewState" role="toolbar" aria-label="Review session controls">
+      <span class="review-toolbar__progress" *ngIf="reviewState.total > 0">
+        {{ reviewState.index + (reviewState.is_finished ? 0 : 1) }} / {{ reviewState.total }}
+      </span>
+      <button type="button" class="review-toolbar__btn review-toolbar__btn--skip"
+        (click)="reviewSkip()"
+        [disabled]="reviewState.is_finished"
+        aria-label="Skip current word"
+        matTooltip="Skip this word">
+        <span class="material-icons" aria-hidden="true">skip_next</span>
+        <span>Skip word</span>
+      </button>
+      <span class="review-toolbar__spacer"></span>
+      <button type="button" class="review-toolbar__btn review-toolbar__btn--next"
+        [class.is-cued]="reviewState.last_verdict === 'correct' || reviewState.last_verdict === 'partial'"
+        (click)="reviewNext()"
+        [disabled]="reviewState.is_finished"
+        [attr.aria-label]="reviewState.last_verdict === 'correct' ? 'Next word (teacher says correct)' : 'Next word'"
+        matTooltip="Move on to the next word">
+        <span>Next word</span>
+        <span class="material-icons" aria-hidden="true">arrow_forward</span>
+      </button>
+      <button type="button" class="review-toolbar__btn review-toolbar__btn--end"
+        (click)="reviewEndSession()"
+        aria-label="End review session"
+        matTooltip="End review and see summary">
+        <span class="material-icons" aria-hidden="true">stop_circle</span>
+        <span>End review</span>
+      </button>
+    </div>
+
     <!-- Input and controls (fixed at viewport bottom) -->
     <div #input class='input' >
       <app-avatar [talking]="(avatarTalking$ | async) || false" class="input-avatar"></app-avatar>

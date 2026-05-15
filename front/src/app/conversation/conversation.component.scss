@@ -416,3 +416,96 @@ mat-checkbox .mat-checkbox-label {
     max-width: 90%;
   }
 }
+
+/* Vocabulary-review toolbar. Shown only while a review session is active
+   (see `reviewState` in the component). Sits between the chat area and
+   the main input toolbar to make the special mode visually obvious. */
+.review-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin: 0 8px 4px;
+  background: rgba(21, 101, 192, 0.06);
+  border: 1px solid rgba(21, 101, 192, 0.25);
+  border-radius: 8px;
+  font-size: 0.92rem;
+}
+
+.review-toolbar__progress {
+  font-weight: 600;
+  color: #1565c0;
+  padding: 2px 8px;
+  background: #ffffff;
+  border-radius: 999px;
+  border: 1px solid rgba(21, 101, 192, 0.35);
+}
+
+.review-toolbar__spacer {
+  flex: 1 1 auto;
+}
+
+.review-toolbar__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: #1565c0;
+  transition: background-color 0.15s ease, border-color 0.15s ease,
+              color 0.15s ease, transform 0.15s ease;
+}
+
+.review-toolbar__btn:hover:not(:disabled) {
+  background: rgba(21, 101, 192, 0.1);
+}
+
+.review-toolbar__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.review-toolbar__btn .material-icons {
+  font-size: 1.05rem;
+}
+
+.review-toolbar__btn--end {
+  color: #8e24aa;
+}
+
+.review-toolbar__btn--end:hover:not(:disabled) {
+  background: rgba(142, 36, 170, 0.1);
+}
+
+/* "Next word" reads as the primary action when the LLM judge marked the
+   user's last answer as correct/partial. Pulsing draws the eye without
+   stealing focus. */
+.review-toolbar__btn--next {
+  border-color: rgba(21, 101, 192, 0.35);
+}
+
+.review-toolbar__btn--next.is-cued {
+  background: #1565c0;
+  color: #ffffff;
+  border-color: #1565c0;
+  animation: review-next-pulse 1.4s ease-in-out infinite;
+}
+
+.review-toolbar__btn--next.is-cued:hover:not(:disabled) {
+  background: #0d47a1;
+  color: #ffffff;
+}
+
+@keyframes review-next-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(21, 101, 192, 0.55); }
+  50%      { box-shadow: 0 0 0 6px rgba(21, 101, 192, 0); }
+}
+
+@media (max-width: 768px) {
+  .review-toolbar { flex-wrap: wrap; }
+  .review-toolbar__spacer { display: none; }
+}
