@@ -92,8 +92,7 @@ export class ConversationComponent {
   swRating=false;
   ratingPhrase: RatingPhrase | null = null; 
   numberLine:number=0
-  defaultGreeting:string="Hello, I'm robotito. Do you want to talk?"
-  responseMessage:string="Hello, I'm robotito. Do you want to talk?"
+  responseMessage:string=""
   inputText: string = '';
   showRecord=false
   showLanguageOptions=false
@@ -158,19 +157,16 @@ export class ConversationComponent {
         // default greeting if there is no history.
         this._resetConversationState()
         await this.list_context()
-        await this.getConversationsHistory()        
+        await this.getConversationsHistory()
         if  (this.conversationHistory.length>0)
         {
-          this.context.id= this.conversationHistory[0].idContext
-          if (this.context.id==null)
-          {
-            this.setDefaultContext()            
-          }
-          else
-          {
-            this.setTextContextById(this.context.id)            
-            await this.back.contextSet(this.context.id)
-          }
+          // Open the most recent conversation automatically on login. The
+          // backend orders `conversation_get_list` by `final_date desc`, so
+          // entry [0] is the last one the user worked on. `historyChoose`
+          // handles resetting state, loading lines, setting the context and
+          // synchronising the active conversation id.
+          const last = this.conversationHistory[0]
+          await this.historyChoose(last.id, last.idContext)
         }
         else
         {
@@ -184,7 +180,10 @@ export class ConversationComponent {
   }
   putGreeting()
   {
-    this.chatHistory.push({line:this.numberLine, type: "R",msg: this.defaultGreeting,msgClean:this.responseMessage});
+    // Intentionally a no-op: the initial "Hello, I'm robotito..." greeting
+    // has been removed. The method is kept (and still called from the
+    // reset / history-load flows) so we can reintroduce a greeting later
+    // without re-wiring all call sites.
   }
   
   async setDefaultContext()
