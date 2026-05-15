@@ -57,10 +57,37 @@ async def context_setById(id):
   return jsonify({'message': f"Context set  Set Context to: '{id}'", 'data': context_db,'status':'OK'})
 
 ## Work with context
+@context_bp.route('/transient', methods=['PUT'])
+async def context_set_transient():
+  """Set the active in-memory context without persisting it to the DB.
+
+  Used by client flows (e.g. the "review 10 random dictionary words"
+  conversation) where the context is a throw-away wrapper around runtime
+  data and should not pollute the user's saved context list.
+  """
+  data = await request.get_json() or {}
+  text = data.get('text', '')
+  label = data.get('label', 'transient')
+  remember = data.get('remember', '')
+  mem = memory.getMemory(request.headers.get("uuid"))
+  if mem is None:
+    return jsonify({'message': 'Memory not found!', 'status': 'KO'}), 404
+  context = mem.getContext()
+  if context is None:
+    context = memory.Context()
+    mem.setContext(context)
+  # No DB id — this is an in-memory-only context.
+  context.setId(None)
+  context.setLabel(label)
+  context.setText(text)
+  context.setRememberText(remember)
+  return jsonify({'message': 'Transient context set', 'status': 'OK'})
+
+
 @context_bp.route('', methods=['POST'])
-async def context_update():      
-  data = await request.get_json()  # Get JSON data from the request body   
-  mem=memory.getMemory(request.headers.get("uuid")) 
+async def context_update():
+  data = await request.get_json()  # Get JSON data from the request body
+  mem=memory.getMemory(request.headers.get("uuid"))
   context =mem.getContext()
   if context is None:
     context=memory.Context()

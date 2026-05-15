@@ -8,13 +8,26 @@ import { contextDTO } from '../model/context.dto';
 import { ApiBackService } from '../services/api-back.service';
 
 /**
+ * Result returned by the new-conversation dialog.
+ *   - `context`    : the chosen / newly-created context profile to apply
+ *                    to the LLM for this conversation.
+ *   - `reviewMode` : true when the user clicked the "Review words" button;
+ *                    the caller is responsible for picking the words and
+ *                    building the review context.
+ * `null` means the user cancelled.
+ */
+export interface NewConversationDialogResult {
+  context?: contextDTO;
+  reviewMode?: boolean;
+}
+
+/**
  * Dialog shown when the user starts a new conversation.
  *
  * Lets them either pick an existing context profile (and optionally edit
- * its text) or create a brand new one with its own label and text.
- *
- * On close it returns the chosen `contextDTO` (with the LLM-applicable text),
- * or `null` if the user cancelled.
+ * its text) or create a brand new one with its own label and text, OR
+ * start a vocabulary-review session that picks 10 random words from the
+ * user's dictionary as the context.
  */
 @Component({
   selector: 'app-new-conversation-dialog',
@@ -77,6 +90,15 @@ export class NewConversationDialogComponent {
   }
 
   /**
+   * Dedicated "Review words" action: closes the dialog signalling a
+   * review-mode start. The caller picks the words and builds the
+   * context; the dialog does not need any label/text from the user.
+   */
+  onReview() {
+    this.dialogRef.close({ reviewMode: true } as NewConversationDialogResult);
+  }
+
+  /**
    * Persist the (possibly edited or brand-new) context and return it to the
    * caller. The caller is responsible for applying it as the active LLM
    * context for the new conversation.
@@ -117,7 +139,7 @@ export class NewConversationDialogComponent {
         if (found) savedId = found.id;
       }
       const result: contextDTO = { ...dto, id: savedId || dto.id } as contextDTO;
-      this.dialogRef.close(result);
+      this.dialogRef.close({ context: result } as NewConversationDialogResult);
     } catch (e) {
       console.error('Failed to save context:', e);
       this.errorMsg = 'Could not save context. Please try again.';

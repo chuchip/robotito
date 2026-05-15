@@ -43,4 +43,14 @@
     color: #b00020;
     font-size: 0.85rem;
   }
+
+  &__review-btn {
+    // Visually distinct from Cancel/OK so the "Review words" entry point
+    // reads as an alternative action rather than a confirm/dismiss.
+    color: #1565c0;
+  }
+
+  &__spacer {
+    flex: 1 1 auto;
+  }
 }

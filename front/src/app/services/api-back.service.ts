@@ -151,6 +151,21 @@ async getLastUser(): Promise<any> {
       throw error;
     }
   }
+  /**
+   * Set the active LLM context entirely in memory, without saving it as a
+   * profile in the user's contexts list. Used by transient flows such as
+   * the dictionary review conversation.
+   */
+  async contextSetTransient(text: string, label: string = 'transient', remember: string = ''): Promise<any> {
+    try {
+      return await firstValueFrom(
+        this.http.put(`${this.backendUrl}/context/transient`, { text, label, remember })
+      );
+    } catch (error) {
+      console.error('context_set_transient failed!:', error);
+      throw error;
+    }
+  }
   async contextSetUrl(url: string): Promise<any> {
     try {
       return await firstValueFrom(this.http.put(`${this.backendUrl}/context/url`, { url }));

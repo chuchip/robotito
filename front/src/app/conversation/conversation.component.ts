@@ -27,7 +27,7 @@ import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.compone
 import { ConversationHistoryComponent } from '../conversation-history/conversation-history.component';
 import { SettingsComponent } from '../settings/settings.component';
 import { SelectionMenuComponent } from '../selection-menu/selection-menu.component';
-import { NewConversationDialogComponent } from '../new-conversation-dialog/new-conversation-dialog.component';
+import { NewConversationDialogComponent, NewConversationDialogResult } from '../new-conversation-dialog/new-conversation-dialog.component';
 import { firstValueFrom } from 'rxjs';
 @Component({
   selector: 'app-conversation',
@@ -684,11 +684,16 @@ export class ConversationComponent {
       // user cancelled the dialog (Cancel button or backdrop click)
       return;
     }
+    if (result.reviewMode) {
+      await this._startReviewConversation();
+      return;
+    }
+    if (!result.context) return;
     await this._resetConversationState();
     // Apply the chosen context to the LLM for this new conversation.
-    this.setContext(result);
+    this.setContext(result.context);
     try {
-      await this.back.contextSet(result.id);
+      await this.back.contextSet(result.context.id);
     } catch (e) {
       console.error('Could not set active context:', e);
     }
@@ -697,13 +702,91 @@ export class ConversationComponent {
     await this.list_context();
     // Show the chosen context as the first robot line, but don't persist
     // it yet — we only save it when the conversation actually starts.
-    const text = (result.text || '').trim();
+    const text = (result.context.text || '').trim();
     if (text) {
       const line = `Context of this conversation: ${text}`;
       this.chatHistory.push({ line: this.numberLine, type: 'R', msg: line, msgClean: line });
       this.pendingContextLine = line;
       this.numberLine++;
     }
+  }
+
+  /**
+   * Start a new conversation in "vocabulary review" mode: pick 10 random
+   * words from the user's dictionary, build a context that asks the LLM
+   * to use those words inside invented short stories, and show the
+   * introductory robotito line. Like the normal flow, nothing is saved
+   * to the backend until the user writes their first message (or opens
+   * notes/dictionary, which routes through `_ensureConversationInitialized`).
+   */
+  private async _startReviewConversation() {
+    let words: any[] = []
+    try {
+      words = await this.back.getUserWords()
+    } catch (e) {
+      console.error('Failed to load dictionary words:', e)
+      this.showSystemMessage('Could not load your dictionary words')
+      return
+    }
+    if (!words || words.length === 0) {
+      this.showSystemMessage('No words saved yet. Add some in the dictionary first.')
+      return
+    }
+
+    // Pick up to 10 random words with a partial Fisher-Yates shuffle so
+    // the selection is unbiased even when the dictionary is small.
+    const sample = [...words]
+    const pickCount = Math.min(10, sample.length)
+    for (let i = 0; i < pickCount; i++) {
+      const j = i + Math.floor(Math.random() * (sample.length - i))
+      const tmp = sample[i]; sample[i] = sample[j]; sample[j] = tmp
+    }
+    const picked = sample.slice(0, pickCount)
+    const wordList = picked.map(w => w.word).filter(Boolean)
+    const wordListStr = wordList.join(', ')
+
+    // Build the LLM context. It instructs the AI to weave the words into
+    // short stories without revealing their meaning directly, so the user
+    // can guess from context.
+    const contextText =
+      `This conversation is a vocabulary review session. ` +
+      `We are going to practice these English words: ${wordListStr}. ` +
+      `In every answer, invent a short story or example sentences that use one or more of these words in natural context, ` +
+      `so the user can guess what each word means from the situation. ` +
+      `Do not state the translation or definition of a word unless the user explicitly asks. ` +
+      `Encourage the user to guess; confirm or gently correct when they try.`
+
+    // Apply the context for THIS conversation only — do NOT persist it as
+    // a profile in the user's contexts list. The backend's
+    // `/context/transient` endpoint sets the active in-memory context
+    // without touching the DB, so this review session leaves no trace in
+    // the contexts dropdown.
+    try {
+      await this.back.contextSetTransient(contextText, 'Word review')
+    } catch (e) {
+      console.error('Failed to apply transient review context:', e)
+      this.showSystemMessage('Could not apply review context')
+      return
+    }
+
+    await this._resetConversationState()
+    // Reflect the transient context locally so the rest of the UI (the
+    // settings panel, the side history, etc.) sees a consistent value.
+    // Important: we do NOT push this into `this.contexts` — the list of
+    // saved profiles must stay unchanged.
+    this.context.id = ''
+    this.context.label = 'Word review'
+    this.context.text = contextText
+    this.context.remember = ''
+
+    // Introductory line shown (and later saved) as the first robot
+    // message of the conversation.
+    const introLine =
+      `Now, we are going to review these words: ${wordListStr}. ` +
+      `I'll try to imagine a story so I can use these words, and you have to guess what is the meaning of these words.`
+    this.chatHistory.push({ line: this.numberLine, type: 'R', msg: introLine, msgClean: introLine })
+    this.pendingContextLine = introLine
+    this.numberLine++
   }
 
   /**
@@ -741,12 +824,11 @@ export class ConversationComponent {
   }
 
   /**
-   * Open the "new conversation" dialog and return the chosen contextDTO,
-   * `null` if the user cancelled, or `undefined` if the dialog could not
-   * be opened at all (no `dialog` available, etc).
+   * Open the "new conversation" dialog and return the chosen result, or
+   * `null` if the user cancelled / closed via backdrop.
    */
-  private async askNewConversationContext(): Promise<contextDTO | null | undefined> {
-    if (!this.dialog) return undefined;
+  private async askNewConversationContext(): Promise<NewConversationDialogResult | null> {
+    if (!this.dialog) return null;
     const ref = this.dialog.open(NewConversationDialogComponent, {
       width: '560px',
       data: {
@@ -755,7 +837,8 @@ export class ConversationComponent {
       },
       disableClose: false,
     });
-    return await firstValueFrom(ref.afterClosed());
+    const result = await firstValueFrom(ref.afterClosed());
+    return (result as NewConversationDialogResult) || null;
   }
 
   setTextContextById(id:string)  {

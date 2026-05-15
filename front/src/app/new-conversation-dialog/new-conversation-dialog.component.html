@@ -30,6 +30,16 @@
 </div>
 
 <div mat-dialog-actions align="end">
+  <!-- Dedicated entry point for the vocabulary-review session. It bypasses
+       the label/text fields entirely: the caller picks 10 random words
+       from the dictionary and builds the context itself. -->
+  <button mat-button type="button" class="new-conv__review-btn"
+    (click)="onReview()" [disabled]="saving"
+    aria-label="Start a dictionary review session"
+    matTooltip="Review 10 random words from your dictionary">
+    Review words
+  </button>
+  <span class="new-conv__spacer"></span>
   <button mat-button (click)="onCancel()" [disabled]="saving">Cancel</button>
   <button mat-button color="primary" (click)="onAccept()" [disabled]="saving" cdkFocusInitial>
     {{ saving ? 'Saving...' : 'OK' }}
