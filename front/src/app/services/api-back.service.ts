@@ -235,7 +235,7 @@ async getLastUser(): Promise<any> {
   } 
   cleanText(text:string):string
   {   
-    const caracteresPermitidos = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ñáéíóúüÁÉÍÓÚÜ .,\'"?!¿:-\n\r';
+    const caracteresPermitidos = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ñáéíóúüÁÉÍÓÚÜ .,’\'"?!¿:-—';
     let textoLimpio = '';
 
     for (const char of text) {
@@ -243,7 +243,6 @@ async getLastUser(): Promise<any> {
         textoLimpio += char;
       }
     }   
-  
     return textoLimpio;
   }
   async getLoginUser(uuid:string): Promise<any> {    

@@ -269,7 +269,6 @@ export class ConversationComponent {
           pFin=this.findNextPunctuation(this.responseMessage,pIni)          
           if (pFin!=-1) {
             txt+=this.responseMessage.substring(pIni,pFin+1)
-            debugger
             if (txt.length>200){            
               setTimeout(() => this.scrollToBottom(), 0)  
               if (this.swTalkResponse && !this.ttsAbort) {

@@ -46,7 +46,8 @@ Ensure your entire response is ONLY the JSON object, starting with {{ and ending
 
 _prompt_translation_str = """
 Translate the following from English word to Spanish. If a word has more than one meaning, list up to five of them, separated by commas. Indicate in brackets, for each translation, whether it is an adjective, a noun, a verb, etc.
-Provide examples in both English and Spanish for each meaning of the word.
+Provide examples phrases with the word in both, English and Spanish, for each meaning of the word. 
+For the example phrases, you must use the exact English word '{word_input}' or its direct conjugations (e.g., tempted, tempting). Do not use synonyms like 'provoke' or 'lure'. If the word is not in the example, the response is incorrect.
 
 Word: {word_input}
 
