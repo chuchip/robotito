@@ -318,7 +318,7 @@ async getLastUser(): Promise<any> {
   } 
   cleanText(text:string):string
   {   
-    const caracteresPermitidos = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ñáéíóúüÁÉÍÓÚÜ .,’\'"?!¿:-—';
+    const caracteresPermitidos = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ñáéíóúüÁÉÍÓÚÜ .,’\'"?!¿:-—()';
     let textoLimpio = '';
 
     for (const char of text) {

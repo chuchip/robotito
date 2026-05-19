@@ -801,6 +801,7 @@ export class ConversationComponent {
     }
     if (!resp || !resp.state || !resp.state.current_word) {
       this.showSystemMessage('No words available to review.')
+      this.speakAloud('No words available to review.')
       return
     }
 
@@ -811,6 +812,7 @@ export class ConversationComponent {
     // initialised in the backend (first user turn, or open notes/dict).
     const intro = (resp.intro || '').trim()
     if (intro) {
+      this.speakAloud(intro)
       this.chatHistory.push({ line: this.numberLine, type: 'R', msg: intro, msgClean: intro })
       this.pendingContextLine = intro
       this.numberLine++
@@ -891,7 +893,7 @@ export class ConversationComponent {
 
   private async _reviewAdvance(known: boolean) {
     try {
-      const resp: any = await this.back.reviewAdvance(known)
+      const resp: any = await this.back.reviewAdvance(known)      
       this._applyReviewAdvanceResponse(resp)
     } catch (e) {
       console.error('reviewAdvance failed:', e)
@@ -902,20 +904,24 @@ export class ConversationComponent {
   /** Common post-processing for /advance and /skip: update the local
    *  mirror, push the new word's intro line into the chat, and persist it
    *  if the conversation already exists. */
-  private async _applyReviewAdvanceResponse(resp: any) {
+  private async _applyReviewAdvanceResponse(resp: any) {    
     if (!resp || !resp.state) return
     this.reviewState = resp.state
     const intro = (resp.intro || '').trim()
     if (this.reviewState && this.reviewState.is_finished) {
       // No more words; offer to end the session.
       const done = 'That was the last word. Click "End review" when you want to see your summary.'
+      this.speakAloud(done);
       this.chatHistory.push({ line: this.numberLine, type: 'R', msg: done, msgClean: done })
       this.numberLine++
       if (this.conversationId && this.swSaveConversation) {
         try { await this.back.saveConversation(this.conversationId, 'R', done) } catch (e) { console.error(e) }
       }
       return
+    } else {
+      this.speakAloud(resp.intro || '');
     }
+    
     if (intro) {
       this.chatHistory.push({ line: this.numberLine, type: 'R', msg: intro, msgClean: intro })
       this.numberLine++
@@ -1320,7 +1326,7 @@ export class ConversationComponent {
    * `sendData`).
    */
   private async _ensureConversationInitialized(): Promise<string> {
-    if (this.conversationId) return this.conversationId;
+    if (this.conversationId) return this.conversationId;    
     try {
       const conv: any = await this.back.initConversation('Empty conversation');
       this.conversationId = conv?.id || '';

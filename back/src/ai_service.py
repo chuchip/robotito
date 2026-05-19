@@ -7,6 +7,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage, AIMessage
 
@@ -37,6 +38,16 @@ def init(client_text, llm_text, model_api: str, chains: dict, max_history: int, 
     _chains = chains
     _max_history = max_history
     _logger = logger
+
+
+def _sanitize_json_value(value) -> str:
+    """Normalize text so it can be safely embedded in a prompt and JSON payload."""
+    if value is None:
+        return ""
+    text = str(value)
+    text = text.replace("\r", " ").replace("\n", " ").replace("\t", " ")
+    text = re.sub(r"[\x00-\x1F\x7F]+", "", text)
+    return text.strip()
 
 
 async def call_llm(state):
@@ -169,6 +180,8 @@ async def sumary_history(uuid, type):
 
 
 async def rating_phrase(phrase):
+    phrase = _sanitize_json_value(phrase)
+    # phrase = _ensure_single_sentence(phrase)
     return await asyncio.to_thread(_chains['rating'].invoke, {"sentence_input": phrase})
 
 

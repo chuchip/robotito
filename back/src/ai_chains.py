@@ -34,18 +34,20 @@ Sentences  to analyze:
 Ensure your entire response is ONLY the JSON object, starting with {{ and ending with }}."""
 
 _prompt_rating_str = """
-Analyze the grammatical correctness of the following sentence.
+Analyze the grammatical correctness of the following sentences. If there are more than one sentence in the input, analyze all as a whole, not separately. 
 {sentence_input}
 
-If the previous sentence is understandable and has no serious grammatical errors, don't worry about punctuation, missing spaces, or whether it could be improved for clarity.. The phrase was written for someone at level B2, so don't be too harsh. 
+If the previous sentences are  understandable and has no serious grammatical errors, don't worry about punctuation, missing spaces, or whether it could be improved for clarity.. The phrase was written for someone at level B2, so don't be too harsh. 
 Provide the results as a JSON object conforming to the following schema.
 
 {format_instructions}
 
+Return a single JSON object, not an array.
+
 Ensure your entire response is ONLY the JSON object, starting with {{ and ending with }}."""
 
 _prompt_translation_str = """
-Translate the following from English word to Spanish. If a word has more than one meaning, list up to five of them, separated by commas. Indicate in brackets, for each translation, whether it is an adjective, a noun, a verb, etc.
+Translate the following from English word to Spanish. If a word has more than one meaning, list up to five of them, separated by commas. Indicate in brackets, for each translation, whether it is an adjective, a noun, a verb, etc. For each translation, if that meaning is not commonly used, indicate it in parentheses.
 Provide examples phrases with the word in both, English and Spanish, for each meaning of the word. 
 For the example phrases, you must use the exact English word '{word_input}' or its direct conjugations (e.g., tempted, tempting). Do not use synonyms like 'provoke' or 'lure'. If the word is not in the example, the response is incorrect.
 
