@@ -47,6 +47,17 @@ def _sanitize_json_value(value) -> str:
     text = str(value)
     text = text.replace("\r", " ").replace("\n", " ").replace("\t", " ")
     text = re.sub(r"[\x00-\x1F\x7F]+", "", text)
+    # Double quotes in the input survive verbatim into the model's JSON
+    # output, where they break the surrounding "sentence": "..." string
+    # (the LLM doesn't escape them reliably). Swap them for single quotes
+    # so the JSON the model produces is always parseable. Smart/typographic
+    # quotes are normalised too because some TTS/STT pipelines emit them.
+    text = (text
+            .replace("\u201c", "'")
+            .replace("\u201d", "'")
+            .replace("\u201e", "'")
+            .replace("\u2033", "'")
+            .replace('"', "'"))
     return text.strip()
 
 
