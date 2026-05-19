@@ -53,7 +53,7 @@ def _sanitize_json_value(value) -> str:
 async def call_llm(state):
     memoryData = memory.getMemory(state['uuid'])
     max_length_answers = memoryData.getMaxLengthAnswer()
-    limit_words = f"Your answer should be less than {max_length_answers} words"
+    limit_words = f"You answer should be less than {max_length_answers} words"
     context = memoryData.getContext()
     rememberText = ""
     if context is not None:
@@ -81,17 +81,24 @@ async def call_llm(state):
                 question += f". {context.getRememberText()}"
                 swRemember = True
             context.incrementRememberNumber()
-        if _max_history > 0:
-            msgs = chat_history[_max_history * -1:]
+        # The context is normally carried as the first line of chat_history
+        # (the "Context of this conversation: ..." robot line saved by the
+        # frontend). We only fall back to context.getText() as the system
+        # prompt when the history is still empty (very first turn of a
+        # brand-new session, before that line has been persisted).
+        if len(chat_history) == 0:
+            context_text = context.getText() if context is not None else ""
+            msgs = []
         else:
-            msgs = chat_history
-        # Fall back to an empty system prompt if no context has been selected
-        # yet (e.g. very first message of a brand-new session). Long-term
-        # memory and the URL context block are still appended below.
-        context_text = context.getText() if context is not None else ""
+            context_text = ""
+            if _max_history > 0 and len(chat_history) > _max_history:
+                # Pin chat_history[0] so the context line survives history
+                # truncation in long conversations.
+                msgs = [chat_history[0]] + chat_history[-(_max_history - 1):]
+            else:
+                msgs = list(chat_history)
         if max_length_answers != 0:
-            base_text = context.getText() if context is not None else ""
-            context_text = f"{limit_words}. {base_text}"
+            context_text = f"{limit_words}. {context_text}".strip()
             insert_pos = len(msgs) - 4
             if insert_pos > 0:
                 msgs.insert(insert_pos, HumanMessage(f"Remember: {limit_words}"))
@@ -99,7 +106,7 @@ async def call_llm(state):
                 msgs.append(HumanMessage(f"Remember: {limit_words}"))
 
         if long_term:
-            context_text = f"{context_text}\n\n{long_term}"
+            context_text = f"{context_text}\n\n{long_term}".strip()
 
         url_context = memoryData.getUrlContext()
         if url_context:
@@ -191,6 +198,27 @@ def save_msg(uuid, type, msg):
         chat_history.append(AIMessage(content=msg))
     else:
         chat_history.append(HumanMessage(content=msg))
+
+
+def pop_last_turn(uuid) -> bool:
+    """Remove the last (HumanMessage, AIMessage) pair from the in-memory
+    chat_history of the given session. Used when the user edits their last
+    message: the previous user line and the previous assistant reply are
+    discarded so the next call_llm sees a clean history.
+
+    Returns True if a pair was popped, False otherwise.
+    """
+    memoryData = memory.getMemory(uuid)
+    if memoryData is None:
+        return False
+    chat_history = memoryData.getChatHistory()
+    if (len(chat_history) >= 2
+            and isinstance(chat_history[-1], AIMessage)
+            and isinstance(chat_history[-2], HumanMessage)):
+        chat_history.pop()
+        chat_history.pop()
+        return True
+    return False
 
 
 def restore_history(uuid, jsonHistory):

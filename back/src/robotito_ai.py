@@ -153,6 +153,7 @@ call_llm_internal = ai_service.call_llm_internal
 sumary_history = ai_service.sumary_history
 rating_phrase = ai_service.rating_phrase
 save_msg = ai_service.save_msg
+pop_last_turn = ai_service.pop_last_turn
 restore_history = ai_service.restore_history
 call_llm_translate = ai_service.call_llm_translate
 call_llm_review = ai_service.call_llm_review

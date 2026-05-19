@@ -285,6 +285,14 @@ async getLastUser(): Promise<any> {
       throw error;
     }
   }
+  async deleteLastTurn(id: string): Promise<any> {
+    try {
+      return await firstValueFrom(this.http.delete(`${this.backendUrl}/conversation/id/${id}/last-turn`));
+    } catch (error) {
+      console.error('deleteLastTurn failed!:', error);
+      throw error;
+    }
+  }
   async initConversation(msg:string)
   {
     try {

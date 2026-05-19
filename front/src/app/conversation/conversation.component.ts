@@ -111,6 +111,14 @@ export class ConversationComponent {
   reviewWindow: Window | null = null;
   memoryWindow: Window | null = null;
 
+  // "Edit last message" state. While `editingIndex` is set, the matching
+  // 'H' line in the template is rendered as a textarea bound to
+  // `editingText` (Save / Cancel). Saving deletes the previous (H, R)
+  // pair on the backend and re-submits the edited text through the
+  // normal sendData() path.
+  editingIndex: number | null = null;
+  editingText: string = '';
+
   /**
    * First robot line announcing the chosen context (e.g. "Context of this
    * conversation: ..."). It is added to `chatHistory` for display but is
@@ -951,6 +959,8 @@ export class ConversationComponent {
     this.swRating = false
     this.pendingContextLine = ''
     this.isEmptyConversation = false
+    this.editingIndex = null
+    this.editingText = ''
     // If a backend review session is still running from the previous
     // conversation, end it server-side so the next turn doesn't get routed
     // back to /review/turn by mistake. We don't need its summary here —
@@ -1209,6 +1219,71 @@ export class ConversationComponent {
           this.sendData()
       }
      
+  }
+
+  /**
+   * True when the message at position `i` is the very last user message
+   * AND it is immediately followed by exactly one robot reply — i.e. the
+   * canonical "you can edit your last turn" state. Returns false while a
+   * response is streaming, during review sessions, or when summary lines
+   * have been appended after the last reply.
+   */
+  canEditLastMessage(i: number): boolean {
+    if (this.isLoading) return false
+    if (this.responseMessage !== '') return false
+    if (this.reviewState) return false
+    const len = this.chatHistory.length
+    if (len < 2) return false
+    if (i !== len - 2) return false
+    const h = this.chatHistory[i]
+    const r = this.chatHistory[i + 1]
+    return h?.type === 'H' && r?.type === 'R'
+  }
+
+  startEditLastMessage(i: number) {
+    if (!this.canEditLastMessage(i)) return
+    this.editingIndex = i
+    this.editingText = this.chatHistory[i].msg
+  }
+
+  cancelEditLastMessage() {
+    this.editingIndex = null
+    this.editingText = ''
+  }
+
+  async saveEditLastMessage() {
+    if (this.editingIndex === null) return
+    const newText = (this.editingText || '').trim()
+    if (newText === '') return
+    const idx = this.editingIndex
+    const len = this.chatHistory.length
+    if (idx !== len - 2 || this.chatHistory[idx].type !== 'H' || this.chatHistory[idx + 1].type !== 'R') {
+      // History changed underneath us; bail.
+      this.cancelEditLastMessage()
+      return
+    }
+    const popped = this.chatHistory[idx]
+    // Drop the previous user message and assistant reply from the local
+    // history and the rating bound to that user line.
+    this.chatHistory.splice(idx, 2)
+    const rIdx = this.ratingHistory.findIndex(r => r.line === popped.line)
+    if (rIdx >= 0) this.ratingHistory.splice(rIdx, 1)
+    this.numberLine = popped.line
+    // Mirror the change on the backend (DB + in-memory chat_history) so
+    // the next call_llm doesn't see the stale exchange. If we have no
+    // conversation id yet (shouldn't happen because the last R is always
+    // saved), just skip the backend call.
+    if (this.conversationId && this.swSaveConversation) {
+      try {
+        await this.back.deleteLastTurn(this.conversationId)
+      } catch (e) {
+        console.error('deleteLastTurn failed:', e)
+      }
+    }
+    this.editingIndex = null
+    this.editingText = ''
+    this.inputText = newText
+    await this.sendData()
   }
   @HostListener('document:keydown', ['$event'])
   handleKeydown(event: KeyboardEvent) {

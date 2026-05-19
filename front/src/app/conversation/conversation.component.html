@@ -49,9 +49,33 @@
              matTooltip="Rating details">
             <span class="material-icons" aria-hidden="true">info</span>
           </button>
+          <button *ngIf="canEditLastMessage(i) && editingIndex !== i"
+             (click)="startEditLastMessage(i)"
+             aria-label="Edit this message and regenerate the reply"
+             matTooltip="Edit message and re-ask">
+            <span class="material-icons" aria-hidden="true">edit</span>
+          </button>
         </div>
-        <span   [ngClass]="line_chat.type=='H'? 'line-text-human':'line-text-robot'">
+        <span *ngIf="editingIndex !== i"   [ngClass]="line_chat.type=='H'? 'line-text-human':'line-text-robot'">
           <span [innerHTML]="toHtml(line_chat.msg,line_chat.type)"> </span>
+        </span>
+        <span *ngIf="editingIndex === i" class="line-text-human edit-line">
+          <textarea id="edit_input" class="expandable-input edit-input"
+            [(ngModel)]="editingText"
+            (keydown)="$event.stopPropagation()"
+            aria-label="Edit your last message"></textarea>
+          <span class="edit-actions">
+            <button (click)="saveEditLastMessage()"
+              aria-label="Save edit and re-ask"
+              matTooltip="Save and re-ask">
+              <span class="material-icons" aria-hidden="true">check</span>
+            </button>
+            <button (click)="cancelEditLastMessage()"
+              aria-label="Cancel edit"
+              matTooltip="Cancel">
+              <span class="material-icons" aria-hidden="true">close</span>
+            </button>
+          </span>
         </span>
       </div>
       </ng-container>

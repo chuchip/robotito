@@ -242,6 +242,52 @@
   color: var(--color-text-muted);
 }
 
+.edit-line {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.edit-input {
+  min-height: 2.4em;
+  padding: 6px 8px;
+  border: 1px solid var(--color-primary);
+  border-radius: 6px;
+  background: var(--color-background, #fff);
+  resize: vertical;
+  overflow: auto;
+}
+
+.edit-actions {
+  display: inline-flex;
+  gap: 6px;
+  align-self: flex-end;
+}
+
+.edit-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--color-primary);
+  background: transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.edit-actions button:hover {
+  background: var(--color-primary);
+  color: #ffffff;
+}
+
+.edit-actions .material-icons {
+  font-size: 16px;
+}
+
 /* ------------------------------------------------------------------ */
 /* Buttons                                                            */
 /* ------------------------------------------------------------------ */

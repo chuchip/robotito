@@ -54,6 +54,21 @@ async def conversation_deleteId(id):
   return jsonify({'message': f'Conversation with id {id} DELETED!', 'conversation': id})
 
 
+@conversation_bp.route('/id/<string:id>/last-turn', methods=['DELETE'])
+async def conversation_delete_last_turn(id):
+  """Drop the most recent (user message, assistant reply) pair from a
+  conversation. Used by the frontend "edit last message" feature: it
+  removes the stale pair from the DB and the in-memory chat_history so
+  the next call_llm sees a clean state. The frontend then submits the
+  edited message through the regular send-question path.
+  """
+  import robotito_ai as ai
+  uuid = request.headers.get("uuid")
+  ai.pop_last_turn(uuid)
+  await db.conversation_delete_last_turn(id)
+  return jsonify({'message': f'Last turn of conversation {id} deleted', 'id': id})
+
+
 @conversation_bp.route('/id/<string:id>', methods=['POST'])
 async def conversation_saveId(id):
   import robotito_ai as ai

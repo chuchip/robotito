@@ -521,7 +521,24 @@ async def conversation_get_list(user):
 
 async def conversation_delete_by_id(id):
     sql="delete from conversation where id = :id"
-    await g.connection.execute(sql,{"id":id})    
+    await g.connection.execute(sql,{"id":id})
+
+
+async def conversation_delete_last_turn(conversation_id):
+    """Remove the most recent assistant reply and the most recent user
+    message of a conversation. Used by the "edit last message" feature so
+    the new exchange replaces the previous one.
+    """
+    sql_r = """delete from conversation_lines where ctid in (
+                 select ctid from conversation_lines
+                 where conversation_id = :id and type = 'R'
+                 order by time_msg desc, ctid desc limit 1)"""
+    sql_h = """delete from conversation_lines where ctid in (
+                 select ctid from conversation_lines
+                 where conversation_id = :id and type = 'H'
+                 order by time_msg desc, ctid desc limit 1)"""
+    await g.connection.execute(sql_r, {"id": conversation_id})
+    await g.connection.execute(sql_h, {"id": conversation_id})    
     
     
 async def update_language(user,language,voice):    
