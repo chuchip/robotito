@@ -189,7 +189,21 @@ async def sumary_history(uuid, type):
 async def rating_phrase(phrase):
     phrase = _sanitize_json_value(phrase)
     # phrase = _ensure_single_sentence(phrase)
-    return await asyncio.to_thread(_chains['rating'].invoke, {"sentence_input": phrase})
+    try:
+        return await asyncio.to_thread(_chains['rating'].invoke, {"sentence_input": phrase})
+    except Exception as e:
+        # The LLM occasionally produces text the PydanticOutputParser can't
+        # decode (code fences, trailing commas, extra prose). Don't surface a
+        # 500 to the frontend for what is just a flaky grading call: log it
+        # and return a neutral "Good" rating so the conversation continues.
+        _logger.error(f"rating_phrase: parser failed for phrase {phrase!r}: {e}")
+        from ai_models import AnalizePhrase
+        return AnalizePhrase(
+            sentence=phrase,
+            rating="Good",
+            explication="(grading unavailable — the AI grader returned an unreadable response)",
+            correction="",
+        )
 
 
 def save_msg(uuid, type, msg):

@@ -2,10 +2,113 @@
 
 `build_chains(llm_text)` returns a dict of named chains wired to the provided LLM.
 """
+import re
+
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
+from langchain_core.runnables import RunnableLambda
+from langchain_core.messages import BaseMessage
 
 from ai_models import SumaryResume, AnalizePhrase, AnalizePhrases, TranslationResult, ReviewResult, MemoryExtraction, ReviewVerdict
+
+
+# ---------------------------------------------------------------------------
+# Output cleanup
+# ---------------------------------------------------------------------------
+_CODE_FENCE_RE = re.compile(r"```(?:json|JSON)?\s*([\s\S]*?)\s*```")
+
+
+def _clean_llm_json(message):
+    """Best-effort cleanup of an LLM response so PydanticOutputParser can
+    decode it. Handles the two failure modes we see in practice:
+
+    - The model wraps the JSON in a Markdown ```json ... ``` fence.
+    - The model prefixes or suffixes the JSON with prose (e.g. "Sure! Here
+      is the result: { ... }").
+
+    Returns the original message untouched when no JSON object/array can be
+    located — let the downstream parser raise a meaningful error in that
+    case.
+    """
+    # The chain runs LLM -> parser, so we may receive either an AIMessage
+    # (chat models) or a plain string (some completion LLMs).
+    if isinstance(message, BaseMessage):
+        text = message.content
+        if isinstance(text, list):  # Google-style content blocks.
+            parts = []
+            for block in text:
+                if isinstance(block, str):
+                    parts.append(block)
+                elif isinstance(block, dict):
+                    parts.append(block.get("text") or block.get("content") or "")
+            text = "".join(parts)
+        if not isinstance(text, str):
+            return message
+    elif isinstance(message, str):
+        text = message
+    else:
+        return message
+
+    cleaned = text.strip()
+
+    # 1. Strip Markdown code fences (``` or ```json) anywhere in the output.
+    fence_match = _CODE_FENCE_RE.search(cleaned)
+    if fence_match:
+        cleaned = fence_match.group(1).strip()
+
+    # 2. Extract the first balanced JSON object / array. We track string
+    #    state so braces inside strings don't throw us off.
+    start_idx = -1
+    open_char = ""
+    for i, ch in enumerate(cleaned):
+        if ch == "{" or ch == "[":
+            start_idx = i
+            open_char = ch
+            break
+    if start_idx < 0:
+        # Nothing to extract; return what we have and let the parser
+        # produce a useful error.
+        if isinstance(message, BaseMessage):
+            message.content = cleaned
+            return message
+        return cleaned
+
+    close_char = "}" if open_char == "{" else "]"
+    depth = 0
+    in_string = False
+    escape = False
+    end_idx = -1
+    for i in range(start_idx, len(cleaned)):
+        ch = cleaned[i]
+        if in_string:
+            if escape:
+                escape = False
+            elif ch == "\\":
+                escape = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+            continue
+        if ch == open_char:
+            depth += 1
+        elif ch == close_char:
+            depth -= 1
+            if depth == 0:
+                end_idx = i
+                break
+
+    if end_idx > start_idx:
+        cleaned = cleaned[start_idx:end_idx + 1]
+
+    if isinstance(message, BaseMessage):
+        message.content = cleaned
+        return message
+    return cleaned
+
+
+_clean_json_runnable = RunnableLambda(_clean_llm_json)
 
 
 _prompt_resume_str = """
@@ -174,7 +277,10 @@ def _build_chain(template_str: str, input_variables: list, parser: PydanticOutpu
         input_variables=input_variables,
         partial_variables={"format_instructions": parser.get_format_instructions()},
     )
-    return prompt | llm | parser
+    # Insert a JSON-cleanup step between the LLM and the Pydantic parser so
+    # responses wrapped in ```json``` fences or padded with prose still
+    # parse correctly.
+    return prompt | llm | _clean_json_runnable | parser
 
 
 def build_chains(llm_text, llm_smart=None) -> dict:
