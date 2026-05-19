@@ -1484,7 +1484,9 @@ export class ConversationComponent {
     
     if (pos<0 )
     {
-      await this.getRatingTeacher(posHistory,this.chatHistory[posHistory].msgClean)
+      const entry = this.chatHistory.find(c => c.line === posHistory)
+      if (!entry) return
+      await this.getRatingTeacher(posHistory, entry.msgClean)
     }
     pos =this.getLineRating(posHistory)
     if (pos<0 )

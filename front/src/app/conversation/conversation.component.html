@@ -43,8 +43,8 @@
             matTooltip="Play this message aloud">
             <span class="material-icons" aria-hidden="true">volume_up</span>
           </button>
-          <button *ngIf="line_chat.type=='H'" class="teacher-button"  [ngStyle]="{'background-color': getBackgroundColor(i)}"
-             (click)="showRating(i)"
+          <button *ngIf="line_chat.type=='H'" class="teacher-button"  [ngStyle]="{'background-color': getBackgroundColor(line_chat.line)}"
+             (click)="showRating(line_chat.line)"
              aria-label="Show rating details for this message"
              matTooltip="Rating details">
             <span class="material-icons" aria-hidden="true">info</span>
