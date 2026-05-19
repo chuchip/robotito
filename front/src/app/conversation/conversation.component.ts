@@ -1203,19 +1203,10 @@ export class ConversationComponent {
       this.clicksWindow++;
       return
     }
-    if (this.showLanguageOptions   && this.configurationWinElement && !this.configurationWinElement.nativeElement.contains(event.target)) {
-      this.showLanguageOptions = false;
-      this.clicksWindow=0
-    }
     if (this.persistence.showSummary  && !this.summaryWinElement.nativeElement.contains(event.target)) {
       this.persistence.showSummary=false
       this.clicksWindow=0
     }
-    if (this.swRating  && !this.ratingWinElement.nativeElement.contains(event.target)) {
-        this.swRating=false
-        this.clicksWindow=0
-    }
-    
   }
   async pressEnter(swSendData:boolean) {
     if ( this.sound.isRecording) 
