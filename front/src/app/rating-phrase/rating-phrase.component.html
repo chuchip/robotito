@@ -1,23 +1,32 @@
-<div *ngIf="ratingPhrase!=null"  class="configuration">
-    <div class="configuration_line">    
-        <span class="rating-text">Rating</span>
-        <span class="rating-label">{{ratingPhrase.value}}</span>      
-        <button class="close-trigger" (click)="closeWindow()">Close</button>        
+<div *ngIf="ratingPhrase!=null" class="rating" role="dialog" aria-modal="true" aria-labelledby="rating-title">
+  <header class="rating__header">
+    <div class="rating__title-wrap">
+      <h2 id="rating-title" class="rating__title">Rating details</h2>
+      <span class="rating__badge"
+        [ngClass]="ratingPhrase.value==='Good' ? 'rating__badge--good' : 'rating__badge--bad'">
+        {{ ratingPhrase.value }}
+      </span>
     </div>
-    <div class="configuration_summary">
-        <div class="summary_line">
-            <div class="text_line">
-                <span class="label">Original:</span>
-                <span class="text">{{ratingPhrase.sentence}}</span>
-            </div>
-            <div class="text_line">
-                <span class="label">Explication:</span>
-                <span class="text">{{ratingPhrase.explication}}</span>
-            </div>
-            <div class="text_line">
-                <span class="label">Correction</span>
-                <span class="text"> {{ratingPhrase.correction}}</span>
-            </div>
-        </div>
+    <button type="button" class="rating__close"
+      (click)="closeWindow()"
+      aria-label="Close rating details"
+      matTooltip="Close">
+      <span class="material-icons" aria-hidden="true">close</span>
+    </button>
+  </header>
+
+  <section class="rating__body">
+    <div class="rating__field">
+      <span class="rating__label">Original</span>
+      <p class="rating__text">{{ ratingPhrase.sentence }}</p>
     </div>
+    <div class="rating__field">
+      <span class="rating__label">Explanation</span>
+      <p class="rating__text">{{ ratingPhrase.explication }}</p>
+    </div>
+    <div class="rating__field">
+      <span class="rating__label">Correction</span>
+      <p class="rating__text rating__text--accent">{{ ratingPhrase.correction }}</p>
+    </div>
+  </section>
 </div>

@@ -1122,7 +1122,10 @@ export class ConversationComponent {
     }
     this.inputText = ""
     this.isLoading=false
-    setTimeout(() => this.resetInputHeight(), 0)
+    setTimeout(() => {
+      this.resetInputHeight()
+      this.scrollToBottom()
+    }, 0)
   }
   async hystoryDelete(event: Event, id: string)
   {
