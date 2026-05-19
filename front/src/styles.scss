@@ -92,3 +92,13 @@ body::after {
         transition-duration: 0.001ms !important;
     }
 }
+
+/* Angular Material renders tooltips, menus and dialogs into a single
+   global CDK overlay container, which defaults to z-index 1000. Our
+   in-app modals (rating details, summary, settings) also use 1000, so
+   tooltips opened from inside a modal would hide behind it. Lift the
+   whole CDK layer above app modals so tooltips like "Speak aloud" stay
+   on top wherever they're triggered. */
+.cdk-overlay-container {
+    z-index: 1200;
+}

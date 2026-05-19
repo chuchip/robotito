@@ -1,6 +1,6 @@
 .selection-menu {
   position: fixed;
-  z-index: 200;
+  z-index: 1100;
   display: inline-flex;
   flex-direction: row;
   align-items: stretch;
@@ -71,7 +71,7 @@
 /* Translation popover anchored to the same coords as the menu. */
 .selection-translation {
   position: fixed;
-  z-index: 201;
+  z-index: 1101;
   max-width: 360px;
   min-width: 180px;
   padding: 8px 10px 10px;

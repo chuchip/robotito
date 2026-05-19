@@ -111,13 +111,13 @@ export class ConversationComponent {
   reviewWindow: Window | null = null;
   memoryWindow: Window | null = null;
 
-  // "Edit last message" state. While `editingIndex` is set, the matching
-  // 'H' line in the template is rendered as a textarea bound to
-  // `editingText` (Save / Cancel). Saving deletes the previous (H, R)
-  // pair on the backend and re-submits the edited text through the
-  // normal sendData() path.
-  editingIndex: number | null = null;
-  editingText: string = '';
+  // "Edit last message" state. Clicking the pencil on the last H line
+  // copies its text into the main input area and flips `isEditingLast`
+  // so the next send replaces the previous (H, R) pair instead of
+  // appending. Editing happens in the bottom textarea (more room than
+  // inline in the conversation panel).
+  isEditingLast: boolean = false;
+  editingLine: number | null = null;
 
   /**
    * First robot line announcing the chosen context (e.g. "Context of this
@@ -291,6 +291,12 @@ export class ConversationComponent {
     this.inputText=this.inputText.trim()
     this.stopAudio()
     if (this.inputText!='') {
+      // If the user clicked the pencil on the last turn and is now
+      // submitting the edited text, drop the previous (H, R) pair before
+      // we append the new one. _consumeEditLast also resets the flag.
+      if (this.isEditingLast) {
+        await this._consumeEditLast()
+      }
       this.chatHistory.push({line:this.numberLine, type: "H",msg: this.inputText.trim(),msgClean: this.inputText.trim()})
       this.getRatingTeacher(this.numberLine,this.inputText.trim())
       this.isLoading=true
@@ -959,8 +965,8 @@ export class ConversationComponent {
     this.swRating = false
     this.pendingContextLine = ''
     this.isEmptyConversation = false
-    this.editingIndex = null
-    this.editingText = ''
+    this.isEditingLast = false
+    this.editingLine = null
     // If a backend review session is still running from the previous
     // conversation, end it server-side so the next turn doesn't get routed
     // back to /review/turn by mistake. We don't need its summary here —
@@ -1243,39 +1249,65 @@ export class ConversationComponent {
     return h?.type === 'H' && r?.type === 'R'
   }
 
+  /**
+   * Start editing the last user message: copy its text into the main
+   * input area and mark the session as "editing" so the next sendData()
+   * replaces the previous (H, R) pair instead of appending a new turn.
+   */
   startEditLastMessage(i: number) {
     if (!this.canEditLastMessage(i)) return
-    this.editingIndex = i
-    this.editingText = this.chatHistory[i].msg
+    const entry = this.chatHistory[i]
+    this.isEditingLast = true
+    this.editingLine = entry.line
+    this.inputText = entry.msg
+    // Defer the focus + resize until the textarea has the new value.
+    setTimeout(() => {
+      if (this.inputElement?.nativeElement) {
+        const el = this.inputElement.nativeElement as HTMLTextAreaElement
+        el.focus()
+        // Move the caret to the end of the text so the user can keep typing
+        // straight away instead of inheriting a selection.
+        const len = (this.inputText || '').length
+        try { el.setSelectionRange(len, len) } catch { /* ignore */ }
+        this.adjustHeight(el)
+      }
+    }, 0)
   }
 
+  /**
+   * Bail out of edit mode without sending. Clears the input and the flag.
+   */
   cancelEditLastMessage() {
-    this.editingIndex = null
-    this.editingText = ''
+    this.isEditingLast = false
+    this.editingLine = null
+    this.inputText = ''
+    setTimeout(() => this.resetInputHeight(), 0)
   }
 
-  async saveEditLastMessage() {
-    if (this.editingIndex === null) return
-    const newText = (this.editingText || '').trim()
-    if (newText === '') return
-    const idx = this.editingIndex
+  /**
+   * Drop the trailing (H, R) pair from the local chat history, the
+   * rating bound to that user line, and the matching DB rows + in-memory
+   * chat_history on the backend. Called from sendData() right before the
+   * new turn is streamed.
+   */
+  private async _consumeEditLast(): Promise<void> {
+    const targetLine = this.editingLine
+    this.isEditingLast = false
+    this.editingLine = null
+    if (targetLine === null) return
     const len = this.chatHistory.length
-    if (idx !== len - 2 || this.chatHistory[idx].type !== 'H' || this.chatHistory[idx + 1].type !== 'R') {
-      // History changed underneath us; bail.
-      this.cancelEditLastMessage()
+    if (len < 2) return
+    const h = this.chatHistory[len - 2]
+    const r = this.chatHistory[len - 1]
+    if (h?.type !== 'H' || r?.type !== 'R' || h.line !== targetLine) {
+      // History changed underneath us (e.g. a summary line was appended).
+      // Bail silently — the new turn will just be appended.
       return
     }
-    const popped = this.chatHistory[idx]
-    // Drop the previous user message and assistant reply from the local
-    // history and the rating bound to that user line.
-    this.chatHistory.splice(idx, 2)
-    const rIdx = this.ratingHistory.findIndex(r => r.line === popped.line)
+    this.chatHistory.splice(len - 2, 2)
+    const rIdx = this.ratingHistory.findIndex(rt => rt.line === targetLine)
     if (rIdx >= 0) this.ratingHistory.splice(rIdx, 1)
-    this.numberLine = popped.line
-    // Mirror the change on the backend (DB + in-memory chat_history) so
-    // the next call_llm doesn't see the stale exchange. If we have no
-    // conversation id yet (shouldn't happen because the last R is always
-    // saved), just skip the backend call.
+    this.numberLine = targetLine
     if (this.conversationId && this.swSaveConversation) {
       try {
         await this.back.deleteLastTurn(this.conversationId)
@@ -1283,10 +1315,6 @@ export class ConversationComponent {
         console.error('deleteLastTurn failed:', e)
       }
     }
-    this.editingIndex = null
-    this.editingText = ''
-    this.inputText = newText
-    await this.sendData()
   }
   @HostListener('document:keydown', ['$event'])
   handleKeydown(event: KeyboardEvent) {

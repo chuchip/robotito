@@ -49,33 +49,15 @@
              matTooltip="Rating details">
             <span class="material-icons" aria-hidden="true">info</span>
           </button>
-          <button *ngIf="canEditLastMessage(i) && editingIndex !== i"
+          <button *ngIf="canEditLastMessage(i)"
              (click)="startEditLastMessage(i)"
              aria-label="Edit this message and regenerate the reply"
              matTooltip="Edit message and re-ask">
             <span class="material-icons" aria-hidden="true">edit</span>
           </button>
         </div>
-        <span *ngIf="editingIndex !== i"   [ngClass]="line_chat.type=='H'? 'line-text-human':'line-text-robot'">
+        <span [ngClass]="line_chat.type=='H'? 'line-text-human':'line-text-robot'">
           <span [innerHTML]="toHtml(line_chat.msg,line_chat.type)"> </span>
-        </span>
-        <span *ngIf="editingIndex === i" class="line-text-human edit-line">
-          <textarea id="edit_input" class="expandable-input edit-input"
-            [(ngModel)]="editingText"
-            (keydown)="$event.stopPropagation()"
-            aria-label="Edit your last message"></textarea>
-          <span class="edit-actions">
-            <button (click)="saveEditLastMessage()"
-              aria-label="Save edit and re-ask"
-              matTooltip="Save and re-ask">
-              <span class="material-icons" aria-hidden="true">check</span>
-            </button>
-            <button (click)="cancelEditLastMessage()"
-              aria-label="Cancel edit"
-              matTooltip="Cancel">
-              <span class="material-icons" aria-hidden="true">close</span>
-            </button>
-          </span>
         </span>
       </div>
       </ng-container>
@@ -122,6 +104,18 @@
 
     <!-- Input and controls (fixed at viewport bottom) -->
     <div #input class='input' >
+      <!-- Banner shown while editing the last user message. Sending will
+           replace the previous (H, R) pair instead of appending. -->
+      <div *ngIf="isEditingLast" class="edit-banner" role="status">
+        <span class="edit-banner__icon material-icons" aria-hidden="true">edit</span>
+        <span class="edit-banner__text">Editing your last message — send to replace the previous reply.</span>
+        <button type="button" class="edit-banner__cancel"
+          (click)="cancelEditLastMessage()"
+          aria-label="Cancel editing"
+          matTooltip="Cancel edit">
+          <span class="material-icons" aria-hidden="true">close</span>
+        </button>
+      </div>
       <app-avatar [talking]="(avatarTalking$ | async) || false" class="input-avatar"></app-avatar>
       <div class="vertical">
         <button class="button-action" (click)="clicksWindow=0; showLanguageOptions=!showLanguageOptions"
