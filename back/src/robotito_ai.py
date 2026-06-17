@@ -96,6 +96,7 @@ elif model_api == "ollama":
         0.8,
         reasoning=False,
         num_predict=-1,
+        keep_alive="30m",
     )
     llm_text = ai_providers.configOllamaAI(
         "gemma4",
@@ -104,6 +105,7 @@ elif model_api == "ollama":
         reasoning=False,
         num_predict=-1,
         format="json",
+        keep_alive="30m",
     )
 else:
     model_api = "gemini"
