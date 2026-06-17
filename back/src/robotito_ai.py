@@ -90,8 +90,20 @@ if model_api == "openai":
     client_text = ai_providers.configOpenAI()
     llm_text = ai_providers.configOpenAI(temperature=0.0)
 elif model_api == "ollama":
-    client_text = ai_providers.configOllamaAI("gemma3", "http://172.24.144.1:11434")
-    llm_text = ai_providers.configOllamaAI("gemma3", "http://172.24.144.1:11434", 0.0)
+    client_text = ai_providers.configOllamaAI(
+        "gemma4",
+        "http://localhost:11434",
+        0.8,
+        reasoning=False,
+        num_predict=-1,
+    )
+    llm_text = ai_providers.configOllamaAI(
+        "gemma4",
+        "http://localhost:11434",
+        0.0,
+        reasoning=False,
+        num_predict=-1,
+    )
 else:
     model_api = "gemini"
     # Override the Gemini model with the GEMINI_MODEL env var. Defaults to the

@@ -9,9 +9,9 @@ from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 
-def configOllamaAI(model: str, base_url: str, temperature: float = 0.6):
-    from langchain_ollama.llms import OllamaLLM
-    return OllamaLLM(model=model, base_url=base_url, temperature=temperature)
+def configOllamaAI(model: str, base_url: str, temperature: float = 0.6, **kwargs):
+    from langchain_ollama.chat_models import ChatOllama
+    return ChatOllama(model=model, base_url=base_url, temperature=temperature, **kwargs)
 
 
 def configOpenAI(version: str = "3.5", temperature: float = 0.8):

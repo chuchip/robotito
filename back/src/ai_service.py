@@ -132,8 +132,10 @@ async def call_llm(state):
         )
         _logger.debug(f"LLM Context: {context_text}\n Question: {question}")
         if _model_api == 'ollama':
+            _logger.debug(f"Calling Ollama LLM with prompt: {chat_prompt}")
             async for chunk in _client_text.astream(chat_prompt):
-                yield _chunk_to_text(chunk)
+                _logger.debug(f"Ollama LLM chunk: {chunk}")
+                yield _chunk_to_text(chunk.content)
         else:
             try:
                 async for chunk in _client_text.astream(chat_prompt):
