@@ -103,6 +103,7 @@ elif model_api == "ollama":
         0.0,
         reasoning=False,
         num_predict=-1,
+        format="json",
     )
 else:
     model_api = "gemini"

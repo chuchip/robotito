@@ -9,9 +9,19 @@ export class PersistenceService {
   public clearLogin=false  
   public showSummary=false;
   public showNotes=false;
+  private _swRatingEnabled=true;
+  get swRatingEnabled(): boolean { return this._swRatingEnabled; }
+  set swRatingEnabled(v: boolean) {
+    this._swRatingEnabled = v;
+    try { localStorage.setItem('rbt_rating_enabled', v ? '1' : '0'); } catch {}
+  }
 
   constructor() {
     this.uuid = this.generateUuid();
+    try {
+      const ratingEnabled = localStorage.getItem('rbt_rating_enabled');
+      if (ratingEnabled !== null) this._swRatingEnabled = ratingEnabled === '1';
+    } catch {}
    }
   setAuthorization(authorization: string) {
     this.security.authorization=authorization 
@@ -102,21 +112,25 @@ export class PersistenceService {
     localStorage.setItem('rbt_uuid', this.uuid);
     localStorage.setItem('rbt_authorization', this.getAuthorization());
     localStorage.setItem('rbt_user', this.getUser());
+    localStorage.setItem('rbt_rating_enabled', this.swRatingEnabled ? '1' : '0');
   }
 
   restoreFromLocalStorage() {
     const uuid = localStorage.getItem('rbt_uuid');
     const authorization = localStorage.getItem('rbt_authorization');
     const user = localStorage.getItem('rbt_user');
+    const ratingEnabled = localStorage.getItem('rbt_rating_enabled');
     if (uuid) this.uuid = uuid;
     if (authorization) this.setAuthorization(authorization);
     if (user) this.setUser(user);
+    if (ratingEnabled !== null) this._swRatingEnabled = ratingEnabled === '1';
   }
 
   clearLocalStorage() {
     localStorage.removeItem('rbt_uuid');
     localStorage.removeItem('rbt_authorization');
     localStorage.removeItem('rbt_user');
+    localStorage.removeItem('rbt_rating_enabled');
   }
 
   logout() {

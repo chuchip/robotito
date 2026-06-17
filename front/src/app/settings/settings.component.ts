@@ -41,6 +41,9 @@ export class SettingsComponent {
   @Input() swSaveConversation = true;
   @Output() swSaveConversationChange = new EventEmitter<boolean>();
 
+  @Input() swRatingEnabled = true;
+  @Output() swRatingEnabledChange = new EventEmitter<boolean>();
+
   @Input() playbackSpeed = 1;
   @Output() playbackSpeedChange = new EventEmitter<number>();
 

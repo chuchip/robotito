@@ -33,6 +33,13 @@
         <span>Save</span>
       </label>
 
+      <label class="check-option">
+        <input type="checkbox" [ngModel]="swRatingEnabled"
+          (ngModelChange)="swRatingEnabled = $event; swRatingEnabledChange.emit($event)"
+          matTooltip="Automatically grade each user message (extra LLM call per turn)">
+        <span>Auto-rate</span>
+      </label>
+
       <label class="field">
         <span class="field__label">Max. length answers</span>
         <input class="field__input field__input--narrow" #inputMaxLengthAnswer type="number"

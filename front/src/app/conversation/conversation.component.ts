@@ -298,7 +298,9 @@ export class ConversationComponent {
         await this._consumeEditLast()
       }
       this.chatHistory.push({line:this.numberLine, type: "H",msg: this.inputText.trim(),msgClean: this.inputText.trim()})
-      this.getRatingTeacher(this.numberLine,this.inputText.trim())
+      if (this.persistence.swRatingEnabled) {
+        this.getRatingTeacher(this.numberLine,this.inputText.trim())
+      }
       this.isLoading=true
       this.responseMessage=""
       // Pick the right backend route: review sessions stream through
