@@ -91,21 +91,23 @@ if model_api == "openai":
     llm_text = ai_providers.configOpenAI(temperature=0.0)
 elif model_api == "ollama":
     client_text = ai_providers.configOllamaAI(
-        "gemma4",
+        "gemma4:e4b",
         "http://localhost:11434",
-        0.8,
-        reasoning=False,
+        0.75,
+        reasoning=False,        
         num_predict=-1,
         keep_alive="30m",
+        num_ctx=16384
     )
     llm_text = ai_providers.configOllamaAI(
-        "gemma4",
+        "gemma4:e4b",
         "http://localhost:11434",
         0.0,
         reasoning=False,
         num_predict=-1,
         format="json",
         keep_alive="30m",
+        num_ctx=16384
     )
 else:
     model_api = "gemini"
