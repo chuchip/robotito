@@ -134,8 +134,15 @@ async def call_llm(state):
         if _model_api == 'ollama':
             _logger.debug(f"Calling Ollama LLM with prompt: {chat_prompt}")
             async for chunk in _client_text.astream(chat_prompt):
-                _logger.debug(f"Ollama LLM chunk: {chunk}")
-                yield _chunk_to_text(chunk.content)
+                text = _chunk_to_text(chunk.content)
+                if not text:
+                    _logger.debug(
+                        f"Ollama empty chunk: content={chunk.content!r} "
+                        f"additional_kwargs={getattr(chunk, 'additional_kwargs', None)} "
+                        f"response_metadata={getattr(chunk, 'response_metadata', None)}"
+                    )
+                    continue
+                yield text
         else:
             try:
                 async for chunk in _client_text.astream(chat_prompt):
