@@ -277,10 +277,40 @@ def _build_chain(template_str: str, input_variables: list, parser: PydanticOutpu
         input_variables=input_variables,
         partial_variables={"format_instructions": parser.get_format_instructions()},
     )
+
+    # If the underlying LLM supports structured output (Ollama >= 0.5 via
+    # `format=<json-schema>`, Gemini via tool/response schema), use it.
+    # That enforces the schema at decode time, so small local models can't
+    # rename fields or skip required ones — exactly the failure mode the
+    # PydanticOutputParser hits on Ollama. Fall back to the textual
+    # cleanup + parse pipeline for providers that don't support it.
+    schema_model = parser.pydantic_object
+    try:
+        structured_llm = llm.with_structured_output(schema_model)
+        return prompt | structured_llm
+    except Exception:
+        pass
+
+    # Wrap the parser so a failure logs the raw text we tried to parse.
+    # Without this we only see "ValidationError: ..." with no clue what the
+    # model actually returned, making the problem impossible to diagnose
+    # (especially with small local models that produce malformed JSON).
+    def _parse_with_logging(cleaned):
+        try:
+            return parser.invoke(cleaned)
+        except Exception as e:
+            import logging
+            raw = cleaned.content if isinstance(cleaned, BaseMessage) else cleaned
+            logging.getLogger(__name__).error(
+                "PydanticOutputParser failed for %s. Error: %s. Raw output:\n%s",
+                schema_model.__name__, e, raw,
+            )
+            raise
+
     # Insert a JSON-cleanup step between the LLM and the Pydantic parser so
     # responses wrapped in ```json``` fences or padded with prose still
     # parse correctly.
-    return prompt | llm | _clean_json_runnable | parser
+    return prompt | llm | _clean_json_runnable | RunnableLambda(_parse_with_logging)
 
 
 def build_chains(llm_text, llm_smart=None) -> dict:

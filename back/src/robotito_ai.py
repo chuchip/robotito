@@ -90,21 +90,22 @@ if model_api == "openai":
     client_text = ai_providers.configOpenAI()
     llm_text = ai_providers.configOpenAI(temperature=0.0)
 elif model_api == "ollama":
+    ollama_model = os.getenv("OLLAMA_MODEL") or "gemma4"
+    ollama_url = os.getenv("OLLAMA_URL") or "http://localhost:11434"
     client_text = ai_providers.configOllamaAI(
-        "gemma4",
-        "http://localhost:11434",
+        ollama_model,
+        ollama_url,
         0.8,
         reasoning=False,
         num_predict=-1,
         keep_alive="30m",
     )
     llm_text = ai_providers.configOllamaAI(
-        "gemma4",
-        "http://localhost:11434",
+        ollama_model,
+        ollama_url,
         0.0,
         reasoning=False,
         num_predict=-1,
-        format="json",
         keep_alive="30m",
     )
 else:
