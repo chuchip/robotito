@@ -33,6 +33,10 @@ export class SelectionMenuComponent {
   menuX = 0;
   menuY = 0;
   selectedText = '';
+  // Cached selection rect so the translation popover can position itself
+  // relative to the original selection (not the menu, which may have
+  // flipped above).
+  private selectionRect: { top: number; bottom: number; left: number; right: number } | null = null;
 
   // Translation popover state. Lives in the same component so the popover
   // can be anchored to the selection rect we already track.
@@ -44,12 +48,29 @@ export class SelectionMenuComponent {
 
   /** Re-evaluate the current document selection and toggle the menu. */
   private updateFromSelection() {
-    const selection = window.getSelection();
+    // Ignore selections made *inside* the translation popover — we want
+    // the user to be able to copy text from it without the menu jumping
+    // around or being re-shown.
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+      const anchor = sel.anchorNode as Node | null;
+      const focus = sel.focusNode as Node | null;
+      const insidePopover = (n: Node | null) => {
+        let el: HTMLElement | null = (n && (n.nodeType === 1 ? (n as HTMLElement) : n.parentElement)) || null;
+        return !!(el && el.closest('.selection-translation'));
+      };
+      if (insidePopover(anchor) || insidePopover(focus)) {
+        return;
+      }
+    }
+
+    const selection = sel;
     const text = selection ? selection.toString().trim() : '';
     this.selectedText = text;
 
     if (text === '' || !selection || selection.rangeCount === 0) {
       this.showMenu = false;
+      this.selectionRect = null;
       return;
     }
 
@@ -57,8 +78,10 @@ export class SelectionMenuComponent {
     const rect = range.getBoundingClientRect();
     if (rect.width <= 0 && rect.height <= 0) {
       this.showMenu = false;
+      this.selectionRect = null;
       return;
     }
+    this.selectionRect = { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right };
 
     // Approximate menu height; flip above the selection if it would
     // overflow the viewport bottom.
@@ -145,16 +168,27 @@ export class SelectionMenuComponent {
       this.showMenu = false;
       return;
     }
-    // Anchor the popover to the same coords as the menu, but slightly below
-    // it so they don't overlap if the user clicked the menu's Translate.
-    // Clamp horizontally too (popover is narrower).
+    // Anchor the popover relative to the original selection rect so it
+    // always sits next to the selected text — flipping above the
+    // selection when there isn't enough room below.
     const approxPopoverWidth = 380;
+    const approxPopoverHeight = 140;
     const margin = 6;
+    const rect = this.selectionRect;
+    const anchorLeft = rect ? rect.left : this.menuX;
+    const anchorBottom = rect ? rect.bottom : this.menuY;
+    const anchorTop = rect ? rect.top : this.menuY;
+
     this.translationX = Math.min(
-      Math.max(margin, this.menuX),
+      Math.max(margin, anchorLeft),
       Math.max(margin, window.innerWidth - approxPopoverWidth - margin),
     );
-    this.translationY = this.menuY + 44;
+    // Place below the selection if it fits; otherwise above.
+    if (anchorBottom + approxPopoverHeight + margin <= window.innerHeight) {
+      this.translationY = anchorBottom + margin;
+    } else {
+      this.translationY = Math.max(margin, anchorTop - approxPopoverHeight - margin);
+    }
     this.translationLoading = true;
     this.showTranslation = true;
     this.translationText = '';

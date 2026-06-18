@@ -120,6 +120,9 @@
   color: var(--color-text, #0f172a);
   word-wrap: break-word;
   white-space: pre-wrap;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
 }
 
 .selection-translation-loading {
