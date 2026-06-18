@@ -193,9 +193,8 @@ def _chunk_to_text(content) -> str:
 
 async def call_llm_internal(chat_prompt):
     response = await asyncio.to_thread(_llm_text.invoke, chat_prompt)
-    if _model_api == 'ollama':
-        return _chunk_to_text(response)
-    return _chunk_to_text(response.content)
+    content = getattr(response, "content", response)
+    return _chunk_to_text(content)
 
 
 async def sumary_history(uuid, type):

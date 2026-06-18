@@ -78,7 +78,7 @@ export class NewConversationDialogComponent {
       return;
     }
     this.isNew = false;
-    const found = this.contexts.find(c => c.id === this.selectedId);
+    const found = this.contexts.find(c => String(c.id) === String(this.selectedId));
     if (found) {
       this.label = found.label || '';
       this.text = found.text || '';
@@ -120,7 +120,7 @@ export class NewConversationDialogComponent {
       // Save the context profile so it sticks around in the user's list.
       // Preserve existing `remember` if we're editing an existing context;
       // the dialog itself no longer exposes that field.
-      const existing = this.contexts.find(c => c.id === this.selectedId);
+      const existing = this.contexts.find(c => String(c.id) === String(this.selectedId));
       const remember = existing?.remember || '';
       const dto: contextDTO = {
         id: this.isNew ? '' : (existing?.id || ''),
