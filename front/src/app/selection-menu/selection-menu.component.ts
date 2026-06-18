@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
+import { AfterViewChecked, Component, ElementRef, EventEmitter, HostListener, Input, Output, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
@@ -20,7 +20,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
   templateUrl: './selection-menu.component.html',
   styleUrls: ['./selection-menu.component.scss'],
 })
-export class SelectionMenuComponent {
+export class SelectionMenuComponent implements AfterViewChecked {
   /** Fired when the user clicks one of the menu buttons. `alt` is true
    *  when the user picked the alternative-voice action (Shift+F4). */
   @Output() speak = new EventEmitter<{ text: string; alt: boolean }>();
@@ -28,6 +28,9 @@ export class SelectionMenuComponent {
    *  directly and shows the result in a small popover next to the
    *  selection — parent doesn't need to handle anything. */
   @Input() translateFn?: (text: string) => Promise<string>;
+
+  @ViewChild('translationPopover') translationPopover?: ElementRef<HTMLElement>;
+  private translationNeedsClamp = false;
 
   showMenu = false;
   menuX = 0;
@@ -193,6 +196,7 @@ export class SelectionMenuComponent {
     this.showTranslation = true;
     this.translationText = '';
     this.showMenu = false;
+    this.translationNeedsClamp = true;
     try {
       const result = await this.translateFn(text);
       this.translationText = result || '(no translation)';
@@ -200,7 +204,62 @@ export class SelectionMenuComponent {
       this.translationText = 'Translate error';
     } finally {
       this.translationLoading = false;
+      // The popover content just changed — measure it on the next CD pass
+      // and re-clamp so it always fits inside the viewport.
+      this.translationNeedsClamp = true;
     }
+  }
+
+  ngAfterViewChecked(): void {
+    if (this.translationNeedsClamp && this.showTranslation) {
+      this.translationNeedsClamp = false;
+      this.clampTranslationToViewport();
+    }
+  }
+
+  /**
+   * Measure the rendered popover and shift it so it stays entirely inside
+   * the viewport. Called after the translation text has been rendered (or
+   * window resized) because we can't know the real size before that.
+   */
+  private clampTranslationToViewport() {
+    const el = this.translationPopover?.nativeElement;
+    if (!el) return;
+    const margin = 6;
+    const rect = el.getBoundingClientRect();
+    let { left, top } = rect;
+    const width = rect.width;
+    const height = rect.height;
+
+    // Horizontal: keep within [margin, innerWidth - width - margin].
+    const maxLeft = Math.max(margin, window.innerWidth - width - margin);
+    if (left > maxLeft) left = maxLeft;
+    if (left < margin) left = margin;
+
+    // Vertical: prefer to flip above the original selection if the popover
+    // would overflow the bottom. If still too tall, clamp to the top.
+    const sel = this.selectionRect;
+    if (top + height + margin > window.innerHeight) {
+      if (sel) {
+        const above = sel.top - height - margin;
+        if (above >= margin) {
+          top = above;
+        } else {
+          top = Math.max(margin, window.innerHeight - height - margin);
+        }
+      } else {
+        top = Math.max(margin, window.innerHeight - height - margin);
+      }
+    }
+    if (top < margin) top = margin;
+
+    this.translationX = left;
+    this.translationY = top;
+  }
+
+  @HostListener('window:resize')
+  onWindowResize() {
+    if (this.showTranslation) this.translationNeedsClamp = true;
   }
 
   closeTranslation() {

@@ -72,8 +72,11 @@
 .selection-translation {
   position: fixed;
   z-index: 1101;
-  max-width: 360px;
+  max-width: min(360px, calc(100vw - 12px));
   min-width: 180px;
+  max-height: calc(100vh - 12px);
+  display: flex;
+  flex-direction: column;
   padding: 8px 10px 10px;
   background: rgba(255, 255, 255, 0.98);
   border: 1px solid var(--color-border, #e2e8f0);
@@ -123,6 +126,9 @@
   user-select: text;
   -webkit-user-select: text;
   cursor: text;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .selection-translation-loading {

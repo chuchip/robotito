@@ -27,7 +27,7 @@
   </button>
 </div>
 
-<div *ngIf="showTranslation" class="selection-translation"
+<div *ngIf="showTranslation" #translationPopover class="selection-translation"
   [style.left.px]="translationX" [style.top.px]="translationY"
   role="dialog" aria-label="Translation">
   <div class="selection-translation-header"
