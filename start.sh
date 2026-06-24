@@ -1,4 +1,6 @@
-if [ $# -gt 1 ];then
+echo "Starting Robotito"
+if [ $# -gt 0 ]
+then
   internetMode="Y"
   echo "listening in internet"
 else

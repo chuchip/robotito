@@ -99,7 +99,7 @@ elif model_api == "ollama":
         reasoning=False,
         num_predict=-1,
         keep_alive="30m",
-        num_ctx=16384
+        num_ctx=32384
     )
     llm_text = ai_providers.configOllamaAI(
         ollama_model,
@@ -108,7 +108,7 @@ elif model_api == "ollama":
         reasoning=False,
         num_predict=-1,
         keep_alive="30m",
-        num_ctx=16384
+        num_ctx=32384
     )
 else:
     model_api = "gemini"
