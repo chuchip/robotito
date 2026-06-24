@@ -9,7 +9,7 @@ import logging
 import os
 import re
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
 
 import memory
 import persistence as db
@@ -61,6 +61,40 @@ def _sanitize_json_value(value) -> str:
     return text.strip()
 
 
+def _normalize_chat_messages(msgs: list) -> list:
+    """Enforce strict Human/AI alternation in a chat-history slice.
+
+    Some chat-tuned models (notably Gemma 3 via Ollama) require strict
+    alternation between `user` and `assistant` turns and react poorly
+    (hallucinating things like "you accidentally pasted code again")
+    when the same role appears twice in a row or when a message has
+    empty content. Gemini is forgiving and works without this; Ollama
+    is not. Filtering also drops empty messages so we never emit a
+    blank turn.
+
+    Consecutive same-role messages are merged by joining their
+    contents with a blank line. Non-Human/AI messages (e.g. System)
+    are left in place untouched.
+    """
+    cleaned: list = []
+    for m in msgs:
+        if not isinstance(m, BaseMessage):
+            cleaned.append(m)
+            continue
+        content = m.content
+        if isinstance(content, str) and content.strip() == "":
+            continue
+        if cleaned and isinstance(cleaned[-1], type(m)) and isinstance(m, (HumanMessage, AIMessage)):
+            prev = cleaned[-1]
+            prev_text = prev.content if isinstance(prev.content, str) else str(prev.content)
+            new_text = content if isinstance(content, str) else str(content)
+            merged_text = f"{prev_text}\n\n{new_text}".strip()
+            cleaned[-1] = type(m)(content=merged_text)
+        else:
+            cleaned.append(m)
+    return cleaned
+
+
 async def call_llm(state):
     memoryData = memory.getMemory(state['uuid'])
     max_length_answers = memoryData.getMaxLengthAnswer()
@@ -94,27 +128,38 @@ async def call_llm(state):
             context.incrementRememberNumber()
         # The context is normally carried as the first line of chat_history
         # (the "Context of this conversation: ..." robot line saved by the
-        # frontend). We only fall back to context.getText() as the system
-        # prompt when the history is still empty (very first turn of a
-        # brand-new session, before that line has been persisted).
+        # frontend). We fall back to context.getText() as the system prompt
+        # when the history is still empty (very first turn of a brand-new
+        # session, before that line has been persisted). For chat models
+        # that require strict role alternation (Gemma via Ollama), we also
+        # promote that pinned context line into the system prompt instead
+        # of leaving it at the head of `msgs`, where it could collide with
+        # a following AI message and cause two consecutive assistant turns.
         if len(chat_history) == 0:
             context_text = context.getText() if context is not None else ""
             msgs = []
         else:
-            context_text = ""
+            pinned = chat_history[0]
             if _max_history > 0 and len(chat_history) > _max_history:
-                # Pin chat_history[0] so the context line survives history
-                # truncation in long conversations.
-                msgs = [chat_history[0]] + chat_history[-(_max_history - 1):]
+                tail = chat_history[-(_max_history - 1):]
             else:
-                msgs = list(chat_history)
+                tail = list(chat_history[1:])
+            pinned_text = ""
+            if isinstance(pinned, BaseMessage) and isinstance(pinned.content, str):
+                pinned_text = pinned.content.strip()
+            base_context = context.getText() if context is not None else ""
+            context_text = "\n\n".join(t for t in (base_context, pinned_text) if t).strip()
+            msgs = list(tail)
         if max_length_answers != 0:
-            context_text = f"{limit_words}. {context_text}".strip()
-            insert_pos = len(msgs) - 4
-            if insert_pos > 0:
-                msgs.insert(insert_pos, HumanMessage(f"Remember: {limit_words}"))
+            if context_text:
+                context_text = f"{limit_words}. {context_text}".strip()
             else:
-                msgs.append(HumanMessage(f"Remember: {limit_words}"))
+                context_text = limit_words
+            # Append the reminder to the user's question instead of injecting
+            # an out-of-order HumanMessage into the middle of `msgs` — that
+            # injection used to create Human->Human pairs that confuse
+            # strict-alternation chat templates (Gemma).
+            question = f"{question}\n\n(Remember: {limit_words}.)"
 
         if long_term:
             context_text = f"{context_text}\n\n{long_term}".strip()
@@ -124,11 +169,13 @@ async def call_llm(state):
             url_source = memoryData.getUrlSource()
             context_text += f"\n\nUse the following web page content as reference to answer questions. Source: {url_source}\n---\n{url_context}\n---"
 
+        msgs = _normalize_chat_messages(msgs)
+
         chat_prompt = prompt.format_messages(
             system_msg=context_text,
             context=[],
             msgs=msgs,
-            question=HumanMessage(question),
+            question=question,
         )
         _logger.debug(f"LLM Context: {context_text}\n Question: {question}")
         if _model_api == 'ollama':            
