@@ -233,7 +233,7 @@ async def review_turn(uuid: str, user_message: str) -> AsyncIterator[str]:
     chat_prompt = prompt.format_messages(
         system_msg=system_text,
         msgs=msgs,
-        question=HumanMessage(user_message),
+        question=user_message,
     )
 
     reply_parts: list = []
