@@ -113,20 +113,15 @@ def greet(name: str) -> str:
 
 @mcp.tool()
 async def search_past_conversations(topic: str = "", timeframe: str = "", user_id: str = "") -> str:
-    """Search and review past conversations from the database by topic/keyword, date, or timeframe.
+    """Find an earlier conversation when the user wants to recall, revisit, continue, or discuss it.
 
-    Call this tool whenever the user says things like:
-    - 'Recuerdas lo que hablamos la semana pasada acerca de XXXX?' (topic='XXXX', timeframe='last_week')
-    - 'What did we talk about regarding XXXX?' (topic='XXXX')
-    - Do you remember our last conversation 
-    - 'I want to review our conversation on Oct 13' (timeframe='Oct 13')
-    - 'Ask me questions about our previous conversation' (topic='', timeframe='' -> returns the last conversation)
+    Use the user's intended subject or time period as filters when provided.
+    Leave both filters empty for a general request about the most recent conversation.
 
-    Parameters:
-    - topic: Keyword, person, place, or subject to search for (e.g. 'cocina', 'Japón', 'Python', 'viajes').
-             Leave empty if asking generally about the last conversation.
-    - timeframe: Time period or date (e.g. 'la semana pasada', 'last_week', 'ayer', 'yesterday', 'Oct 13', '2026-10-13').
-                 Leave empty for the most recent conversation.
+    Args:
+        topic: Optional subject or keyword to search for.
+        timeframe: Optional date or time period to search.
+        user_id: Authenticated user identifier, supplied by the application.
     """
     actual_user = user_id or os.getenv("CURRENT_USER_ID") or "default"
     logger.info(

@@ -178,10 +178,10 @@ async def call_llm(state):
 
         if mcp_tools:
             context_text += (
-                "\n\nYou have access to external tools: "
-                "- 'search_past_conversations' / 'get_last_conversation_for_review': Call this tool whenever the user asks about "
-                "a past conversation, asks if you remember what was discussed ('Recuerdas lo que hablamos...'), mentions a specific topic "
-                "(e.g. topic='XXXX'), or a time period (e.g. timeframe='la semana pasada', 'yesterday', 'Oct 13', or leave empty for the last talk)."
+                "\n\nUse 'search_past_conversations' whenever the user's intent is to recall, revisit, continue, "
+                "or discuss an earlier conversation. Decide from the meaning of the request, not exact keywords. "
+                "If they refer generally to the last conversation without a topic or date, call it with empty topic and timeframe. "
+                "For a specific subject or time period, pass the relevant topic or timeframe."
             )
 
         chat_prompt = prompt.format_messages(
