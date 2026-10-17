@@ -95,20 +95,20 @@ elif model_api == "ollama":
     client_text = ai_providers.configOllamaAI(
         ollama_model,
         ollama_url,
-        0.8,
+        temperature=0.7,
         reasoning=False,
-        num_predict=-1,
-        keep_alive="30m",
-        num_ctx=32384
+        num_predict=2048,
+        keep_alive=1800,
+        num_ctx=4096
     )
     llm_text = ai_providers.configOllamaAI(
         ollama_model,
         ollama_url,
-        0.0,
+        temperature=0.0,
         reasoning=False,
-        num_predict=-1,
-        keep_alive="30m",
-        num_ctx=32384
+        num_predict=2048,
+        keep_alive=1800,
+        num_ctx=4096
     )
 else:
     model_api = "gemini"

@@ -65,6 +65,8 @@ def getAudioFromKokoro(text, audioData, uuid, voice_name: str = ""):
             total = audio
         else:
             total = np.concatenate((total, audio), axis=0)
+    if total is None or np.asarray(total).size == 0:
+        raise ValueError("Kokoro produced no audio for the input text")
     wav_file = f"audio/{uuid}-tts.wav"
     webm_file = f"audio/{uuid}-tts.webm"
     sf.write(wav_file, total, 24000)

@@ -106,13 +106,17 @@ async def upload_audio():
 async def tts():
     import robotito_ai as ai
     data = await request.get_json()  # Get JSON data from the request body
+    if not isinstance(data, dict):
+        return jsonify({'error': 'Request body must be a JSON object'}), 400
     text = data.get('text')
+    if not isinstance(text, str):
+        return jsonify({'error': 'text must be a string'}), 400
     uuid=request.headers.get("uuid")
     voice_name=memory.getMemory(uuid).getAudioData().voice_name
     if data.get('voice_name') is not None:        
         voice_name = data.get('voice_name') if data.get('voice_name') != '' else voice_name
     audioData=memory.getMemory(uuid).getAudioData()
-    if text=='':
+    if not text.strip():
         return Response(None, mimetype='audio/webm')
     #logging.info(f"In tts {text}")
     # Unique key per request so concurrent TTS calls for the same user
