@@ -60,14 +60,15 @@ def greet(name: str) -> str:
 
 
 @mcp.tool()
-async def get_last_conversation_for_review(user_id: str = "default") -> str:
+async def get_last_conversation_for_review(user_id: str = "") -> str:
     """Read the previous conversation from the database to review topics discussed and quiz the user.
-    Use this tool whenever the user says:
-    - 'I want to review what we talked about last day / yesterday / last conversation'
+    Call this tool whenever the user says:
     - 'Ask me questions about our previous conversation'
+    - 'I want to review what we talked about last day / yesterday / last conversation'
     - 'Test my memory about our last talk'
     """
-    logger.info("Fetching last conversation for review (user_id=%s)", user_id)
+    actual_user = user_id or os.getenv("CURRENT_USER_ID") or "default"
+    logger.info("Fetching last conversation for review (user_id=%s)", actual_user)
     try:
         conn = await get_db_connection()
     except Exception as e:
@@ -75,21 +76,21 @@ async def get_last_conversation_for_review(user_id: str = "default") -> str:
         return f"Error connecting to Robotito database: {e}. Please ensure PostgreSQL is running."
 
     try:
-        # Fetch the most recent conversations
+        # Fetch the most recent conversations for this specific user only
         convs = await conn.fetch(
             """
             SELECT c.id, c.name, c.initial_time, c.final_date,
                    (SELECT count(*) FROM conversation_lines l WHERE l.conversation_id = c.id) as line_count
             FROM conversation c
-            WHERE c.user_id = $1 OR $1 = 'default'
+            WHERE c.user_id = $1
             ORDER BY COALESCE(c.final_date, c.initial_time) DESC
             LIMIT 5
             """,
-            user_id
+            actual_user
         )
 
         if not convs:
-            return "No previous conversations found in the database."
+            return f"No previous conversations found in the database for user '{actual_user}'."
 
         # If the newest conversation has <= 2 lines (e.g. current turn just started),
         # pick the previous one so we review the actual past conversation.

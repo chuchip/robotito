@@ -172,6 +172,17 @@ async def call_llm(state):
 
         msgs = _normalize_chat_messages(msgs)
 
+        # Check for MCP tools and set user context
+        mcp_tools = await mcp_service.mcp_manager.get_tools_for_llm()
+        current_user = memoryData.getUser() or "default"
+
+        if mcp_tools:
+            context_text += (
+                "\n\nYou have access to external tools. "
+                "If the user asks to review, recall, or ask questions about a previous or past conversation, "
+                "you MUST call the get_last_conversation_for_review tool (which takes no arguments)."
+            )
+
         chat_prompt = prompt.format_messages(
             system_msg=context_text,
             context=[],
@@ -180,9 +191,8 @@ async def call_llm(state):
         )
         _logger.debug(f"LLM Context: {context_text}\n Question: {question}")
 
-        # Check for MCP tools and attempt tool-calling if available
+        # Attempt tool-calling if MCP tools are available
         executed_tool = False
-        mcp_tools = await mcp_service.mcp_manager.get_tools_for_llm()
         if mcp_tools and hasattr(_client_text, "bind_tools"):
             try:
                 tool_client = _client_text.bind_tools(mcp_tools)
@@ -199,11 +209,11 @@ async def call_llm(state):
                         t_name = tc.get("name")
                         t_args = tc.get("args") or {}
                         t_id = tc.get("id") or t_name
-                        if "user_id" not in t_args and memoryData.getUser():
-                            t_args["user_id"] = memoryData.getUser()
-                        _logger.info("Executing MCP tool %s with args %s", t_name, t_args)
+                        # Enforce user_id from the authenticated session
+                        t_args["user_id"] = current_user
+                        _logger.info("Executing MCP tool %s with args %s for user %s", t_name, t_args, current_user)
 
-                        t_result = await mcp_service.mcp_manager.call_tool(t_name, t_args)
+                        t_result = await mcp_service.mcp_manager.call_tool(t_name, t_args, user_id=current_user)
                         _logger.info("MCP tool %s returned: %s", t_name, t_result)
                         last_tool_result = t_result
 

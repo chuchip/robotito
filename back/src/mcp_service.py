@@ -10,16 +10,32 @@ from typing import List, Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_SERVER_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "server.py"))
+def get_default_server_path() -> str:
+    env_path = os.getenv("MCP_SERVER_SCRIPT")
+    if env_path and os.path.exists(env_path):
+        return env_path
+    candidates = [
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "mcp_server.py")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "server.py")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src", "mcp_server.py")),
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            return p
+    return candidates[0]
 
 
 class MCPClientManager:
     """Manages MCP server communication and tool dispatch."""
 
     def __init__(self, server_path: Optional[str] = None):
-        self.server_path = server_path or os.getenv("MCP_SERVER_SCRIPT", DEFAULT_SERVER_PATH)
+        self._custom_path = server_path
         self._cached_tools: Optional[List[Dict[str, Any]]] = None
         self._last_mtime: float = 0.0
+
+    @property
+    def server_path(self) -> str:
+        return self._custom_path or get_default_server_path()
 
     def is_available(self) -> bool:
         """Check if MCP server script exists and is enabled."""
@@ -68,16 +84,24 @@ class MCPClientManager:
             logger.warning("Could not load MCP tools from %s: %s", self.server_path, e)
             return []
 
-    async def call_tool(self, name: str, arguments: dict) -> str:
-        """Execute a tool on the MCP server and return text result."""
+    async def call_tool(self, name: str, arguments: dict, user_id: str = "default") -> str:
+        """Execute a tool on the MCP server with strict user session isolation."""
         try:
             from mcp import ClientSession, StdioServerParameters
             from mcp.client.stdio import stdio_client
 
+            # Per-invocation environment isolation
+            call_env = os.environ.copy()
+            call_env["CURRENT_USER_ID"] = user_id
+
+            # Ensure user_id is injected into arguments if appropriate
+            if "user_id" in arguments or name == "get_last_conversation_for_review":
+                arguments["user_id"] = user_id
+
             params = StdioServerParameters(
                 command=sys.executable,
                 args=["-u", self.server_path],
-                env=os.environ.copy(),
+                env=call_env,
             )
             async with stdio_client(params) as (read, write):
                 async with ClientSession(read, write) as session:
