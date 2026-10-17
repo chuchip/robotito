@@ -178,9 +178,10 @@ async def call_llm(state):
 
         if mcp_tools:
             context_text += (
-                "\n\nYou have access to external tools. "
-                "If the user asks to review, recall, or ask questions about a previous or past conversation, "
-                "you MUST call the get_last_conversation_for_review tool (which takes no arguments)."
+                "\n\nYou have access to external tools: "
+                "- 'search_past_conversations' / 'get_last_conversation_for_review': Call this tool whenever the user asks about "
+                "a past conversation, asks if you remember what was discussed ('Recuerdas lo que hablamos...'), mentions a specific topic "
+                "(e.g. topic='XXXX'), or a time period (e.g. timeframe='la semana pasada', 'yesterday', 'Oct 13', or leave empty for the last talk)."
             )
 
         chat_prompt = prompt.format_messages(

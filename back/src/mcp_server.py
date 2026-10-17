@@ -1,11 +1,17 @@
 """Robotito MCP Server using FastMCP.
 
-Exposes tools for LLM tool-calling (math, greeting, database conversation review).
+Exposes tools for LLM tool-calling:
+- add_numbers: Basic math
+- greet: Greeting tool
+- search_past_conversations / get_last_conversation_for_review: Searching and reviewing
+  previous conversations by topic (e.g. "comida", "viajes"), timeframe ("la semana pasada",
+  "yesterday", "Oct 13"), or default to the most recent conversation.
 """
 import os
 import sys
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
+from typing import Tuple, Optional
 from mcp.server.fastmcp import FastMCP
 
 # Set up logging to stderr so it doesn't interfere with stdio JSON-RPC protocol
@@ -45,6 +51,52 @@ async def get_db_connection():
     )
 
 
+def resolve_timeframe(timeframe: str) -> Tuple[Optional[datetime], Optional[datetime]]:
+    """Convert natural language or formatted timeframe string into (start_date, end_date)."""
+    if not timeframe or not timeframe.strip():
+        return None, None
+
+    tf = timeframe.lower().strip()
+    now = datetime.now()
+
+    # Relative timeframes (English & Spanish)
+    if any(k in tf for k in ("week", "semana")):
+        return now - timedelta(days=7), now
+    if any(k in tf for k in ("yesterday", "ayer")):
+        yesterday = now - timedelta(days=1)
+        return yesterday.replace(hour=0, minute=0, second=0, microsecond=0), yesterday.replace(hour=23, minute=59, second=59, microsecond=999999)
+    if any(k in tf for k in ("today", "hoy")):
+        return now.replace(hour=0, minute=0, second=0, microsecond=0), now
+    if any(k in tf for k in ("month", "mes")):
+        return now - timedelta(days=30), now
+
+    # Try dateparser if available in the environment
+    try:
+        import dateparser
+        parsed = dateparser.parse(timeframe, languages=["es", "en"])
+        if parsed:
+            return parsed.replace(hour=0, minute=0, second=0, microsecond=0), parsed.replace(hour=23, minute=59, second=59, microsecond=999999)
+    except Exception:
+        pass
+
+    # Try common explicit date formats
+    for fmt in (
+        "%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y",
+        "%b %d", "%B %d", "%d %b", "%d %B",
+        "%b %d %Y", "%B %d %Y", "%d %b %Y", "%d %B %Y",
+    ):
+        try:
+            parsed = datetime.strptime(timeframe, fmt)
+            # If year wasn't parsed (defaulted to 1900), substitute current year
+            if parsed.year == 1900:
+                parsed = parsed.replace(year=now.year)
+            return parsed.replace(hour=0, minute=0, second=0, microsecond=0), parsed.replace(hour=23, minute=59, second=59, microsecond=999999)
+        except ValueError:
+            pass
+
+    return None, None
+
+
 @mcp.tool()
 def add_numbers(a: float, b: float) -> float:
     """Add two numbers together."""
@@ -60,15 +112,28 @@ def greet(name: str) -> str:
 
 
 @mcp.tool()
-async def get_last_conversation_for_review(user_id: str = "") -> str:
-    """Read the previous conversation from the database to review topics discussed and quiz the user.
-    Call this tool whenever the user says:
-    - 'Ask me questions about our previous conversation'
-    - 'I want to review what we talked about last day / yesterday / last conversation'
-    - 'Test my memory about our last talk'
+async def search_past_conversations(topic: str = "", timeframe: str = "", user_id: str = "") -> str:
+    """Search and review past conversations from the database by topic/keyword, date, or timeframe.
+
+    Call this tool whenever the user says things like:
+    - 'Recuerdas lo que hablamos la semana pasada acerca de XXXX?' (topic='XXXX', timeframe='last_week')
+    - 'What did we talk about regarding XXXX?' (topic='XXXX')
+    - Do you remember our last conversation 
+    - 'I want to review our conversation on Oct 13' (timeframe='Oct 13')
+    - 'Ask me questions about our previous conversation' (topic='', timeframe='' -> returns the last conversation)
+
+    Parameters:
+    - topic: Keyword, person, place, or subject to search for (e.g. 'cocina', 'Japón', 'Python', 'viajes').
+             Leave empty if asking generally about the last conversation.
+    - timeframe: Time period or date (e.g. 'la semana pasada', 'last_week', 'ayer', 'yesterday', 'Oct 13', '2026-10-13').
+                 Leave empty for the most recent conversation.
     """
     actual_user = user_id or os.getenv("CURRENT_USER_ID") or "default"
-    logger.info("Fetching last conversation for review (user_id=%s)", actual_user)
+    logger.info(
+        "Searching past conversations: user=%s, topic=%r, timeframe=%r",
+        actual_user, topic, timeframe
+    )
+
     try:
         conn = await get_db_connection()
     except Exception as e:
@@ -76,26 +141,53 @@ async def get_last_conversation_for_review(user_id: str = "") -> str:
         return f"Error connecting to Robotito database: {e}. Please ensure PostgreSQL is running."
 
     try:
-        # Fetch the most recent conversations for this specific user only
-        convs = await conn.fetch(
-            """
+        start_dt, end_dt = resolve_timeframe(timeframe)
+
+        # Build dynamic SQL query
+        query = """
             SELECT c.id, c.name, c.initial_time, c.final_date,
                    (SELECT count(*) FROM conversation_lines l WHERE l.conversation_id = c.id) as line_count
             FROM conversation c
             WHERE c.user_id = $1
-            ORDER BY COALESCE(c.final_date, c.initial_time) DESC
-            LIMIT 5
-            """,
-            actual_user
-        )
+        """
+        params = [actual_user]
+        idx = 2
+
+        if start_dt and end_dt:
+            query += f" AND COALESCE(c.final_date, c.initial_time) >= ${idx} AND COALESCE(c.final_date, c.initial_time) <= ${idx + 1}"
+            params.extend([start_dt, end_dt])
+            idx += 2
+
+        clean_topic = (topic or "").strip()
+        if clean_topic:
+            search_pattern = f"%{clean_topic}%"
+            query += f""" AND (
+                c.name ILIKE ${idx}
+                OR EXISTS (
+                    SELECT 1 FROM conversation_lines l
+                    WHERE l.conversation_id = c.id AND l.msg ILIKE ${idx}
+                )
+            )"""
+            params.append(search_pattern)
+            idx += 1
+
+        query += " ORDER BY COALESCE(c.final_date, c.initial_time) DESC LIMIT 5"
+
+        convs = await conn.fetch(query, *params)
 
         if not convs:
-            return f"No previous conversations found in the database for user '{actual_user}'."
+            msg_filter = []
+            if clean_topic:
+                msg_filter.append(f"topic '{clean_topic}'")
+            if timeframe:
+                msg_filter.append(f"timeframe '{timeframe}'")
+            filter_desc = " with " + " and ".join(msg_filter) if msg_filter else ""
+            return f"No previous conversations found in the database for user '{actual_user}'{filter_desc}."
 
-        # If the newest conversation has <= 2 lines (e.g. current turn just started),
-        # pick the previous one so we review the actual past conversation.
+        # If searching generally without topic or timeframe, and the top conversation
+        # only has <= 2 lines (just started this session), pick the previous one.
         target_conv = convs[0]
-        if len(convs) > 1 and target_conv["line_count"] <= 2:
+        if not clean_topic and not timeframe and len(convs) > 1 and target_conv["line_count"] <= 2:
             target_conv = convs[1]
 
         conv_id = target_conv["id"]
@@ -114,26 +206,49 @@ async def get_last_conversation_for_review(user_id: str = "") -> str:
             conv_id
         )
 
-        if not lines:
-            return f"Conversation '{conv_name}' ({date_str}) found, but it has no recorded messages."
-
         transcript_lines = []
+        matching_snippets = []
         for row in lines:
             role = "User" if row["type"] == "H" else "Robotito"
-            transcript_lines.append(f"{role}: {row['msg']}")
+            msg = row["msg"]
+            transcript_lines.append(f"{role}: {msg}")
+            if clean_topic and clean_topic.lower() in msg.lower():
+                matching_snippets.append(f"[{role}]: {msg}")
 
         transcript = "\n".join(transcript_lines)
-        return (
-            f"=== PREVIOUS CONVERSATION FOUND ===\n"
-            f"Topic: {conv_name}\n"
-            f"Date: {date_str}\n\n"
-            f"Transcript:\n{transcript}\n\n"
+        snippets_block = ""
+        if matching_snippets:
+            snippets_block = (
+                f"\n=== KEY MENTIONS OF '{clean_topic}' ===\n"
+                + "\n".join(matching_snippets)
+                + "\n"
+            )
+
+        instructions = (
             f"=== INSTRUCTIONS FOR ROBOTITO ===\n"
-            f"1. Tell the user what the previous conversation was about.\n"
-            f"2. Ask 2 or 3 engaging questions about the details discussed to test their memory."
+            f"1. Answer the user's question about what was talked about, citing specific details from the transcript above.\n"
+            f"2. If the user asked 'Recuerdas...' or asked if you remember, enthusiastically confirm you remember and mention what was said.\n"
+            f"3. If appropriate or requested, ask 1 or 2 fun follow-up/quiz questions to test the user's memory about what they said."
+        )
+
+        return (
+            f"=== PAST CONVERSATION FOUND ===\n"
+            f"Topic: {conv_name}\n"
+            f"Date: {date_str}\n"
+            f"{snippets_block}\n"
+            f"Transcript:\n{transcript}\n\n"
+            f"{instructions}"
         )
     finally:
         await conn.close()
+
+
+@mcp.tool()
+async def get_last_conversation_for_review(topic: str = "", timeframe: str = "", user_id: str = "") -> str:
+    """Review previous conversations or search past talks by topic or timeframe.
+    Alias for search_past_conversations.
+    """
+    return await search_past_conversations(topic=topic, timeframe=timeframe, user_id=user_id)
 
 
 @mcp.resource("echo://{message}")

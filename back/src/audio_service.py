@@ -76,11 +76,15 @@ def getAudioFromKokoro(text, audioData, uuid, voice_name: str = ""):
         '-c:a', 'libopus',
         webm_file,
     ]
-    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:
-        os.remove(wav_file)
-    except OSError as exc:
-        _logger.warning(f"Could not remove kokoro wav {wav_file}: {exc}")
+        subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10)
+    except subprocess.TimeoutExpired:
+        _logger.error(f"ffmpeg conversion timed out after 10s for {wav_file}")
+    finally:
+        try:
+            os.remove(wav_file)
+        except OSError as exc:
+            _logger.warning(f"Could not remove kokoro wav {wav_file}: {exc}")
     return webm_file
 
 
