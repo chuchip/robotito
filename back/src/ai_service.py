@@ -9,10 +9,11 @@ import logging
 import os
 import re
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
+from langchain_core.messages import HumanMessage, AIMessage, BaseMessage, ToolMessage
 
 import memory
 import persistence as db
+import mcp_service
 from ai_models import TranslationResult, ExamplePhrase, ReviewResult, ReviewItem
 
 
@@ -178,20 +179,90 @@ async def call_llm(state):
             question=question,
         )
         _logger.debug(f"LLM Context: {context_text}\n Question: {question}")
-        if _model_api == 'ollama':            
-            _logger.debug(f"Calling Ollama LLM with prompt: {chat_prompt}")
-            async for chunk in _client_text.astream(chat_prompt):
-                text = _chunk_to_text(chunk.content)
-                if not text:
-                    continue
-                yield text
-        else:
+
+        # Check for MCP tools and attempt tool-calling if available
+        executed_tool = False
+        mcp_tools = await mcp_service.mcp_manager.get_tools_for_llm()
+        if mcp_tools and hasattr(_client_text, "bind_tools"):
             try:
-                async for chunk in _client_text.astream(chat_prompt):
-                    yield _chunk_to_text(chunk.content)
+                tool_client = _client_text.bind_tools(mcp_tools)
+                ai_response = await tool_client.ainvoke(chat_prompt)
+                tool_calls = getattr(ai_response, "tool_calls", []) or []
+
+                if tool_calls:
+                    executed_tool = True
+                    new_messages = list(chat_prompt)
+                    new_messages.append(ai_response)
+
+                    last_tool_result = ""
+                    for tc in tool_calls:
+                        t_name = tc.get("name")
+                        t_args = tc.get("args") or {}
+                        t_id = tc.get("id") or t_name
+                        if "user_id" not in t_args and memoryData.getUser():
+                            t_args["user_id"] = memoryData.getUser()
+                        _logger.info("Executing MCP tool %s with args %s", t_name, t_args)
+
+                        t_result = await mcp_service.mcp_manager.call_tool(t_name, t_args)
+                        _logger.info("MCP tool %s returned: %s", t_name, t_result)
+                        last_tool_result = t_result
+
+                        new_messages.append(ToolMessage(content=str(t_result), tool_call_id=t_id, name=t_name))
+
+                    # Stream the final answer from the LLM based on tool outputs
+                    yielded_any = False
+                    try:
+                        async for chunk in _client_text.astream(new_messages):
+                            text = _chunk_to_text(chunk.content)
+                            if text:
+                                yielded_any = True
+                                yield text
+                    except Exception as err:
+                        _logger.warning("Error streaming follow-up with ToolMessage: %s", err)
+
+                    # If the LLM returned nothing (common with Ollama templates lacking tool role)
+                    if not yielded_any:
+                        try:
+                            followup_prompt = list(chat_prompt) + [
+                                HumanMessage(content=f"Tool result: {last_tool_result}. Please answer the original question concisely using this result.")
+                            ]
+                            async for chunk in _client_text.astream(followup_prompt):
+                                text = _chunk_to_text(chunk.content)
+                                if text:
+                                    yielded_any = True
+                                    yield text
+                        except Exception as err:
+                            _logger.warning("Error streaming prompt follow-up: %s", err)
+
+                    # Final fallback if still empty: return the raw tool result directly
+                    if not yielded_any and last_tool_result:
+                        _logger.info("Yielding direct tool result fallback")
+                        yield f"The result is {last_tool_result}."
+                else:
+                    # Model didn't call any tools; return its direct response
+                    executed_tool = True
+                    direct_text = _chunk_to_text(ai_response.content)
+                    if direct_text:
+                        yield direct_text
             except Exception as e:
-                _logger.error(f"Error in LLM call: {e}")
-                yield ""
+                _logger.warning("MCP tool execution check failed, falling back to direct stream: %s", e)
+                executed_tool = False
+
+        if not executed_tool:
+            if _model_api == 'ollama':            
+                _logger.debug(f"Calling Ollama LLM with prompt: {chat_prompt}")
+                async for chunk in _client_text.astream(chat_prompt):
+                    text = _chunk_to_text(chunk.content)
+                    if not text:
+                        continue
+                    yield text
+            else:
+                try:
+                    async for chunk in _client_text.astream(chat_prompt):
+                        yield _chunk_to_text(chunk.content)
+                except Exception as e:
+                    _logger.error(f"Error in LLM call: {e}")
+                    yield ""
         if swRemember:
             yield "*"
     else:
