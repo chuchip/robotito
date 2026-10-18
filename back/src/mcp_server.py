@@ -10,8 +10,12 @@ Exposes tools for LLM tool-calling:
 import os
 import sys
 import logging
+import asyncio
 from datetime import datetime, timedelta
 from typing import Tuple, Optional
+from urllib.parse import urlsplit
+
+import trafilatura
 from mcp.server.fastmcp import FastMCP
 
 # Set up logging to stderr so it doesn't interfere with stdio JSON-RPC protocol
@@ -109,6 +113,45 @@ def greet(name: str) -> str:
     """Return a greeting message."""
     logger.info("Executing greet for name=%s", name)
     return f"Hello, {name}! Greetings from your Python MCP server on WSL."
+
+
+@mcp.tool()
+async def read_web_page(url: str) -> str:
+    """Read and extract the main text from a web page URL supplied by the user.
+
+    Use this when the user asks a question about a web page or asks you to read
+    a URL. The extracted page text is returned for you to use as context.
+
+    Args:
+        url: Absolute HTTP or HTTPS URL of the page to read.
+    """
+    url = (url or "").strip()
+    parsed_url = urlsplit(url)
+    if parsed_url.scheme not in ("http", "https") or not parsed_url.hostname:
+        return "Error reading web page: provide an absolute HTTP or HTTPS URL."
+    if parsed_url.username or parsed_url.password:
+        return "Error reading web page: URLs containing credentials are not allowed."
+
+    try:
+        
+        downloaded = await asyncio.to_thread(trafilatura.fetch_url, url)
+        if downloaded is None:
+            return f"Error reading web page: could not fetch {url}."
+
+        text = await asyncio.to_thread(
+            trafilatura.extract,
+            downloaded,
+            include_comments=False,
+            include_tables=True,
+        )
+        if not text:
+            return f"Error reading web page: could not extract content from {url}."
+
+        logger.info("Read web page %s (%d chars)", url, len(text))
+        return f"Content extracted from {url}:\n\n{text}"
+    except Exception as e:
+        logger.error("Error reading web page %s: %s", url, e)
+        return f"Error reading web page {url}: {e}"
 
 
 @mcp.tool()

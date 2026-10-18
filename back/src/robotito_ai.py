@@ -251,5 +251,12 @@ def global_security_check():
         abort(401)
 
 
+@app.after_serving
+async def shutdown_mcp():
+    """Gracefully stop the persistent MCP server process on backend exit."""
+    import mcp_service
+    await mcp_service.mcp_manager.shutdown()
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)

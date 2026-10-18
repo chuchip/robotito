@@ -23,6 +23,7 @@ _model_api = None
 _chains: dict = {}
 _max_history: int = 12
 _logger: logging.Logger = logging.getLogger(__name__)
+_max_mcp_tool_rounds: int = 5
 
 # How many user turns between automatic memory consolidations during a long
 # conversation. 0 disables the periodic refresh (consolidation still runs at
@@ -197,30 +198,45 @@ async def call_llm(state):
         if mcp_tools and hasattr(_client_text, "bind_tools"):
             try:
                 tool_client = _client_text.bind_tools(mcp_tools)
-                ai_response = await tool_client.ainvoke(chat_prompt)
-                tool_calls = getattr(ai_response, "tool_calls", []) or []
+                new_messages = list(chat_prompt)
+                tool_results = []
+                tool_rounds = 0
 
-                if tool_calls:
+                while True:
+                    ai_response = await tool_client.ainvoke(new_messages)
+                    tool_calls = getattr(ai_response, "tool_calls", []) or []
+
+                    if not tool_calls:
+                        # Model didn't call any tools; return its direct response.
+                        executed_tool = True
+                        direct_text = _chunk_to_text(ai_response.content)
+                        if direct_text:
+                            yield direct_text
+                        break
+
                     executed_tool = True
-                    new_messages = list(chat_prompt)
+                    tool_rounds += 1
                     new_messages.append(ai_response)
 
-                    last_tool_result = ""
                     for tc in tool_calls:
                         t_name = tc.get("name")
-                        t_args = tc.get("args") or {}
+                        t_args = dict(tc.get("args") or {})
                         t_id = tc.get("id") or t_name
-                        # Enforce user_id from the authenticated session
-                        t_args["user_id"] = current_user
                         _logger.info("Executing MCP tool %s with args %s for user %s", t_name, t_args, current_user)
 
                         t_result = await mcp_service.mcp_manager.call_tool(t_name, t_args, user_id=current_user)
                         _logger.info("MCP tool %s returned: %s", t_name, t_result)
-                        last_tool_result = t_result
+                        tool_results.append(t_result)
 
                         new_messages.append(ToolMessage(content=str(t_result), tool_call_id=t_id, name=t_name))
 
-                    # Stream the final answer from the LLM based on tool outputs
+                    if tool_rounds < _max_mcp_tool_rounds:
+                        continue
+
+                    _logger.warning(
+                        "Reached the maximum of %d MCP tool rounds; requesting a final answer",
+                        _max_mcp_tool_rounds,
+                    )
                     yielded_any = False
                     try:
                         async for chunk in _client_text.astream(new_messages):
@@ -229,13 +245,14 @@ async def call_llm(state):
                                 yielded_any = True
                                 yield text
                     except Exception as err:
-                        _logger.warning("Error streaming follow-up with ToolMessage: %s", err)
+                        _logger.warning("Error streaming final answer after MCP tool limit: %s", err)
 
-                    # If the LLM returned nothing (common with Ollama templates lacking tool role)
+                    # Some Ollama templates do not support the ToolMessage role.
                     if not yielded_any:
                         try:
+                            tool_summary = "\n".join(str(result) for result in tool_results)
                             followup_prompt = list(chat_prompt) + [
-                                HumanMessage(content=f"Tool result: {last_tool_result}. Please answer the original question concisely using this result.")
+                                HumanMessage(content=f"Tool results: {tool_summary}. Please answer the original question concisely using these results.")
                             ]
                             async for chunk in _client_text.astream(followup_prompt):
                                 text = _chunk_to_text(chunk.content)
@@ -245,16 +262,10 @@ async def call_llm(state):
                         except Exception as err:
                             _logger.warning("Error streaming prompt follow-up: %s", err)
 
-                    # Final fallback if still empty: return the raw tool result directly
-                    if not yielded_any and last_tool_result:
+                    if not yielded_any and tool_results:
                         _logger.info("Yielding direct tool result fallback")
-                        yield f"The result is {last_tool_result}."
-                else:
-                    # Model didn't call any tools; return its direct response
-                    executed_tool = True
-                    direct_text = _chunk_to_text(ai_response.content)
-                    if direct_text:
-                        yield direct_text
+                        yield f"The result is {tool_results[-1]}."
+                    break
             except Exception as e:
                 _logger.warning("MCP tool execution check failed, falling back to direct stream: %s", e)
                 executed_tool = False
