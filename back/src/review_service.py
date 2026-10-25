@@ -237,20 +237,13 @@ async def review_turn(uuid: str, user_message: str) -> AsyncIterator[str]:
     )
 
     reply_parts: list = []
-    try:
-        if _model_api == "ollama":
-            async for chunk in _client_text.astream(chat_prompt):
-                text = _chunk_to_text(chunk)
-                if text:
-                    reply_parts.append(text)
-                    yield text
-        else:
-            async for chunk in _client_text.astream(chat_prompt):
-                content = getattr(chunk, "content", chunk)
-                text = _chunk_to_text(content)
-                if text:
-                    reply_parts.append(text)
-                    yield text
+    try:  
+        async for chunk in _client_text.astream(chat_prompt):
+            content = getattr(chunk, "content", chunk)
+            text = _chunk_to_text(content)
+            if text:
+                reply_parts.append(text)
+                yield text
     except Exception as e:
         _logger.error(f"review_turn: LLM streaming error: {e}")
 

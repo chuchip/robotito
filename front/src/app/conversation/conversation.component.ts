@@ -355,7 +355,7 @@ export class ConversationComponent {
               }
             }
           }
-          this.responseMessage+= displayChunk.replace(/\n/g, '');
+          this.responseMessage+= displayChunk;
           pFin=this.findNextPunctuation(this.responseMessage,pIni)          
           if (pFin!=-1) {
             txt+=this.responseMessage.substring(pIni,pFin+1)
