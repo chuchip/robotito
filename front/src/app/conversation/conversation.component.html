@@ -17,6 +17,23 @@
 <app-selection-menu (speak)="onSelectionMenuSpeak($event)" [translateFn]="translateSelection"></app-selection-menu>
 
 <div class="system" *ngIf="responseBack!=''" role="status" aria-live="polite">{{responseBack}}</div>
+<div
+  #avatarWindow
+  class="window-avatar"
+  cdkDrag
+  cdkDragBoundary="body"
+  [cdkDragFreeDragPosition]="avatarDragPosition"
+  [style.width.px]="avatarWindowWidth"
+  [style.height.px]="avatarWindowHeight"
+  (cdkDragEnded)="saveAvatarWindowState()">
+  <div class="window-avatar__titlebar" cdkDragHandle>
+    <span>Robotito</span>
+    <span class="window-avatar__move-hint" aria-hidden="true">Drag to move</span>
+  </div>
+  <div class="window-avatar__content">
+    <app-avatar [talking]="(avatarTalking$ | async) || false" [emotionText]="spokenText"></app-avatar>
+  </div>
+</div>
 <div class="page">
 
   <app-conversation-history
@@ -116,7 +133,6 @@
           <span class="material-icons" aria-hidden="true">close</span>
         </button>
       </div>
-      <app-avatar [talking]="(avatarTalking$ | async) || false" class="input-avatar"></app-avatar>
       <div class="vertical">
         <button class="button-action" (click)="clicksWindow=0; showLanguageOptions=!showLanguageOptions"
           aria-label="Show language and settings options"

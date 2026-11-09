@@ -1,4 +1,5 @@
-import { Component, ViewChild,HostListener, ElementRef } from '@angular/core';
+import { AfterViewInit, Component, ViewChild, HostListener, ElementRef, OnDestroy } from '@angular/core';
+import { CdkDrag, CdkDragHandle } from '@angular/cdk/drag-drop';
 import { SoundPlayingComponent } from '../sound-playing/sound-playing.component';
 import { SoundRecordingComponent } from '../sound-recording/sound-recording.component';
 import { RatingPhraseComponent } from '../rating-phrase/rating-phrase.component';
@@ -29,11 +30,32 @@ import { SettingsComponent } from '../settings/settings.component';
 import { SelectionMenuComponent } from '../selection-menu/selection-menu.component';
 import { NewConversationDialogComponent, NewConversationDialogResult } from '../new-conversation-dialog/new-conversation-dialog.component';
 import { firstValueFrom } from 'rxjs';
+
+interface AvatarWindowState {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+function isAvatarWindowState(value: unknown): value is AvatarWindowState {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const { x, y, width, height } = value as Record<string, unknown>;
+  return typeof x === 'number' && Number.isFinite(x)
+    && typeof y === 'number' && Number.isFinite(y)
+    && typeof width === 'number' && Number.isFinite(width) && width > 0
+    && typeof height === 'number' && Number.isFinite(height) && height > 0;
+}
+
 @Component({
   selector: 'app-conversation',
   imports: [CommonModule, MatTooltipModule, MatCheckboxModule, FormsModule,
     MatButtonModule, MatIconModule, SoundPlayingComponent, SoundRecordingComponent,
     MatSliderModule, LoadingComponent, SummaryComponent, RatingPhraseComponent, AvatarComponent, MatDialogModule,
+    CdkDrag, CdkDragHandle,
     ConversationHistoryComponent, SettingsComponent, SelectionMenuComponent],
   templateUrl: './conversation.component.html',
   styleUrls: ['./conversation.component.scss']
@@ -42,7 +64,16 @@ import { firstValueFrom } from 'rxjs';
 /**
  * Conversation component
  */
-export class ConversationComponent {
+export class ConversationComponent implements AfterViewInit, OnDestroy {
+  private readonly avatarWindowStorageKey = 'robotito.avatarWindow';
+  avatarDragPosition = { x: 0, y: 0 };
+  avatarWindowWidth: number | null = null;
+  avatarWindowHeight: number | null = null;
+  @ViewChild('avatarWindow') private avatarWindowElement!: ElementRef<HTMLDivElement>;
+  @ViewChild(CdkDrag) private avatarWindowDrag!: CdkDrag;
+  private avatarWindowResizeObserver?: ResizeObserver;
+  private avatarWindowSaveTimer?: ReturnType<typeof setTimeout>;
+
   selectedText: string = '';
   human_voice='af_heart'  // default secondary voice; overwritten by getLastUser()
   isLoading=false;
@@ -57,8 +88,10 @@ export class ConversationComponent {
   isPlayingSound=false
   semaphoreStopAudio:number=0
   avatarTalking$: Observable<boolean> = new Observable();
+  spokenText = '';
   private readonly backendUrl = 'http://localhost:5000';
   ttsArray:Promise<Blob>[]=[]
+  private ttsTexts: string[] = []
   ttsStart=false
   // ----- TTS dispatch throttling / cancellation -----
   // Keep at most TTS_MAX_CONCURRENT requests in flight against the backend
@@ -159,6 +192,7 @@ export class ConversationComponent {
   } | null = null;
    
   constructor(private router: Router,public sound: SoundService,public back: ApiBackService,public persistence: PersistenceService,private avatarService: AvatarService, private dialog: MatDialog) {
+    this.restoreAvatarWindowState();
     this.isLoading=true
     this.avatarTalking$ = this.avatarService.talking$;
     if (persistence.getAuthorization()=='')
@@ -207,6 +241,95 @@ export class ConversationComponent {
         this.isLoading=false
         })
   }
+
+  ngAfterViewInit(): void {
+    this.avatarWindowResizeObserver = new ResizeObserver(() => this.scheduleAvatarWindowSave());
+    this.avatarWindowResizeObserver.observe(this.avatarWindowElement.nativeElement);
+  }
+
+  ngOnDestroy(): void {
+    this.avatarWindowResizeObserver?.disconnect();
+    if (this.avatarWindowSaveTimer) {
+      clearTimeout(this.avatarWindowSaveTimer);
+    }
+    this.saveAvatarWindowState();
+  }
+
+  @HostListener('window:resize')
+  onAvatarWindowViewportResize(): void {
+    if (!this.avatarWindowDrag || !this.avatarWindowElement) {
+      return;
+    }
+    const position = this.avatarWindowDrag.getFreeDragPosition();
+    const bounds = this.avatarWindowElement.nativeElement.getBoundingClientRect();
+    const origin = window.innerWidth <= 768 ? 6 : 10;
+    this.avatarDragPosition = {
+      x: Math.min(position.x, Math.max(0, window.innerWidth - bounds.width - origin)),
+      y: Math.min(position.y, Math.max(0, window.innerHeight - bounds.height - origin)),
+    };
+    this.avatarWindowDrag.setFreeDragPosition(this.avatarDragPosition);
+    this.scheduleAvatarWindowSave();
+  }
+
+  saveAvatarWindowState(): void {
+    if (!this.avatarWindowElement || !this.avatarWindowDrag) {
+      return;
+    }
+    const bounds = this.avatarWindowElement.nativeElement.getBoundingClientRect();
+    const position = this.avatarWindowDrag.getFreeDragPosition();
+    const state: AvatarWindowState = {
+      x: position.x,
+      y: position.y,
+      width: Math.round(bounds.width),
+      height: Math.round(bounds.height),
+    };
+    try {
+      localStorage.setItem(this.avatarWindowStorageKey, JSON.stringify(state));
+    } catch (error) {
+      console.error('Unable to save the avatar window settings.', error);
+    }
+  }
+
+  private restoreAvatarWindowState(): void {
+    try {
+      const saved = localStorage.getItem(this.avatarWindowStorageKey);
+      if (!saved) {
+        return;
+      }
+      const state: unknown = JSON.parse(saved);
+      if (!isAvatarWindowState(state)) {
+        console.warn('Ignoring invalid saved avatar window settings.');
+        return;
+      }
+
+      const mobile = window.innerWidth <= 768;
+      const minWidth = mobile ? 140 : 150;
+      const minHeight = mobile ? 170 : 180;
+      this.avatarWindowWidth = Math.min(
+        Math.max(state.width, minWidth),
+        Math.max(minWidth, window.innerWidth - 12),
+      );
+      this.avatarWindowHeight = Math.min(
+        Math.max(state.height, minHeight),
+        Math.max(minHeight, window.innerHeight - 12),
+      );
+      const origin = mobile ? 6 : 10;
+      this.avatarDragPosition = {
+        x: Math.min(Math.max(0, state.x), Math.max(0, window.innerWidth - this.avatarWindowWidth - origin)),
+        y: Math.min(Math.max(0, state.y), Math.max(0, window.innerHeight - this.avatarWindowHeight - origin)),
+      };
+    } catch (error) {
+      console.error('Unable to restore the saved avatar window settings.', error);
+    }
+  }
+
+  private scheduleAvatarWindowSave(): void {
+    if (this.avatarWindowSaveTimer) {
+      clearTimeout(this.avatarWindowSaveTimer);
+    }
+    this.avatarWindowSaveTimer = setTimeout(() => this.saveAvatarWindowState(), 150);
+  }
+
   putGreeting()
   {
     // Intentionally a no-op: the initial "Hello, I'm robotito..." greeting
@@ -324,6 +447,7 @@ export class ConversationComponent {
           swStart=false
         }
         this.ttsArray.length=0
+        this.ttsTexts.length=0
         this.ttsAbort=false
         // Review-mode verdict marker accumulators. The backend appends
         // `\n[[VERDICT:<value>]]` at the end of the stream; we strip it
@@ -367,6 +491,7 @@ export class ConversationComponent {
                 // (max TTS_MAX_CONCURRENT in flight) before hitting the
                 // backend, and reject early if ESC was pressed.
                 this.ttsArray.push(this.ttsRequest(cleanText))
+                this.ttsTexts.push(cleanText)
                 if (swStart)
                 {
                   this.ttsStart=true                
@@ -384,6 +509,7 @@ export class ConversationComponent {
           const cleanText=this.back.cleanText(txt)
           if (cleanText.length>0 && this.swTalkResponse && !this.ttsAbort) {        
             this.ttsArray.push(this.ttsRequest(cleanText))
+            this.ttsTexts.push(cleanText)
             if (swStart)
             {
               this.ttsStart=true
@@ -481,7 +607,9 @@ export class ConversationComponent {
     let txt=""
     let swStart=true
     this.isPlayingSound=true
+    this.spokenText=''
     this.ttsArray.length=0
+    this.ttsTexts.length=0
     this.ttsAbort=false
     
     while (pFin!=-1 && pFin<cleanText.length) {
@@ -493,6 +621,7 @@ export class ConversationComponent {
         if (txt.length>150 && !this.ttsAbort){                      
           // Throttled dispatch (max TTS_MAX_CONCURRENT in flight, ESC-aware).
           this.ttsArray.push(this.ttsRequest(txt,voice))
+          this.ttsTexts.push(txt)
           txt=""
           if (swStart)
           {
@@ -508,6 +637,7 @@ export class ConversationComponent {
       txt+=cleanText.substring(pIni)
       if (txt.length>0 && !this.ttsAbort) {        
         this.ttsArray.push(this.ttsRequest(txt,voice))
+        this.ttsTexts.push(txt)
         if (swStart)
         {
           this.ttsStart=true
@@ -584,7 +714,7 @@ export class ConversationComponent {
         i++
         continue
       }
-      await this.prepareAudio(response)
+      await this.prepareAudio(response, this.ttsTexts[i] ?? '')
       i++     
       while (this.ttsStart && this.ttsArray.length<=i && this.semaphoreStopAudio==1)
       {
@@ -642,6 +772,9 @@ export class ConversationComponent {
       }  
       else{
         if (this.audio) {
+          this.spokenText = inputText;
+          this.avatarService.setTalking(true);
+          this.avatarService.connectAudio(this.audio);
           this.audio.playbackRate = this.playbackSpeed;                 
           this.audio.pause();
           this.audio.currentTime = 0; 
@@ -652,11 +785,11 @@ export class ConversationComponent {
           return
         }
       }
-      this.prepareAudio(this.responseTextToSound!)     
+      this.prepareAudio(this.responseTextToSound!, inputText)
     }
   }
 
-  async prepareAudio(audioBlob: Blob) {
+  async prepareAudio(audioBlob: Blob, spokenText = '') {
     this.audioUrl = URL.createObjectURL(audioBlob);
     
      // Stop the previous audio if it’s playing
@@ -668,6 +801,7 @@ export class ConversationComponent {
     }
 
     this.audio = new Audio(this.audioUrl);
+    this.spokenText = spokenText;
     this.audio.playbackRate = this.playbackSpeed; 
     this.isPlayingSound=true;
     // start talking animation
@@ -697,6 +831,7 @@ export class ConversationComponent {
   stopAudio(): void {
     // ensure avatar stops talking when audio is killed
     this.avatarService.setTalking(false);
+    this.spokenText = '';
     if (this.sound.isRecording && ! this.sound.chating) {           
       this.sound.stopRecording()
     }

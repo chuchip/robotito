@@ -196,11 +196,6 @@
   z-index: 50;
 }
 
-.input-avatar {
-  flex-shrink: 0;
-  margin-right: 4px;
-}
-
 .input_text {
   display: flex;
   flex-direction: row;
@@ -468,6 +463,7 @@ mat-checkbox .mat-checkbox-label {
   .line {
     max-width: 90%;
   }
+
 }
 
 /* Vocabulary-review toolbar. Shown only while a review session is active
