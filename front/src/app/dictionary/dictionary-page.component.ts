@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnDestroy, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -21,7 +21,7 @@ interface Word {
   templateUrl: './dictionary-page.components.html',
   styleUrls: [ './dictionary-page.components.scss' ]
 })
-export class DictionaryPageComponent implements OnInit {
+export class DictionaryPageComponent implements OnInit, OnDestroy {
   conversationId: string = '';
   statusPlaying: string = 'Loading...';
   words: Word[] = [];
@@ -32,6 +32,12 @@ export class DictionaryPageComponent implements OnInit {
   editingId: string | null = null;
   statusMessage: string = '';
   audio: HTMLAudioElement | null = null;
+  private audioContext: AudioContext | null = null;
+  private analyser: AnalyserNode | null = null;
+  private audioSource: MediaElementAudioSourceNode | null = null;
+  private analyserData = new Uint8Array(0);
+  private volumeFrame = 0;
+  private audioUrl = '';
   selectedText: string = '';
   readingAloudWordId: string | null = null;
   expandedWordIds: Set<string> = new Set<string>();
@@ -169,6 +175,7 @@ export class DictionaryPageComponent implements OnInit {
 
   async readAloud(word: Word) {
     try {
+      this.stopAudio();
       this.readingAloudWordId = word.id || null;
       this.statusMessage = 'Preparing audio...';
       this.statusPlaying = 'Loading audio';
@@ -180,19 +187,8 @@ export class DictionaryPageComponent implements OnInit {
       
       const textToSpeak = englishExamples ? `${word.word}. ". Examples: " ${englishExamples}` : word.word;
       const response = await this.back.text_to_sound(textToSpeak, '');
-      this.statusMessage = 'Playing...';
-
-      // Stop previous audio if playing
-      if (this.audio) {
-        this.audio.pause();
-        this.audio.currentTime = 0;
-      }
       this.statusPlaying = 'Playing...';
-      this.audio = await this.back.playAudioFromResponse(response);
-      this.audio.onended = () => {
-        this.statusMessage = '';
-        this.readingAloudWordId = null;
-      };
+      await this.playAudio(response);
     } catch (error) {
       console.error('Failed to read aloud:', error);
       this.statusMessage = 'Error playing audio';
@@ -222,12 +218,32 @@ export class DictionaryPageComponent implements OnInit {
   }
 
   stopAudio(): void {
+    cancelAnimationFrame(this.volumeFrame);
+    this.audioSource?.disconnect();
+    this.audioSource = null;
+    this.analyser = null;
     if (this.audio) {
+      this.audio.onended = null;
       this.audio.pause();
       this.audio.currentTime = 0;
+      this.audio = null;
     }
+    if (this.audioUrl) {
+      URL.revokeObjectURL(this.audioUrl);
+      this.audioUrl = '';
+    }
+    this.notifyAvatarTalking(false, 0);
     this.readingAloudWordId = null;
     this.statusMessage = '';
+  }
+
+  ngOnDestroy(): void {
+    this.stopAudio();
+  }
+
+  @HostListener('window:pagehide')
+  onPageHide(): void {
+    this.stopAudio();
   }
 
   getSelectedText() {
@@ -246,24 +262,76 @@ export class DictionaryPageComponent implements OnInit {
 
   async speakSelectedText(text: string, voice: string = '') {
     try {
+      this.stopAudio();
       const response = await this.back.text_to_sound(text, voice);
-      this.statusMessage = 'Playing...';
-
-      // Stop previous audio if playing
-      if (this.audio) {
-        this.audio.pause();
-        this.audio.currentTime = 0;
-      }
-
-      this.audio = await this.back.playAudioFromResponse(response);
       this.readingAloudWordId = null;
-      this.audio.onended = () => {
-        this.statusMessage = '';
-      };
+      await this.playAudio(response);
     } catch (error) {
       console.error('Failed to read aloud:', error);
       this.statusMessage = 'Error playing audio';
       this.readingAloudWordId = null;
     }
+  }
+
+  private async playAudio(response: Blob): Promise<void> {
+    this.audioUrl = URL.createObjectURL(response);
+    const audio = new Audio(this.audioUrl);
+    this.audio = audio;
+    audio.onended = () => {
+      if (this.audio !== audio) {
+        return;
+      }
+      this.statusMessage = '';
+      this.readingAloudWordId = null;
+      this.stopAudio();
+    };
+
+    try {
+      this.audioContext ??= new AudioContext();
+      if (this.audioContext.state === 'suspended') {
+        await this.audioContext.resume();
+      }
+      const analyser = this.audioContext.createAnalyser();
+      analyser.fftSize = 512;
+      this.analyserData = new Uint8Array(analyser.fftSize);
+      this.audioSource = this.audioContext.createMediaElementSource(audio);
+      this.audioSource.connect(analyser);
+      analyser.connect(this.audioContext.destination);
+      this.analyser = analyser;
+    } catch (error) {
+      console.error('Unable to synchronize the avatar with dictionary audio.', error);
+    }
+
+    this.statusMessage = 'Playing...';
+    this.notifyAvatarTalking(true, 0);
+    try {
+      await audio.play();
+      this.analyseAudioVolume();
+    } catch (error) {
+      this.stopAudio();
+      throw error;
+    }
+  }
+
+  private analyseAudioVolume(): void {
+    if (!this.audio || !this.analyser) {
+      return;
+    }
+    this.analyser.getByteTimeDomainData(this.analyserData);
+    let sumSquares = 0;
+    for (const sample of this.analyserData) {
+      const amplitude = (sample - 128) / 128;
+      sumSquares += amplitude * amplitude;
+    }
+    const rms = Math.sqrt(sumSquares / this.analyserData.length);
+    this.notifyAvatarTalking(true, Math.min(1, rms * 4));
+    this.volumeFrame = requestAnimationFrame(() => this.analyseAudioVolume());
+  }
+
+  private notifyAvatarTalking(talking: boolean, volume: number): void {
+    window.opener?.postMessage(
+      { type: 'robotito-dictionary-audio', talking, volume },
+      window.location.origin,
+    );
   }
 }

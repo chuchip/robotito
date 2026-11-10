@@ -252,7 +252,28 @@ export class ConversationComponent implements AfterViewInit, OnDestroy {
     if (this.avatarWindowSaveTimer) {
       clearTimeout(this.avatarWindowSaveTimer);
     }
+    this.avatarService.setTalking(false);
     this.saveAvatarWindowState();
+  }
+
+  @HostListener('window:message', ['$event'])
+  onDictionaryAudioMessage(event: MessageEvent<unknown>): void {
+    if (event.origin !== window.location.origin || event.source !== this.dictionaryWindow) {
+      return;
+    }
+    if (typeof event.data !== 'object' || event.data === null) {
+      return;
+    }
+    const message = event.data as Record<string, unknown>;
+    if (message['type'] !== 'robotito-dictionary-audio') {
+      return;
+    }
+    if (typeof message['talking'] === 'boolean') {
+      this.avatarService.setTalking(message['talking']);
+    }
+    if (typeof message['volume'] === 'number' && Number.isFinite(message['volume'])) {
+      this.avatarService.setVolume(message['volume']);
+    }
   }
 
   @HostListener('window:resize')

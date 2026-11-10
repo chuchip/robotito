@@ -26,6 +26,11 @@ export class AvatarService {
     }
   }
 
+  /** Update the avatar's mouth volume from audio playing in another window. */
+  setVolume(value: number): void {
+    this.volumeSubject.next(Math.max(0, Math.min(1, value)));
+  }
+
   /**
    * Connect an HTMLAudioElement so its output volume drives the mouth.
    * Creates an AudioContext → MediaElementSource → AnalyserNode → destination chain.

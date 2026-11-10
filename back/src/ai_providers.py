@@ -10,7 +10,16 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 
 
 def configOllamaAI(model: str, base_url: str, temperature: float = 0.6, **kwargs):
+    import os
     from langchain_ollama.chat_models import ChatOllama
+    api_key = os.getenv("OLLAMA_API_KEY")
+    if api_key:
+        # Cloud models (e.g. minimax-m3.1-flash:cloud) require an Authorization
+        # header. Local models work fine without it, so we only add it when the
+        # env var is set.
+        client_kwargs = kwargs.pop("client_kwargs", {})
+        client_kwargs.setdefault("headers", {})["Authorization"] = f"Bearer {api_key}"
+        kwargs["client_kwargs"] = client_kwargs
     return ChatOllama(model=model, base_url=base_url, temperature=temperature, **kwargs)
 
 
